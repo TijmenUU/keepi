@@ -9,6 +9,7 @@ public static class IServiceCollectionExtensions
   {
     services.AddScoped<ICreateEntryCategoryUseCase, CreateEntryCategoryUseCase>();
     services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+    services.AddScoped<IUpdateEntryCategoryUseCase, UpdateEntryCategoryUseCase>();
 
     return services;
   }

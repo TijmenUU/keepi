@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Keepi.Infrastructure.Data.Repositories;
 
 internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<EntryCategoryRepository> logger)
- : IStoreEntryCategory
+ : IStoreEntryCategory, IUpdateEntryCategory
 {
   async Task<IValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>> IStoreEntryCategory.Execute(
     int userId,
@@ -49,6 +49,49 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
     {
       logger.LogError(ex, "Unexpected error whilst storing new entry category");
       return ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(StoreEntryCategoryError.Unknown);
+    }
+  }
+
+  async Task<IMaybeErrorResult<UpdateEntryCategoryError>> IUpdateEntryCategory.Execute(
+    int entryCategoryId,
+    int userId,
+    string name,
+    bool enabled,
+    DateOnly? activeFrom,
+    DateOnly? activeTo,
+    CancellationToken cancellationToken)
+  {
+    try
+    {
+      var entity = databaseContext.EntryCategories.SingleOrDefault(ec => ec.Id == entryCategoryId);
+      if (entity == null)
+      {
+        return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.EntryCategoryDoesNotExist);
+      }
+      if (entity.UserId != userId)
+      {
+        return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.EntryCategoryBelongsToOtherUser);
+      }
+
+      entity.Name = name;
+      entity.Enabled = enabled;
+      entity.ActiveFrom = activeFrom;
+      entity.ActiveTo = activeTo;
+      await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
+
+      return MaybeErrorResult<UpdateEntryCategoryError>.CreateSuccess();
+    }
+    // This is a bit of a rough catch as it is not known what caused the
+    // exception. Sqlite does not provide the exact constraint nor column name
+    // so for now this seems all that can be done.
+    catch (UniqueConstraintException)
+    {
+        return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.DuplicateName);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Unexpected error whilst storing new entry category");
+      return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.Unknown);
     }
   }
 }

@@ -12,6 +12,7 @@ public static class IServiceCollectionExtensions
 
     services.AddScoped<EntryCategoryRepository>();
     services.AddScoped<IStoreEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());
+    services.AddScoped<IUpdateEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());
 
     services.AddScoped<UserRepository>();
     services.AddScoped<IGetUser>(sp => sp.GetRequiredService<UserRepository>());
