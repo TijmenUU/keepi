@@ -33,13 +33,13 @@ public class GetUserEntryCategoriesEndpoint(
       cancellationToken: cancellationToken);
 
     await SendAsync(
-      response: new GetUserEntryCategoriesResponse(entryCategories: entryCategories
+      response: new GetUserEntryCategoriesResponse(Categories: entryCategories
         .Select(c => new GetUserEntryCategoriesResponseCategory(
-          id: c.Id,
-          name: c.Name,
-          enabled: c.Enabled,
-          activeFrom: c.ActiveFrom,
-          activeTo: c.ActiveTo
+          Id: c.Id,
+          Name: c.Name,
+          Enabled: c.Enabled,
+          ActiveFrom: c.ActiveFrom,
+          ActiveTo: c.ActiveTo
         ))
         .ToArray()),
       cancellation: cancellationToken);
