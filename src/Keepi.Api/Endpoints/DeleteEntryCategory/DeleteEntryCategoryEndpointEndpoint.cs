@@ -3,12 +3,12 @@ using Keepi.Api.Helpers;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.DeleteUpdateEntryCategory;
+namespace Keepi.Api.Endpoints.DeleteEntryCategory;
 
-public class DeleteUpdateEntryCategoryEndpoint(
+public class DeleteEntryCategoryEndpoint(
   IResolveUserHelper resolveUserHelper,
   IDeleteEntryCategoryUseCase deleteEntryCategoryUseCase,
-  ILogger<DeleteUpdateEntryCategoryEndpoint> logger)
+  ILogger<DeleteEntryCategoryEndpoint> logger)
    : EndpointWithoutRequest
 {
   public override void Configure()
