@@ -1,5 +1,4 @@
 using FastEndpoints;
-using Keepi.Api.Extensions;
 using Keepi.Core.Enums;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,7 @@ namespace Keepi.Api.Endpoints.PostRegisterUser;
 public class PostRegisterUserEndpoint(
   IRegisterUserUseCase registerUserUseCase,
   ILogger<PostRegisterUserEndpoint> logger)
-  : Endpoint<PostRegisterUserRequest, PostRegisterUserResponse>
+  : EndpointWithoutRequest<PostRegisterUserResponse>
 {
   public override void Configure()
   {
@@ -17,7 +16,6 @@ public class PostRegisterUserEndpoint(
   }
 
   public override async Task HandleAsync(
-    PostRegisterUserRequest request,
     CancellationToken cancellationToken)
   {
     if (!User.TryGetUserInfo(out var userInfo))
