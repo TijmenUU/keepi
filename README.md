@@ -16,7 +16,7 @@ The following (non testing) projects are part of this repository, followed by a 
 
 ## Required software
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) including the ASP.Net runtime
+- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) including the ASP.Net runtime
 - [bun](https://bun.sh/)
 
 ## Optional software
