@@ -90,7 +90,7 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Unexpected error whilst storing new entry category");
+      logger.LogError(ex, "Unexpected error whilst updating existing entry category");
       return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.Unknown);
     }
   }
