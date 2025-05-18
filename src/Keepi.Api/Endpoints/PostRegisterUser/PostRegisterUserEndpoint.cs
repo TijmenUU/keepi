@@ -1,3 +1,4 @@
+using System.Net;
 using FastEndpoints;
 using Keepi.Core.Enums;
 using Keepi.Core.UseCases;
@@ -47,6 +48,7 @@ public class PostRegisterUserEndpoint(
       case RegisterUserUseCaseResult.UserCreated:
         await SendAsync(
           response: new PostRegisterUserResponse(PostRegisterUserResponseResult.Created),
+          statusCode: (int)HttpStatusCode.Created,
           cancellation: cancellationToken);
         return;
 
