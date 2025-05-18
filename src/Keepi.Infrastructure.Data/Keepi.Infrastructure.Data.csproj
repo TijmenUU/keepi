@@ -14,4 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Keepi.Core\Keepi.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Keepi.Web.Integration.Tests" />
+  </ItemGroup>
 </Project>
