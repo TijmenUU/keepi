@@ -18,6 +18,9 @@ The following (non testing) projects are part of this repository, followed by a 
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) including the ASP.Net runtime
 - [bun](https://bun.sh/)
+
+## Optional software
+
 - [SQLite3](https://sqlite.org/)
 
 ## Secrets
