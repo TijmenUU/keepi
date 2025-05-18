@@ -1,7 +1,7 @@
 using AspNet.Security.OAuth.GitHub;
 using FastEndpoints;
 using Keepi.Api.DependencyInjection;
-using Keepi.Api.Endpoints.DeleteEntryCategory;
+using Keepi.Api.Endpoints.DeleteUserEntryCategory;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -18,7 +18,7 @@ public partial class Program
     builder.Services.AddFastEndpoints(options =>
     {
       options.Assemblies = [
-        typeof(DeleteEntryCategoryEndpoint).Assembly
+        typeof(DeleteUserEntryCategoryEndpoint).Assembly
       ];
     });
 

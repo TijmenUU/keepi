@@ -1,25 +1,24 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using FastEndpoints;
 using Keepi.Api.Helpers;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.PostCreateEntryCategory;
+namespace Keepi.Api.Endpoints.PutUpdateUserEntryCategory;
 
-public class PostCreateEntryCategoryEndpoint(
+public class PutUpdateUserEntryCategoryEndpoint(
   IResolveUserHelper resolveUserHelper,
-  ICreateEntryCategoryUseCase createEntryCategoryUseCase,
-  ILogger<PostCreateEntryCategoryEndpoint> logger)
-   : Endpoint<PostCreateEntryCategoryRequest, PostCreateEntryCategoryResponse>
+  IUpdateEntryCategoryUseCase updateEntryCategoryUseCase,
+  ILogger<PutUpdateUserEntryCategoryEndpoint> logger)
+   : Endpoint<PutUpdateUserEntryCategoryRequest>
 {
   public override void Configure()
   {
-    Post("/user/entrycategories");
+    Put("/user/entrycategories/{EntryCategoryId}");
   }
 
   public override async Task HandleAsync(
-    PostCreateEntryCategoryRequest request,
+    PutUpdateUserEntryCategoryRequest request,
     CancellationToken cancellationToken)
   {
     var user = await resolveUserHelper.GetUserOrNull(
@@ -32,13 +31,15 @@ public class PostCreateEntryCategoryEndpoint(
       return;
     }
 
+    var entryCategoryId = Route<int>(paramName: "EntryCategoryId");
     if (!TryGetValidatedModel(request, out var validatedRequest))
     {
       await SendErrorsAsync(cancellation: cancellationToken);
       return;
     }
 
-    var result = await createEntryCategoryUseCase.Execute(
+    var result = await updateEntryCategoryUseCase.Execute(
+      entryCategoryId: entryCategoryId,
       userId: user.Id,
       name: validatedRequest.Name,
       enabled: validatedRequest.Enabled,
@@ -46,16 +47,13 @@ public class PostCreateEntryCategoryEndpoint(
       activeTo: validatedRequest.ActiveTo,
       cancellationToken: cancellationToken);
 
-    if (result.TrySuccess(out var success, out var error))
+    if (result.TrySuccess(out var error))
     {
-      await SendAsync(
-        new PostCreateEntryCategoryResponse(id: success.EntryCategoryId),
-        statusCode: (int)HttpStatusCode.Created,
-        cancellation: cancellationToken);
+      await SendNoContentAsync(cancellation: cancellationToken);
       return;
     }
 
-    if (error == CreateEntryCategoryUseCaseError.Unknown)
+    if (error == UpdateEntryCategoryUseCaseError.Unknown)
     {
       await SendErrorsAsync(statusCode: 500, cancellation: cancellationToken);
       return;
@@ -66,7 +64,7 @@ public class PostCreateEntryCategoryEndpoint(
   }
 
   private static bool TryGetValidatedModel(
-    PostCreateEntryCategoryRequest request,
+    PutUpdateUserEntryCategoryRequest request,
     [NotNullWhen(returnValue: true)] out ValidatedPostCreateEntryCategoryRequest? validated)
   {
     if (request == null)

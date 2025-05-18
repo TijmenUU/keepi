@@ -1,10 +1,11 @@
 using Keepi.Api.Endpoints.GetUserEntryCategories;
-using Keepi.Api.Endpoints.PostCreateEntryCategory;
+using Keepi.Api.Endpoints.PostCreateUserEntryCategory;
+using Keepi.Api.Endpoints.PutUpdateUserEntryCategory;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
 
 [Collection(DefaultCollection.Name)]
-public class EntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
+public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 {
   [Fact]
   public async Task Create_read_update_delete_entry_category_test()
@@ -37,7 +38,7 @@ public class EntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFac
 
     var httpResponse = await client.PutAsJsonAsync(
       requestUri: $"/api/user/entrycategories/{firstCreatedEntryCategoryId}",
-      value: new PutUpdateEntryCategoryRequest
+      value: new PutUpdateUserEntryCategoryRequest
       {
         Name = "Test 1a",
         ActiveFrom = "2025-01-01",
@@ -84,7 +85,7 @@ public class EntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFac
   {
     var httpResponse = await client.PostAsJsonAsync(
       requestUri: "/api/user/entrycategories",
-      value: new PostCreateEntryCategoryRequest
+      value: new PostCreateUserEntryCategoryRequest
       {
         Name = name,
         ActiveFrom = null,
@@ -92,7 +93,7 @@ public class EntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFac
         Enabled = true
       });
     httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-    var postCreateEntryCategoryResponse = await httpResponse.Content.ReadFromJsonAsync<PostCreateEntryCategoryResponse>();
+    var postCreateEntryCategoryResponse = await httpResponse.Content.ReadFromJsonAsync<PostCreateUserEntryCategoryResponse>();
     postCreateEntryCategoryResponse.ShouldNotBeNull();
     postCreateEntryCategoryResponse.Id.ShouldBeGreaterThan(0);
 
