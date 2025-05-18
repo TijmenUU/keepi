@@ -11,6 +11,7 @@ public interface IMaybeErrorResult<TError> : IResult
 {
   bool TrySuccess(
     [NotNullWhen(returnValue: false)] out TError? error);
+  TError? ErrorOrNull { get; }
 }
 
 public interface IValueOrErrorResult<TSuccess, TError> : IResult
@@ -19,6 +20,7 @@ public interface IValueOrErrorResult<TSuccess, TError> : IResult
     [NotNullWhen(returnValue: true)] out TSuccess? success,
     [NotNullWhen(returnValue: false)] out TError? error);
   TSuccess SuccessOrThrow { get; }
+  TError? ErrorOrNull { get; }
 }
 
 public class MaybeErrorResult<TError>
@@ -59,6 +61,8 @@ public class MaybeErrorResult<TError>
     error = this.error;
     return succeeded;
   }
+
+  public TError? ErrorOrNull => error;
 }
 
 public class ValueOrErrorResult<TSuccess, TError>
@@ -121,4 +125,6 @@ public class ValueOrErrorResult<TSuccess, TError>
       return success;
     }
   }
+
+  public TError? ErrorOrNull => error;
 }
