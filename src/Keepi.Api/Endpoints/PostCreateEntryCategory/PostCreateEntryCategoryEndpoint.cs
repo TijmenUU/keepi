@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using FastEndpoints;
 using Keepi.Api.Helpers;
 using Keepi.Core.UseCases;
@@ -49,6 +50,7 @@ public class PostCreateEntryCategoryEndpoint(
     {
       await SendAsync(
         new PostCreateEntryCategoryResponse(id: success.EntryCategoryId),
+        statusCode: (int)HttpStatusCode.Created,
         cancellation: cancellationToken);
       return;
     }
