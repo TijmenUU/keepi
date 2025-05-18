@@ -11,6 +11,7 @@ public static class IServiceCollectionExtensions
     services.AddDbContext<DatabaseContext>();
 
     services.AddScoped<EntryCategoryRepository>();
+    services.AddScoped<IDeleteEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());
     services.AddScoped<IStoreEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());
     services.AddScoped<IUpdateEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());
 

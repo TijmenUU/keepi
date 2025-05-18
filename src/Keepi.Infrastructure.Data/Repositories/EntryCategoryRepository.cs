@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Keepi.Infrastructure.Data.Repositories;
 
 internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<EntryCategoryRepository> logger)
- : IStoreEntryCategory, IUpdateEntryCategory
+ : IStoreEntryCategory, IUpdateEntryCategory, IDeleteEntryCategory
 {
   async Task<IValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>> IStoreEntryCategory.Execute(
     int userId,
@@ -86,12 +86,41 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
     // so for now this seems all that can be done.
     catch (UniqueConstraintException)
     {
-        return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.DuplicateName);
+      return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.DuplicateName);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error whilst updating existing entry category");
       return MaybeErrorResult<UpdateEntryCategoryError>.CreateFailure(UpdateEntryCategoryError.Unknown);
+    }
+  }
+
+  async Task<IMaybeErrorResult<DeleteEntryCategoryError>> IDeleteEntryCategory.Execute(
+    int entryCategoryId,
+    int userId,
+    CancellationToken cancellationToken)
+  {
+    try
+    {
+      var entity = databaseContext.EntryCategories.SingleOrDefault(ec => ec.Id == entryCategoryId);
+      if (entity == null)
+      {
+        return MaybeErrorResult<DeleteEntryCategoryError>.CreateFailure(DeleteEntryCategoryError.EntryCategoryDoesNotExist);
+      }
+      if (entity.UserId != userId)
+      {
+        return MaybeErrorResult<DeleteEntryCategoryError>.CreateFailure(DeleteEntryCategoryError.EntryCategoryBelongsToOtherUser);
+      }
+
+      databaseContext.Remove(entity);
+      await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
+
+      return MaybeErrorResult<DeleteEntryCategoryError>.CreateSuccess();
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Unexpected error whilst deleting entry category");
+      return MaybeErrorResult<DeleteEntryCategoryError>.CreateFailure(DeleteEntryCategoryError.Unknown);
     }
   }
 }
