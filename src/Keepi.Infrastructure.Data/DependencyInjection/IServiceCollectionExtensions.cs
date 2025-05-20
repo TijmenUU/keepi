@@ -1,14 +1,20 @@
 using Keepi.Core.Repositories;
 using Keepi.Infrastructure.Data.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Keepi.Infrastructure.Data.DependencyInjection;
 
 public static class IServiceCollectionExtensions
 {
-  public static IServiceCollection AddRepositories(this IServiceCollection services)
+  public static IServiceCollection AddRepositories(
+    this IServiceCollection services,
+    string sqliteConnectionString)
   {
-    services.AddDbContext<DatabaseContext>();
+    services.AddDbContext<DatabaseContext>(options =>
+    {
+      options.UseSqlite(connectionString: sqliteConnectionString);
+    });
 
     services.AddScoped<EntryCategoryRepository>();
     services.AddScoped<IDeleteEntryCategory>(sp => sp.GetRequiredService<EntryCategoryRepository>());

@@ -29,7 +29,11 @@ public partial class Program
     }
 
     builder.Services.AddApiHelpers();
-    builder.Services.AddRepositories();
+
+    const string connectionStringName = "Keepi";
+    builder.Services.AddRepositories(sqliteConnectionString: builder.Configuration.GetConnectionString(connectionStringName) ??
+      throw new InvalidOperationException($"Missing required connection string {connectionStringName}"));
+
     builder.Services.AddUseCases();
 
     builder.Services.AddAuthorization(configure =>
