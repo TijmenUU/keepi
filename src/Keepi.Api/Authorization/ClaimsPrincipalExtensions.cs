@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Keepi.Core.Entities;
 
-namespace Keepi.Api.Extensions;
+namespace Keepi.Api.Authorization;
 
 internal static class ClaimsPrincipalExtensions
 {

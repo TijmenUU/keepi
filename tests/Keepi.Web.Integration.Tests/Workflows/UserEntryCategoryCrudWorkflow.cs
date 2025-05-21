@@ -1,6 +1,6 @@
-using Keepi.Api.Endpoints.GetUserEntryCategories;
-using Keepi.Api.Endpoints.PostCreateUserEntryCategory;
-using Keepi.Api.Endpoints.PutUpdateUserEntryCategory;
+using Keepi.Api.UserCategories.Create;
+using Keepi.Api.UserCategories.GetAll;
+using Keepi.Api.UserCategories.Update;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
 

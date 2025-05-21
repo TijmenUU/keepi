@@ -1,7 +1,7 @@
-using Keepi.Api.Endpoints.GetUser;
-using Keepi.Api.Endpoints.PostRegisterUser;
+using Keepi.Api.Users.Get;
+using Keepi.Api.Users.Register;
 
-namespace Keepi.Web.Integration.Tests.Endpoints;
+namespace Keepi.Web.Integration.Tests.Workflows;
 
 [Collection(DefaultCollection.Name)]
 public class CreateNewUserWorkflow(KeepiWebApplicationFactory applicationFactory)

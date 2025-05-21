@@ -1,10 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Api.Helpers;
+using Keepi.Api.Authorization;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.PutUpdateUserEntryCategory;
+namespace Keepi.Api.UserCategories.Update;
 
 public class PutUpdateUserEntryCategoryEndpoint(
   IResolveUserHelper resolveUserHelper,

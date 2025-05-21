@@ -1,7 +1,8 @@
 using FastEndpoints;
+using Keepi.Api.Authorization;
 using Keepi.Core.Repositories;
 
-namespace Keepi.Api.Endpoints.GetUser;
+namespace Keepi.Api.Users.Get;
 
 public class GetUserEndpoint(IGetUserExists getUserExists)
  : EndpointWithoutRequest<GetUserResponse>

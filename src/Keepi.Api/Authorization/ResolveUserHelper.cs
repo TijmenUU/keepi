@@ -3,7 +3,7 @@ using Keepi.Core.Entities;
 using Keepi.Core.Enums;
 using Keepi.Core.Repositories;
 
-namespace Keepi.Api.Helpers;
+namespace Keepi.Api.Authorization;
 
 public interface IResolveUserHelper
 {

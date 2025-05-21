@@ -1,4 +1,4 @@
-namespace Keepi.Api.Extensions;
+namespace Keepi.Api;
 
 internal static class StringExtensions
 {

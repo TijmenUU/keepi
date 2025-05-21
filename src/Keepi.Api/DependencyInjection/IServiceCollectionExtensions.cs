@@ -1,4 +1,4 @@
-using Keepi.Api.Helpers;
+using Keepi.Api.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Keepi.Api.DependencyInjection;

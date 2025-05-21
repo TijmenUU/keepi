@@ -1,4 +1,4 @@
-namespace Keepi.Api.Endpoints.GetUser;
+namespace Keepi.Api.Users.Get;
 
 public class GetUserResponse(string name, bool registered)
 {

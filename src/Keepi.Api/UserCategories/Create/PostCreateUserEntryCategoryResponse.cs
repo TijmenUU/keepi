@@ -1,4 +1,4 @@
-namespace Keepi.Api.Endpoints.PostCreateUserEntryCategory;
+namespace Keepi.Api.UserCategories.Create;
 
 public class PostCreateUserEntryCategoryResponse(int id)
 {

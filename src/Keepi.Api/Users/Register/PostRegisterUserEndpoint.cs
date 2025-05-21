@@ -1,10 +1,11 @@
 using System.Net;
 using FastEndpoints;
+using Keepi.Api.Authorization;
 using Keepi.Core.Enums;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.PostRegisterUser;
+namespace Keepi.Api.Users.Register;
 
 public class PostRegisterUserEndpoint(
   IRegisterUserUseCase registerUserUseCase,

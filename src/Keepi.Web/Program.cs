@@ -1,7 +1,7 @@
 using AspNet.Security.OAuth.GitHub;
 using FastEndpoints;
 using Keepi.Api.DependencyInjection;
-using Keepi.Api.Endpoints.DeleteUserEntryCategory;
+using Keepi.Api.UserCategories.Delete;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;

@@ -1,9 +1,9 @@
 using FastEndpoints;
-using Keepi.Api.Helpers;
+using Keepi.Api.Authorization;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.DeleteUserEntryCategory;
+namespace Keepi.Api.UserCategories.Delete;
 
 public class DeleteUserEntryCategoryEndpoint(
   IResolveUserHelper resolveUserHelper,

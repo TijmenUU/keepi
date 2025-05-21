@@ -1,4 +1,4 @@
-namespace Keepi.Api.Endpoints.PostRegisterUser;
+namespace Keepi.Api.Users.Register;
 
 public class PostRegisterUserResponse
 {

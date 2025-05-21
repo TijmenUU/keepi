@@ -1,6 +1,6 @@
-namespace Keepi.Api.Endpoints.PutUpdateUserEntryCategory;
+namespace Keepi.Api.UserCategories.Create;
 
-public class PutUpdateUserEntryCategoryRequest
+public class PostCreateUserEntryCategoryRequest
 {
   public string? Name { get; set; }
   public bool? Enabled { get; set; }

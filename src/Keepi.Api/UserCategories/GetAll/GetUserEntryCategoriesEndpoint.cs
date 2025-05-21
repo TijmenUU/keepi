@@ -1,9 +1,9 @@
 using FastEndpoints;
-using Keepi.Api.Helpers;
+using Keepi.Api.Authorization;
 using Keepi.Core.Repositories;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.GetUserEntryCategories;
+namespace Keepi.Api.UserCategories.GetAll;
 
 public class GetUserEntryCategoriesEndpoint(
   IResolveUserHelper resolveUserHelper,

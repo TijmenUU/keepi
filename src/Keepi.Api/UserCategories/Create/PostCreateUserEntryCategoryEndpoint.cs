@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Api.Endpoints.GetUserEntryCategories;
-using Keepi.Api.Helpers;
+using Keepi.Api.Authorization;
+using Keepi.Api.UserCategories.GetAll;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.Endpoints.PostCreateUserEntryCategory;
+namespace Keepi.Api.UserCategories.Create;
 
 public class PostCreateUserEntryCategoryEndpoint(
   IResolveUserHelper resolveUserHelper,
