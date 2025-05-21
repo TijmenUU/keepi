@@ -1,4 +1,3 @@
-using System.Text;
 using Keepi.Api.Endpoints.GetUser;
 using Keepi.Api.Endpoints.PostRegisterUser;
 
