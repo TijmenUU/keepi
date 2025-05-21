@@ -93,6 +93,8 @@ public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicatio
         Enabled = true
       });
     httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
+    httpResponse.Headers.Location?.OriginalString.ShouldBe("/api/user/entrycategories");
+
     var postCreateEntryCategoryResponse = await httpResponse.Content.ReadFromJsonAsync<PostCreateUserEntryCategoryResponse>();
     postCreateEntryCategoryResponse.ShouldNotBeNull();
     postCreateEntryCategoryResponse.Id.ShouldBeGreaterThan(0);

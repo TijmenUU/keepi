@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using FastEndpoints;
+using Keepi.Api.Endpoints.GetUserEntryCategories;
 using Keepi.Api.Helpers;
 using Keepi.Core.UseCases;
 using Microsoft.Extensions.Logging;
@@ -48,9 +48,8 @@ public class PostCreateUserEntryCategoryEndpoint(
 
     if (result.TrySuccess(out var success, out var error))
     {
-      await SendAsync(
-        new PostCreateUserEntryCategoryResponse(id: success.EntryCategoryId),
-        statusCode: (int)HttpStatusCode.Created,
+      await SendCreatedAtAsync<GetUserEntryCategoriesEndpoint>(
+        responseBody: new PostCreateUserEntryCategoryResponse(id: success.EntryCategoryId),
         cancellation: cancellationToken);
       return;
     }
