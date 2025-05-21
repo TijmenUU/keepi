@@ -1,16 +1,13 @@
 using EntityFramework.Exceptions.Common;
 using Keepi.Core;
-using Keepi.Core.EntryCategories;
 using Keepi.Core.Users;
-using Keepi.Infrastructure.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Infrastructure.Data.Repositories;
+namespace Keepi.Infrastructure.Data.Users;
 
 internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<UserRepository> logger)
- : IGetUserEntryCategories,
-  IGetUserExists,
+ : IGetUserExists,
   IGetUser,
   IStoreNewUser
 {
@@ -19,22 +16,6 @@ internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<Us
     return await databaseContext.Users.AnyAsync(
       u => u.ExternalId == externalId || u.EmailAddress == emailAddress,
       cancellationToken);
-  }
-
-  async Task<EntryCategoryEntity[]> IGetUserEntryCategories.Execute(int userId, CancellationToken cancellationToken)
-  {
-    var entryCategories = await databaseContext.EntryCategories
-      .Where(c => c.UserId == userId)
-      .ToArrayAsync(cancellationToken);
-
-    return entryCategories
-      .Select(c => new EntryCategoryEntity(
-        id: c.Id,
-        name: c.Name,
-        enabled: c.Enabled,
-        activeFrom: c.ActiveFrom,
-        activeTo: c.ActiveTo))
-      .ToArray();
   }
 
   async Task<IMaybeErrorResult<StoreNewUserError>> IStoreNewUser.Execute(
@@ -46,7 +27,7 @@ internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<Us
   {
     try
     {
-      databaseContext.Add(new Entities.UserEntity
+      databaseContext.Add(new UserEntity
       {
         ExternalId = externalId,
         EmailAddress = emailAddress,
@@ -71,7 +52,7 @@ internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<Us
     }
   }
 
-  async Task<IValueOrErrorResult<UserEntity, GetUserError>> IGetUser.Execute(
+  async Task<IValueOrErrorResult<Core.Users.UserEntity, GetUserError>> IGetUser.Execute(
     string externalId,
     UserIdentityProvider identityProvider,
     CancellationToken cancellationToken)
@@ -85,10 +66,10 @@ internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<Us
 
       if (user == null)
       {
-        return ValueOrErrorResult<UserEntity, GetUserError>.CreateFailure(GetUserError.DoesNotExist);
+        return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateFailure(GetUserError.DoesNotExist);
       }
 
-      return ValueOrErrorResult<UserEntity, GetUserError>.CreateSuccess(new UserEntity(
+      return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateSuccess(new Core.Users.UserEntity(
         id: user.Id,
         emailAddress: user.EmailAddress,
         name: user.Name,
@@ -97,15 +78,15 @@ internal sealed class UserRepository(DatabaseContext databaseContext, ILogger<Us
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error whilst trying to get user");
-      return ValueOrErrorResult<UserEntity, GetUserError>.CreateFailure(GetUserError.Unknown);
+      return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateFailure(GetUserError.Unknown);
     }
   }
 
-  private static Enums.UserIdentityOrigin ToDatabaseEnum(UserIdentityProvider userIdentityProvider)
+  private static UserIdentityOrigin ToDatabaseEnum(UserIdentityProvider userIdentityProvider)
   {
     return userIdentityProvider switch
     {
-      UserIdentityProvider.GitHub => Enums.UserIdentityOrigin.GitHub,
+      UserIdentityProvider.GitHub => UserIdentityOrigin.GitHub,
       _ => throw new ArgumentOutOfRangeException(paramName: nameof(userIdentityProvider))
     };
   }

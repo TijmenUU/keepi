@@ -1,14 +1,34 @@
 using EntityFramework.Exceptions.Common;
 using Keepi.Core;
 using Keepi.Core.EntryCategories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Infrastructure.Data.Repositories;
+namespace Keepi.Infrastructure.Data.EntryCategories;
 
 internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<EntryCategoryRepository> logger)
- : IStoreEntryCategory, IUpdateEntryCategory, IDeleteEntryCategory
+ : IGetUserEntryCategories,
+  IStoreEntryCategory,
+  IUpdateEntryCategory,
+  IDeleteEntryCategory
 {
-  async Task<IValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>> IStoreEntryCategory.Execute(
+  async Task<Core.EntryCategories.EntryCategoryEntity[]> IGetUserEntryCategories.Execute(int userId, CancellationToken cancellationToken)
+  {
+    var entryCategories = await databaseContext.EntryCategories
+      .Where(c => c.UserId == userId)
+      .ToArrayAsync(cancellationToken);
+
+    return entryCategories
+      .Select(c => new Core.EntryCategories.EntryCategoryEntity(
+        id: c.Id,
+        name: c.Name,
+        enabled: c.Enabled,
+        activeFrom: c.ActiveFrom,
+        activeTo: c.ActiveTo))
+      .ToArray();
+  }
+
+  async Task<IValueOrErrorResult<Core.EntryCategories.EntryCategoryEntity, StoreEntryCategoryError>> IStoreEntryCategory.Execute(
     int userId,
     string name,
     bool enabled,
@@ -18,7 +38,7 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
   {
     try
     {
-      var entity = new Entities.EntryCategoryEntity
+      var entity = new EntryCategoryEntity
       {
         Name = name,
         Enabled = enabled,
@@ -29,7 +49,7 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
       databaseContext.Add(entity);
       await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
 
-      return ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateSuccess(new EntryCategoryEntity(
+      return ValueOrErrorResult<Core.EntryCategories.EntryCategoryEntity, StoreEntryCategoryError>.CreateSuccess(new Core.EntryCategories.EntryCategoryEntity(
         id: entity.Id,
         name: entity.Name,
         enabled: entity.Enabled,
@@ -42,12 +62,12 @@ internal class EntryCategoryRepository(DatabaseContext databaseContext, ILogger<
     // so for now this seems all that can be done.
     catch (UniqueConstraintException)
     {
-      return ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(StoreEntryCategoryError.DuplicateName);
+      return ValueOrErrorResult<Core.EntryCategories.EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(StoreEntryCategoryError.DuplicateName);
     }
     catch (Exception ex)
     {
       logger.LogError(ex, "Unexpected error whilst storing new entry category");
-      return ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(StoreEntryCategoryError.Unknown);
+      return ValueOrErrorResult<Core.EntryCategories.EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(StoreEntryCategoryError.Unknown);
     }
   }
 

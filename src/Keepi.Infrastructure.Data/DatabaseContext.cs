@@ -1,5 +1,7 @@
 using EntityFramework.Exceptions.Sqlite;
-using Keepi.Infrastructure.Data.Entities;
+using Keepi.Infrastructure.Data.Entries;
+using Keepi.Infrastructure.Data.EntryCategories;
+using Keepi.Infrastructure.Data.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Keepi.Infrastructure.Data;
