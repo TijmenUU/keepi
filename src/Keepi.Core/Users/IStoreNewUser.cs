@@ -1,6 +1,4 @@
-using Keepi.Core.Enums;
-
-namespace Keepi.Core.Repositories;
+namespace Keepi.Core.Users;
 
 public enum StoreNewUserError
 {

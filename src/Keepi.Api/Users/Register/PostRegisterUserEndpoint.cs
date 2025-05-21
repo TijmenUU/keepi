@@ -1,8 +1,7 @@
 using System.Net;
 using FastEndpoints;
 using Keepi.Api.Authorization;
-using Keepi.Core.Enums;
-using Keepi.Core.UseCases;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Users.Register;

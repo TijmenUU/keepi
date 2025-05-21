@@ -1,6 +1,7 @@
-using Keepi.Core.Entities;
+using Keepi.Core.Aggregates;
+using Keepi.Core.EntryCategories;
 
-namespace Keepi.Core.Aggregates;
+namespace Keepi.Core.Users;
 
 public sealed class UserAggregate : IAggregateRoot
 {

@@ -1,7 +1,5 @@
 using System.Security.Claims;
-using Keepi.Core.Entities;
-using Keepi.Core.Enums;
-using Keepi.Core.Repositories;
+using Keepi.Core.Users;
 
 namespace Keepi.Api.Authorization;
 

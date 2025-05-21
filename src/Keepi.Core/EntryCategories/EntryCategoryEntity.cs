@@ -1,4 +1,4 @@
-namespace Keepi.Core.Entities;
+namespace Keepi.Core.EntryCategories;
 
 public sealed class EntryCategoryEntity
 {

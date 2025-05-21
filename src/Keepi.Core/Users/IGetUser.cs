@@ -1,7 +1,4 @@
-using Keepi.Core.Entities;
-using Keepi.Core.Enums;
-
-namespace Keepi.Core.Repositories;
+namespace Keepi.Core.Users;
 
 public enum GetUserError
 {

@@ -1,4 +1,5 @@
-using Keepi.Core.Repositories;
+using Keepi.Core.EntryCategories;
+using Keepi.Core.Users;
 using Keepi.Infrastructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,4 @@
-using Keepi.Core.Repositories;
-
-namespace Keepi.Core.UseCases;
+namespace Keepi.Core.EntryCategories;
 
 public enum CreateEntryCategoryUseCaseError
 {

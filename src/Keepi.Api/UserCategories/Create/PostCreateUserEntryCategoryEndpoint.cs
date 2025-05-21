@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Api.Authorization;
 using Keepi.Api.UserCategories.GetAll;
-using Keepi.Core.UseCases;
+using Keepi.Core.EntryCategories;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserCategories.Create;

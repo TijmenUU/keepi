@@ -1,8 +1,6 @@
-﻿using Keepi.Core.Enums;
-using Keepi.Core.Repositories;
-using Keepi.Core.UseCases;
+﻿using Keepi.Core.Users;
 
-namespace Keepi.Core.Unit.Tests.UseCases;
+namespace Keepi.Core.Unit.Tests.Users;
 
 public class RegisterUserUseCaseTests
 {

@@ -1,4 +1,4 @@
-namespace Keepi.Core.Repositories;
+namespace Keepi.Core.EntryCategories;
 
 public enum DeleteEntryCategoryError
 {

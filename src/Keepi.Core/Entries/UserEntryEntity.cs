@@ -1,4 +1,4 @@
-namespace Keepi.Core.Entities;
+namespace Keepi.Core.Entries;
 
 public sealed class UserEntryEntity
 {

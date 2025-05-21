@@ -1,7 +1,4 @@
-using Keepi.Core.Enums;
-using Keepi.Core.Repositories;
-
-namespace Keepi.Core.UseCases;
+namespace Keepi.Core.Users;
 
 public enum RegisterUserUseCaseResult
 {

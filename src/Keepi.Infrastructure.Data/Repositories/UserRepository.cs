@@ -1,8 +1,7 @@
 using EntityFramework.Exceptions.Common;
 using Keepi.Core;
-using Keepi.Core.Entities;
-using Keepi.Core.Enums;
-using Keepi.Core.Repositories;
+using Keepi.Core.EntryCategories;
+using Keepi.Core.Users;
 using Keepi.Infrastructure.Data.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

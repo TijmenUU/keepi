@@ -1,8 +1,7 @@
 using System.Text;
-using Keepi.Core.Repositories;
-using Keepi.Core.UseCases;
+using Keepi.Core.EntryCategories;
 
-namespace Keepi.Core.Unit.Tests.UseCases;
+namespace Keepi.Core.Unit.Tests.EntryCategories;
 
 public class UpdateEntryCategoryUseCaseTests
 {

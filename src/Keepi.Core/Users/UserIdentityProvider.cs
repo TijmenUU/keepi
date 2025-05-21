@@ -1,4 +1,4 @@
-namespace Keepi.Core.Enums;
+namespace Keepi.Core.Users;
 
 public enum UserIdentityProvider
 {

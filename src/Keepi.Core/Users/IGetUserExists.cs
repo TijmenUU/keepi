@@ -1,4 +1,4 @@
-namespace Keepi.Core.Repositories;
+namespace Keepi.Core.Users;
 
 public interface IGetUserExists
 {

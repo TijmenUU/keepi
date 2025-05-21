@@ -1,7 +1,6 @@
-using Keepi.Core.Repositories;
-using Keepi.Core.UseCases;
+using Keepi.Core.EntryCategories;
 
-namespace Keepi.Core.Unit.Tests.UseCases;
+namespace Keepi.Core.Unit.Tests.EntryCategories;
 
 public class CreateEntryCategoryUseCaseTests
 {
@@ -9,7 +8,7 @@ public class CreateEntryCategoryUseCaseTests
   public async Task Execute_stores_expected_entity_for_valid_input()
   {
     var context = new TestContext()
-      .WithSuccesfulEntryCategoryStore(new Entities.EntryCategoryEntity(
+      .WithSuccesfulEntryCategoryStore(new EntryCategoryEntity(
           id: 13,
           name: "Dev",
           enabled: true,
@@ -98,7 +97,7 @@ public class CreateEntryCategoryUseCaseTests
   {
     public Mock<IStoreEntryCategory> StoreEntryCategoryMock { get; } = new(MockBehavior.Strict);
 
-    public TestContext WithSuccesfulEntryCategoryStore(Entities.EntryCategoryEntity returnedEntity)
+    public TestContext WithSuccesfulEntryCategoryStore(EntryCategoryEntity returnedEntity)
     {
       StoreEntryCategoryMock
         .Setup(x => x.Execute(
@@ -108,7 +107,7 @@ public class CreateEntryCategoryUseCaseTests
           It.IsAny<DateOnly?>(),
           It.IsAny<DateOnly?>(),
           It.IsAny<CancellationToken>()))
-        .ReturnsAsync(ValueOrErrorResult<Entities.EntryCategoryEntity, StoreEntryCategoryError>.CreateSuccess(returnedEntity));
+        .ReturnsAsync(ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateSuccess(returnedEntity));
 
       return this;
     }
@@ -123,7 +122,7 @@ public class CreateEntryCategoryUseCaseTests
           It.IsAny<DateOnly?>(),
           It.IsAny<DateOnly?>(),
           It.IsAny<CancellationToken>()))
-        .ReturnsAsync(ValueOrErrorResult<Entities.EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(error));
+        .ReturnsAsync(ValueOrErrorResult<EntryCategoryEntity, StoreEntryCategoryError>.CreateFailure(error));
 
       return this;
     }

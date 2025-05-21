@@ -1,6 +1,4 @@
-using Keepi.Core.Entities;
-
-namespace Keepi.Core.Repositories;
+namespace Keepi.Core.EntryCategories;
 
 public interface IGetUserEntryCategories
 {

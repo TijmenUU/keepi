@@ -1,6 +1,6 @@
 using FastEndpoints;
 using Keepi.Api.Authorization;
-using Keepi.Core.Repositories;
+using Keepi.Core.EntryCategories;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserCategories.GetAll;

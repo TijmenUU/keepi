@@ -1,4 +1,5 @@
-using Keepi.Core.UseCases;
+using Keepi.Core.EntryCategories;
+using Keepi.Core.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Keepi.Core.DependencyInjection;
