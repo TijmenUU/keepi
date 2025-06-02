@@ -1,7 +1,7 @@
 #nullable disable
 using System.ComponentModel.DataAnnotations;
 using Keepi.Infrastructure.Data.Entries;
-using Keepi.Infrastructure.Data.EntryCategories;
+using Keepi.Infrastructure.Data.UserEntryCategories;
 using Microsoft.EntityFrameworkCore;
 
 namespace Keepi.Infrastructure.Data.Users;
@@ -19,6 +19,6 @@ internal sealed class UserEntity
   public string Name { get; set; }
   public UserIdentityOrigin IdentityOrigin { get; set; }
 
-  public List<EntryCategoryEntity> EntryCategories { get; set; }
+  public List<UserEntryCategoryEntity> UserEntryCategories { get; set; }
   public List<UserEntryEntity> Entries { get; set; }
 }

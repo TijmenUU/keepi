@@ -1,6 +1,6 @@
 using EntityFramework.Exceptions.Sqlite;
 using Keepi.Infrastructure.Data.Entries;
-using Keepi.Infrastructure.Data.EntryCategories;
+using Keepi.Infrastructure.Data.UserEntryCategories;
 using Keepi.Infrastructure.Data.Users;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +9,7 @@ namespace Keepi.Infrastructure.Data;
 internal class DatabaseContext : DbContext
 {
     public DbSet<UserEntity> Users { get; set; }
-    public DbSet<EntryCategoryEntity> EntryCategories { get; set; }
+    public DbSet<UserEntryCategoryEntity> UserEntryCategories { get; set; }
     public DbSet<UserEntryEntity> UserEntries { get; set; }
 
     public DatabaseContext(DbContextOptions<DatabaseContext> options)

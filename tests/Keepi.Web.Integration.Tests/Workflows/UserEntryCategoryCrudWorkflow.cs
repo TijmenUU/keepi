@@ -1,11 +1,11 @@
-using Keepi.Api.UserCategories.Create;
-using Keepi.Api.UserCategories.GetAll;
-using Keepi.Api.UserCategories.Update;
+using Keepi.Api.UserEntryCategories.Create;
+using Keepi.Api.UserEntryCategories.GetAll;
+using Keepi.Api.UserEntryCategories.Update;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
 
 [Collection(DefaultCollection.Name)]
-public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
+public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 {
   [Fact]
   public async Task Create_read_update_delete_entry_category_test()
@@ -16,29 +16,29 @@ public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicatio
 
     await RegisterUser(client);
 
-    var firstCreatedEntryCategoryId = await CreateEntryCategory(client: client, name: "Test 1");
-    var secondCreatedEntryCategoryId = await CreateEntryCategory(client: client, name: "Test 2");
+    var firstCreatedUserEntryCategoryId = await CreateUserEntryCategory(client: client, name: "Test 1");
+    var secondCreatedUserEntryCategoryId = await CreateUserEntryCategory(client: client, name: "Test 2");
 
-    firstCreatedEntryCategoryId.ShouldNotBe(secondCreatedEntryCategoryId);
+    firstCreatedUserEntryCategoryId.ShouldNotBe(secondCreatedUserEntryCategoryId);
 
-    await VerifyGetEntryCategoriesResponse(
+    await VerifyGetUserEntryCategoriesResponse(
       client,
-      new GetUserEntryCategoriesResponseCategory(
-        Id: firstCreatedEntryCategoryId,
+      new GetUserUserEntryCategoriesResponseCategory(
+        Id: firstCreatedUserEntryCategoryId,
         Name: "Test 1",
         Enabled: true,
         ActiveFrom: null,
         ActiveTo: null),
-      new GetUserEntryCategoriesResponseCategory(
-        Id: secondCreatedEntryCategoryId,
+      new GetUserUserEntryCategoriesResponseCategory(
+        Id: secondCreatedUserEntryCategoryId,
         Name: "Test 2",
         Enabled: true,
         ActiveFrom: null,
         ActiveTo: null));
 
     var httpResponse = await client.PutAsJsonAsync(
-      requestUri: $"/api/user/entrycategories/{firstCreatedEntryCategoryId}",
-      value: new PutUpdateUserEntryCategoryRequest
+      requestUri: $"/api/user/entrycategories/{firstCreatedUserEntryCategoryId}",
+      value: new PutUpdateUserUserEntryCategoryRequest
       {
         Name = "Test 1a",
         ActiveFrom = "2025-01-01",
@@ -47,28 +47,28 @@ public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicatio
       });
     httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
-    await VerifyGetEntryCategoriesResponse(
+    await VerifyGetUserEntryCategoriesResponse(
       client,
-      new GetUserEntryCategoriesResponseCategory(
-        Id: firstCreatedEntryCategoryId,
+      new GetUserUserEntryCategoriesResponseCategory(
+        Id: firstCreatedUserEntryCategoryId,
         Name: "Test 1a",
         Enabled: false,
         ActiveFrom: new DateOnly(2025, 1, 1),
         ActiveTo: new DateOnly(2025, 12, 31)),
-      new GetUserEntryCategoriesResponseCategory(
-        Id: secondCreatedEntryCategoryId,
+      new GetUserUserEntryCategoriesResponseCategory(
+        Id: secondCreatedUserEntryCategoryId,
         Name: "Test 2",
         Enabled: true,
         ActiveFrom: null,
         ActiveTo: null));
 
-    var httpResponseMessage = await client.DeleteAsync(requestUri: $"/api/user/entrycategories/{firstCreatedEntryCategoryId}");
+    var httpResponseMessage = await client.DeleteAsync(requestUri: $"/api/user/entrycategories/{firstCreatedUserEntryCategoryId}");
     httpResponseMessage.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
-    await VerifyGetEntryCategoriesResponse(
+    await VerifyGetUserEntryCategoriesResponse(
       client,
-      new GetUserEntryCategoriesResponseCategory(
-        Id: secondCreatedEntryCategoryId,
+      new GetUserUserEntryCategoriesResponseCategory(
+        Id: secondCreatedUserEntryCategoryId,
         Name: "Test 2",
         Enabled: true,
         ActiveFrom: null,
@@ -81,11 +81,11 @@ public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicatio
     httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
   }
 
-  private static async Task<int> CreateEntryCategory(HttpClient client, string name)
+  private static async Task<int> CreateUserEntryCategory(HttpClient client, string name)
   {
     var httpResponse = await client.PostAsJsonAsync(
       requestUri: "/api/user/entrycategories",
-      value: new PostCreateUserEntryCategoryRequest
+      value: new PostCreateUserUserEntryCategoryRequest
       {
         Name = name,
         ActiveFrom = null,
@@ -95,17 +95,17 @@ public class UserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applicatio
     httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
     httpResponse.Headers.Location?.OriginalString.ShouldBe("/api/user/entrycategories");
 
-    var postCreateEntryCategoryResponse = await httpResponse.Content.ReadFromJsonAsync<PostCreateUserEntryCategoryResponse>();
-    postCreateEntryCategoryResponse.ShouldNotBeNull();
-    postCreateEntryCategoryResponse.Id.ShouldBeGreaterThan(0);
+    var postCreateUserEntryCategoryResponse = await httpResponse.Content.ReadFromJsonAsync<PostCreateUserUserEntryCategoryResponse>();
+    postCreateUserEntryCategoryResponse.ShouldNotBeNull();
+    postCreateUserEntryCategoryResponse.Id.ShouldBeGreaterThan(0);
 
-    return postCreateEntryCategoryResponse.Id;
+    return postCreateUserEntryCategoryResponse.Id;
   }
 
-  private static async Task VerifyGetEntryCategoriesResponse(HttpClient client, params GetUserEntryCategoriesResponseCategory[] expectedEntryCategories)
+  private static async Task VerifyGetUserEntryCategoriesResponse(HttpClient client, params GetUserUserEntryCategoriesResponseCategory[] expectedUserEntryCategories)
   {
-    var getUserEntryCategoriesResponse = await client.GetFromJsonAsync<GetUserEntryCategoriesResponse>("/api/user/entrycategories");
-    getUserEntryCategoriesResponse.ShouldNotBeNull();
-    getUserEntryCategoriesResponse.Categories.ShouldBeEquivalentTo(expectedEntryCategories);
+    var getUserUserEntryCategoriesResponse = await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>("/api/user/entrycategories");
+    getUserUserEntryCategoriesResponse.ShouldNotBeNull();
+    getUserUserEntryCategoriesResponse.Categories.ShouldBeEquivalentTo(expectedUserEntryCategories);
   }
 }

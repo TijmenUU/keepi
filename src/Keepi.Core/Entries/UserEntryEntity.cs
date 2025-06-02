@@ -5,14 +5,14 @@ public sealed class UserEntryEntity
   public UserEntryEntity(
     int id,
     int userId,
-    int entryCategoryId,
+    int userEntryCategoryId,
     DateOnly date,
     int minutes,
     string? remark)
   {
     Id = id;
     UserId = userId;
-    EntryCategoryId = entryCategoryId;
+    UserEntryCategoryId = userEntryCategoryId;
     Date = date;
     Minutes = minutes;
     Remark = remark;
@@ -20,7 +20,7 @@ public sealed class UserEntryEntity
 
   public int Id { get; }
   public int UserId { get; }
-  public int EntryCategoryId { get; }
+  public int UserEntryCategoryId { get; }
   public DateOnly Date { get; set; }
   public int Minutes { get; set; }
   public string? Remark { get; set; }
