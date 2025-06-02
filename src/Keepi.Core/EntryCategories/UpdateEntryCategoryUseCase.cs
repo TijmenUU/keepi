@@ -33,12 +33,12 @@ internal class UpdateEntryCategoryUseCase(IUpdateEntryCategory updateEntryCatego
     DateOnly? activeTo,
     CancellationToken cancellationToken)
   {
-    if (string.IsNullOrWhiteSpace(name) || name.Length > 64)
+    if (!EntryCategoryEntity.IsValidName(name))
     {
       return MaybeErrorResult<UpdateEntryCategoryUseCaseError>.CreateFailure(UpdateEntryCategoryUseCaseError.MalformedName);
     }
 
-    if (activeFrom.HasValue && activeTo.HasValue && activeFrom > activeTo)
+    if (!EntryCategoryEntity.IsValidActiveDateRange(from: activeFrom, to: activeTo))
     {
       return MaybeErrorResult<UpdateEntryCategoryUseCaseError>.CreateFailure(UpdateEntryCategoryUseCaseError.InvalidActiveDateRange);
     }

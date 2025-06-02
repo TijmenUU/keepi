@@ -21,4 +21,14 @@ public sealed class EntryCategoryEntity
   public bool Enabled { get; set; }
   public DateOnly? ActiveFrom { get; set; }
   public DateOnly? ActiveTo { get; set; }
+
+  public static bool IsValidName(string? name)
+  {
+    return !string.IsNullOrWhiteSpace(name) && name.Length <= 64;
+  }
+
+  public static bool IsValidActiveDateRange(DateOnly? from, DateOnly? to)
+  {
+    return from == null || to == null || from < to;
+  }
 }

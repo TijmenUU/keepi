@@ -32,12 +32,12 @@ internal class CreateEntryCategoryUseCase(IStoreEntryCategory storeEntryCategory
     DateOnly? activeTo,
     CancellationToken cancellationToken)
   {
-    if (string.IsNullOrWhiteSpace(name) || name.Length > 64)
+    if (!EntryCategoryEntity.IsValidName(name))
     {
       return ValueOrErrorResult<CreateEntryCategoryUseCaseResult, CreateEntryCategoryUseCaseError>.CreateFailure(CreateEntryCategoryUseCaseError.MalformedName);
     }
 
-    if (activeFrom.HasValue && activeTo.HasValue && activeFrom > activeTo)
+    if (!EntryCategoryEntity.IsValidActiveDateRange(from: activeFrom, to: activeTo))
     {
       return ValueOrErrorResult<CreateEntryCategoryUseCaseResult, CreateEntryCategoryUseCaseError>.CreateFailure(CreateEntryCategoryUseCaseError.InvalidActiveDateRange);
     }
