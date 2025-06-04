@@ -1,4 +1,5 @@
 #nullable disable
+using System.ComponentModel.DataAnnotations;
 using Keepi.Infrastructure.Data.UserEntryCategories;
 using Keepi.Infrastructure.Data.Users;
 using Microsoft.EntityFrameworkCore;
@@ -18,5 +19,6 @@ internal sealed class UserEntryEntity
 
   public DateOnly Date { get; set; }
   public int Minutes { get; set; }
+  [MaxLength(256)] // TODO update initial migration
   public string Remark { get; set; }
 }

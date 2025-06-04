@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Keepi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250602200716_InitialCreate")]
+    [Migration("20250604191304_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -33,6 +33,7 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Remark")
+                        .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserEntryCategoryId")

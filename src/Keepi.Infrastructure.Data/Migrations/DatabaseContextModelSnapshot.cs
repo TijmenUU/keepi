@@ -30,6 +30,7 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Remark")
+                        .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserEntryCategoryId")

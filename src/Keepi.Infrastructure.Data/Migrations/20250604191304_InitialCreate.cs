@@ -60,7 +60,7 @@ namespace Keepi.Infrastructure.Data.Migrations
                     UserEntryCategoryId = table.Column<int>(type: "INTEGER", nullable: false),
                     Date = table.Column<DateOnly>(type: "TEXT", nullable: false),
                     Minutes = table.Column<int>(type: "INTEGER", nullable: false),
-                    Remark = table.Column<string>(type: "TEXT", nullable: true)
+                    Remark = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true)
                 },
                 constraints: table =>
                 {
