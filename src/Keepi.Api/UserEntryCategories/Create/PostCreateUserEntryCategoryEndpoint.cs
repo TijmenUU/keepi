@@ -74,7 +74,13 @@ public class PostCreateUserUserEntryCategoryEndpoint(
       return false;
     }
 
-    if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 64 || request.Enabled == null)
+    if (!UserEntryCategoryEntity.IsValidName(request.Name))
+    {
+      validated = null;
+      return false;
+    }
+
+    if (request.Enabled == null)
     {
       validated = null;
       return false;
@@ -100,6 +106,12 @@ public class PostCreateUserUserEntryCategoryEndpoint(
         validated = null;
         return false;
       }
+    }
+
+    if (!UserEntryCategoryEntity.IsValidActiveDateRange(from: parsedActiveFrom, to: parsedActiveTo))
+    {
+      validated = null;
+      return false;
     }
 
     validated = new ValidatedPostCreateUserEntryCategoryRequest(
