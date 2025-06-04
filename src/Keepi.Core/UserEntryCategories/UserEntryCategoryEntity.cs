@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Keepi.Core.UserEntryCategories;
 
 public sealed class UserEntryCategoryEntity
@@ -22,7 +24,7 @@ public sealed class UserEntryCategoryEntity
   public DateOnly? ActiveFrom { get; set; }
   public DateOnly? ActiveTo { get; set; }
 
-  public static bool IsValidName(string? name)
+  public static bool IsValidName([NotNullWhen(returnValue: true)] string? name)
   {
     return !string.IsNullOrWhiteSpace(name) && name.Length <= 64;
   }
