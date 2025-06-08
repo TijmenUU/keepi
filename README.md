@@ -21,6 +21,7 @@ The following (non testing) projects are part of this repository, followed by a 
 
 ## Optional software
 
+- [Csharpier](https://csharpier.com/)
 - [SQLite3](https://sqlite.org/)
 
 ## Secrets
