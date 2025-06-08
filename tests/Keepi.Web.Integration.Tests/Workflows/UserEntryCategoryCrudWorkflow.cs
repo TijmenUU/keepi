@@ -10,11 +10,9 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
   [Fact]
   public async Task Create_read_update_delete_entry_category_test()
   {
-    var client = applicationFactory.CreateAuthorizedClient(
+    var client = await applicationFactory.CreateRegisteredUserClient(
       userName: "Paul de Groot",
       userSubjectClaim: Guid.NewGuid().ToString());
-
-    await RegisterUser(client);
 
     var firstCreatedUserEntryCategoryId = await CreateUserEntryCategory(client: client, name: "Test 1");
     var secondCreatedUserEntryCategoryId = await CreateUserEntryCategory(client: client, name: "Test 2");
@@ -73,12 +71,6 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
         Enabled: true,
         ActiveFrom: null,
         ActiveTo: null));
-  }
-
-  private static async Task RegisterUser(HttpClient client)
-  {
-    var httpResponse = await client.PostAsync("/api/registeruser", new StringContent(string.Empty));
-    httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
   }
 
   private static async Task<int> CreateUserEntryCategory(HttpClient client, string name)

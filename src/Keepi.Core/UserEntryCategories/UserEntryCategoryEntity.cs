@@ -33,4 +33,24 @@ public sealed class UserEntryCategoryEntity
   {
     return from == null || to == null || from < to;
   }
+
+  public bool IsEntryAllowedForDate(DateOnly entryDate)
+  {
+    if (!Enabled)
+    {
+      return false;
+    }
+
+    if (ActiveTo.HasValue && ActiveTo < entryDate)
+    {
+      return false;
+    }
+
+    if (ActiveFrom.HasValue && ActiveFrom > entryDate)
+    {
+      return false;
+    }
+
+    return true;
+  }
 }

@@ -37,6 +37,20 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Keepi.Web.Progra
 
     return client;
   }
+
+  public async Task<HttpClient> CreateRegisteredUserClient(
+    string userName,
+    string userSubjectClaim)
+  {
+    var client = CreateAuthorizedClient(
+      userName: userName,
+      userSubjectClaim: userSubjectClaim);
+
+    var httpResponse = await client.PostAsync("/api/registeruser", new StringContent(string.Empty));
+    httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
+
+    return client;
+  }
 }
 
 internal class IntegrationTestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>

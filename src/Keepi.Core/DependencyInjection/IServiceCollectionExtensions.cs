@@ -1,3 +1,4 @@
+using Keepi.Core.Entries;
 using Keepi.Core.UserEntryCategories;
 using Keepi.Core.Users;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,8 +11,10 @@ public static class IServiceCollectionExtensions
   {
     services.AddScoped<ICreateUserEntryCategoryUseCase, CreateUserEntryCategoryUseCase>();
     services.AddScoped<IDeleteUserEntryCategoryUseCase, DeleteUserEntryCategoryUseCase>();
+    services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
     services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
     services.AddScoped<IUpdateUserEntryCategoryUseCase, UpdateUserEntryCategoryUseCase>();
+    services.AddScoped<IUpdateWeekUserEntriesUseCase, UpdateWeekUserEntriesUseCase>();
 
     return services;
   }

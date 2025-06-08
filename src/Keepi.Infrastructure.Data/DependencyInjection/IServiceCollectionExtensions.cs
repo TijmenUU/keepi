@@ -1,5 +1,7 @@
+using Keepi.Core.Entries;
 using Keepi.Core.UserEntryCategories;
 using Keepi.Core.Users;
+using Keepi.Infrastructure.Data.Entries;
 using Keepi.Infrastructure.Data.UserEntryCategories;
 using Keepi.Infrastructure.Data.Users;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,10 @@ public static class IServiceCollectionExtensions
     services.AddScoped<IGetUserUserEntryCategories>(sp => sp.GetRequiredService<UserEntryCategoryRepository>());
     services.AddScoped<IStoreUserEntryCategory>(sp => sp.GetRequiredService<UserEntryCategoryRepository>());
     services.AddScoped<IUpdateUserEntryCategory>(sp => sp.GetRequiredService<UserEntryCategoryRepository>());
+
+    services.AddScoped<UserEntryRepository>();
+    services.AddScoped<IGetUserEntriesForDates>(sp => sp.GetRequiredService<UserEntryRepository>());
+    services.AddScoped<IOverwriteUserEntriesForDates>(sp => sp.GetRequiredService<UserEntryRepository>());
 
     services.AddScoped<UserRepository>();
     services.AddScoped<IGetUser>(sp => sp.GetRequiredService<UserRepository>());

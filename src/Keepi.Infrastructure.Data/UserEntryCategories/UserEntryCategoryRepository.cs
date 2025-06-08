@@ -19,14 +19,28 @@ internal class UserEntryCategoryRepository(DatabaseContext databaseContext, ILog
       .ToArrayAsync(cancellationToken);
 
     return userEntryCategories
-      .Select(c => new Core.UserEntryCategories.UserEntryCategoryEntity(
-        id: c.Id,
-        name: c.Name,
-        enabled: c.Enabled,
-        activeFrom: c.ActiveFrom,
-        activeTo: c.ActiveTo))
+      .Select(MapDatabaseEntityToDomainEntity)
       .ToArray();
   }
+
+  async Task<Core.UserEntryCategories.UserEntryCategoryEntity[]> IGetUserUserEntryCategories.Execute(int userId, int[] userEntryCategoryIds, CancellationToken cancellationToken)
+  {
+    var userEntryCategories = await databaseContext.UserEntryCategories
+      .Where(c => c.UserId == userId && userEntryCategoryIds.Contains(c.Id))
+      .ToArrayAsync(cancellationToken);
+
+    return userEntryCategories
+      .Select(MapDatabaseEntityToDomainEntity)
+      .ToArray();
+  }
+
+  private static Core.UserEntryCategories.UserEntryCategoryEntity MapDatabaseEntityToDomainEntity(UserEntryCategoryEntity c)
+    => new(
+      id: c.Id,
+      name: c.Name,
+      enabled: c.Enabled,
+      activeFrom: c.ActiveFrom,
+      activeTo: c.ActiveTo);
 
   async Task<IValueOrErrorResult<Core.UserEntryCategories.UserEntryCategoryEntity, StoreUserEntryCategoryError>> IStoreUserEntryCategory.Execute(
     int userId,
