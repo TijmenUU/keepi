@@ -5,108 +5,126 @@ namespace Keepi.Core.Entries;
 
 public interface IUpdateWeekUserEntriesUseCase
 {
-  Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-    int userId,
-    int year,
-    int weekNumber,
-    UpdateWeekUserEntriesUseCaseInput input,
-    CancellationToken cancellationToken);
+    Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
+        int userId,
+        int year,
+        int weekNumber,
+        UpdateWeekUserEntriesUseCaseInput input,
+        CancellationToken cancellationToken
+    );
 }
 
 internal class UpdateWeekUserEntriesUseCase(
-  IGetUserUserEntryCategories getUserUserEntryCategories,
-  IOverwriteUserEntriesForDates overwriteUserEntriesForDates)
-  : IUpdateWeekUserEntriesUseCase
+    IGetUserUserEntryCategories getUserUserEntryCategories,
+    IOverwriteUserEntriesForDates overwriteUserEntriesForDates
+) : IUpdateWeekUserEntriesUseCase
 {
-  public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-    int userId,
-    int year,
-    int weekNumber,
-    UpdateWeekUserEntriesUseCaseInput input,
-    CancellationToken cancellationToken)
-  {
-    var days = new[]
+    public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
+        int userId,
+        int year,
+        int weekNumber,
+        UpdateWeekUserEntriesUseCaseInput input,
+        CancellationToken cancellationToken
+    )
     {
-      input.Monday,
-      input.Tuesday,
-      input.Wednesday,
-      input.Thursday,
-      input.Friday,
-      input.Saturday,
-      input.Sunday,
-    };
-
-    var userEntryCategories = await getUserUserEntryCategories.Execute(
-      userId: userId,
-      userEntryCategoryIds: days
-        .SelectMany(d => d.Entries.Select(e => e.EntryCategoryId))
-        .Distinct()
-        .ToArray(),
-      cancellationToken: cancellationToken);
-
-    List<UserEntryEntity> userEntryEntities = [];
-    var dayDates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
-
-    Debug.Assert(dayDates.Length == days.Length);
-
-    foreach (var (dayIndex, day) in days.Index())
-    {
-      var date = dayDates[dayIndex];
-
-      foreach (var entry in day.Entries)
-      {
-        var userEntrCategory = userEntryCategories.SingleOrDefault(uec => uec.Id == entry.EntryCategoryId);
-        if (userEntrCategory == null)
+        var days = new[]
         {
-          return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(UpdateWeekUserEntriesUseCaseError.UnknownUserEntryCategory);
+            input.Monday,
+            input.Tuesday,
+            input.Wednesday,
+            input.Thursday,
+            input.Friday,
+            input.Saturday,
+            input.Sunday,
+        };
+
+        var userEntryCategories = await getUserUserEntryCategories.Execute(
+            userId: userId,
+            userEntryCategoryIds: days.SelectMany(d => d.Entries.Select(e => e.EntryCategoryId))
+                .Distinct()
+                .ToArray(),
+            cancellationToken: cancellationToken
+        );
+
+        List<UserEntryEntity> userEntryEntities = [];
+        var dayDates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
+
+        Debug.Assert(dayDates.Length == days.Length);
+
+        foreach (var (dayIndex, day) in days.Index())
+        {
+            var date = dayDates[dayIndex];
+
+            foreach (var entry in day.Entries)
+            {
+                var userEntrCategory = userEntryCategories.SingleOrDefault(uec =>
+                    uec.Id == entry.EntryCategoryId
+                );
+                if (userEntrCategory == null)
+                {
+                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                        UpdateWeekUserEntriesUseCaseError.UnknownUserEntryCategory
+                    );
+                }
+
+                if (!userEntrCategory.IsEntryAllowedForDate(date))
+                {
+                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                        UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory
+                    );
+                }
+
+                if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
+                {
+                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                        UpdateWeekUserEntriesUseCaseError.InvalidMinutes
+                    );
+                }
+
+                if (!UserEntryEntity.IsValidRemark(entry.Remark))
+                {
+                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                        UpdateWeekUserEntriesUseCaseError.InvalidRemark
+                    );
+                }
+
+                userEntryEntities.Add(
+                    new UserEntryEntity(
+                        id: 0,
+                        userId: userId,
+                        userEntryCategoryId: entry.EntryCategoryId,
+                        date: date,
+                        minutes: entry.Minutes,
+                        remark: entry.Remark
+                    )
+                );
+            }
         }
 
-        if (!userEntrCategory.IsEntryAllowedForDate(date))
-        {
-          return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory);
-        }
+        var result = await overwriteUserEntriesForDates.Execute(
+            userId: userId,
+            dates: dayDates,
+            userEntries: userEntryEntities.ToArray(),
+            cancellationToken: cancellationToken
+        );
 
-        if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
+        if (result.Succeeded)
         {
-          return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
+            return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateSuccess();
         }
-
-        if (!UserEntryEntity.IsValidRemark(entry.Remark))
-        {
-          return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
-        }
-
-        userEntryEntities.Add(new UserEntryEntity(
-          id: 0,
-          userId: userId,
-          userEntryCategoryId: entry.EntryCategoryId,
-          date: date,
-          minutes: entry.Minutes,
-          remark: entry.Remark));
-      }
+        return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+            UpdateWeekUserEntriesUseCaseError.Unknown
+        );
     }
-
-    var result = await overwriteUserEntriesForDates.Execute(
-      userId: userId,
-      dates: dayDates,
-      userEntries: userEntryEntities.ToArray(),
-      cancellationToken: cancellationToken);
-
-    if (result.Succeeded)
-    {
-      return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateSuccess();
-    }
-    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(UpdateWeekUserEntriesUseCaseError.Unknown);
-  }
 }
 
 public enum UpdateWeekUserEntriesUseCaseError
 {
-  Unknown,
-  UnknownUserEntryCategory,
-  InvalidUserEntryCategory,
-  InvalidMinutes,
-  InvalidRemark,
+    Unknown,
+    UnknownUserEntryCategory,
+    InvalidUserEntryCategory,
+    InvalidMinutes,
+    InvalidRemark,
 }
 
 public record UpdateWeekUserEntriesUseCaseInput(
@@ -116,12 +134,15 @@ public record UpdateWeekUserEntriesUseCaseInput(
     UpdateWeekUserEntriesUseCaseInputDay Thursday,
     UpdateWeekUserEntriesUseCaseInputDay Friday,
     UpdateWeekUserEntriesUseCaseInputDay Saturday,
-    UpdateWeekUserEntriesUseCaseInputDay Sunday);
+    UpdateWeekUserEntriesUseCaseInputDay Sunday
+);
 
 public record UpdateWeekUserEntriesUseCaseInputDay(
-  UpdateWeekUserEntriesUseCaseInputDayEntry[] Entries);
+    UpdateWeekUserEntriesUseCaseInputDayEntry[] Entries
+);
 
 public record UpdateWeekUserEntriesUseCaseInputDayEntry(
-  int EntryCategoryId,
-  int Minutes,
-  string? Remark);
+    int EntryCategoryId,
+    int Minutes,
+    string? Remark
+);

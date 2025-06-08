@@ -4,53 +4,54 @@ namespace Keepi.Core.UserEntryCategories;
 
 public sealed class UserEntryCategoryEntity
 {
-  public UserEntryCategoryEntity(
-    int id,
-    string name,
-    bool enabled,
-    DateOnly? activeFrom,
-    DateOnly? activeTo)
-  {
-    Id = id;
-    Name = name;
-    Enabled = enabled;
-    ActiveFrom = activeFrom;
-    ActiveTo = activeTo;
-  }
-
-  public int Id { get; }
-  public string Name { get; set; }
-  public bool Enabled { get; set; }
-  public DateOnly? ActiveFrom { get; set; }
-  public DateOnly? ActiveTo { get; set; }
-
-  public static bool IsValidName([NotNullWhen(returnValue: true)] string? name)
-  {
-    return !string.IsNullOrWhiteSpace(name) && name.Length <= 64;
-  }
-
-  public static bool IsValidActiveDateRange(DateOnly? from, DateOnly? to)
-  {
-    return from == null || to == null || from < to;
-  }
-
-  public bool IsEntryAllowedForDate(DateOnly entryDate)
-  {
-    if (!Enabled)
+    public UserEntryCategoryEntity(
+        int id,
+        string name,
+        bool enabled,
+        DateOnly? activeFrom,
+        DateOnly? activeTo
+    )
     {
-      return false;
+        Id = id;
+        Name = name;
+        Enabled = enabled;
+        ActiveFrom = activeFrom;
+        ActiveTo = activeTo;
     }
 
-    if (ActiveTo.HasValue && ActiveTo < entryDate)
+    public int Id { get; }
+    public string Name { get; set; }
+    public bool Enabled { get; set; }
+    public DateOnly? ActiveFrom { get; set; }
+    public DateOnly? ActiveTo { get; set; }
+
+    public static bool IsValidName([NotNullWhen(returnValue: true)] string? name)
     {
-      return false;
+        return !string.IsNullOrWhiteSpace(name) && name.Length <= 64;
     }
 
-    if (ActiveFrom.HasValue && ActiveFrom > entryDate)
+    public static bool IsValidActiveDateRange(DateOnly? from, DateOnly? to)
     {
-      return false;
+        return from == null || to == null || from < to;
     }
 
-    return true;
-  }
+    public bool IsEntryAllowedForDate(DateOnly entryDate)
+    {
+        if (!Enabled)
+        {
+            return false;
+        }
+
+        if (ActiveTo.HasValue && ActiveTo < entryDate)
+        {
+            return false;
+        }
+
+        if (ActiveFrom.HasValue && ActiveFrom > entryDate)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

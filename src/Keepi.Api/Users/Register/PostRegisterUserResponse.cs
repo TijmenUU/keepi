@@ -2,17 +2,16 @@ namespace Keepi.Api.Users.Register;
 
 public class PostRegisterUserResponse
 {
-  public PostRegisterUserResponse(
-    PostRegisterUserResponseResult result)
-  {
-    Result = result;
-  }
+    public PostRegisterUserResponse(PostRegisterUserResponseResult result)
+    {
+        Result = result;
+    }
 
-  public PostRegisterUserResponseResult Result { get; }
+    public PostRegisterUserResponseResult Result { get; }
 }
 
 public enum PostRegisterUserResponseResult
 {
-  Created,
-  UserAlreadyExists
+    Created,
+    UserAlreadyExists,
 }

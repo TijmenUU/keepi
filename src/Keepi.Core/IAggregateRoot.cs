@@ -1,5 +1,3 @@
 namespace Keepi.Core.Aggregates;
 
-public interface IAggregateRoot
-{
-}
+public interface IAggregateRoot { }

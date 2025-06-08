@@ -7,15 +7,15 @@ namespace Keepi.Core.DependencyInjection;
 
 public static class IServiceCollectionExtensions
 {
-  public static IServiceCollection AddUseCases(this IServiceCollection services)
-  {
-    services.AddScoped<ICreateUserEntryCategoryUseCase, CreateUserEntryCategoryUseCase>();
-    services.AddScoped<IDeleteUserEntryCategoryUseCase, DeleteUserEntryCategoryUseCase>();
-    services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
-    services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
-    services.AddScoped<IUpdateUserEntryCategoryUseCase, UpdateUserEntryCategoryUseCase>();
-    services.AddScoped<IUpdateWeekUserEntriesUseCase, UpdateWeekUserEntriesUseCase>();
+    public static IServiceCollection AddUseCases(this IServiceCollection services)
+    {
+        services.AddScoped<ICreateUserEntryCategoryUseCase, CreateUserEntryCategoryUseCase>();
+        services.AddScoped<IDeleteUserEntryCategoryUseCase, DeleteUserEntryCategoryUseCase>();
+        services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
+        services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
+        services.AddScoped<IUpdateUserEntryCategoryUseCase, UpdateUserEntryCategoryUseCase>();
+        services.AddScoped<IUpdateWeekUserEntriesUseCase, UpdateWeekUserEntriesUseCase>();
 
-    return services;
-  }
+        return services;
+    }
 }

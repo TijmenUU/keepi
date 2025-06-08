@@ -5,10 +5,10 @@ namespace Keepi.Api.DependencyInjection;
 
 public static class IServiceCollectionExtensions
 {
-  public static IServiceCollection AddApiHelpers(this IServiceCollection services)
-  {
-    services.AddScoped<IResolveUserHelper, ResolveUserHelper>();
+    public static IServiceCollection AddApiHelpers(this IServiceCollection services)
+    {
+        services.AddScoped<IResolveUserHelper, ResolveUserHelper>();
 
-    return services;
-  }
+        return services;
+    }
 }

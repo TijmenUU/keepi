@@ -7,12 +7,9 @@ public record GetWeekUserEntriesResponse(
     GetWeekUserEntriesResponseDay Thursday,
     GetWeekUserEntriesResponseDay Friday,
     GetWeekUserEntriesResponseDay Saturday,
-    GetWeekUserEntriesResponseDay Sunday);
+    GetWeekUserEntriesResponseDay Sunday
+);
 
-public record GetWeekUserEntriesResponseDay(
-  GetWeekUserEntriesResponseDayEntry[] Entries);
+public record GetWeekUserEntriesResponseDay(GetWeekUserEntriesResponseDayEntry[] Entries);
 
-public record GetWeekUserEntriesResponseDayEntry(
-  int EntryCategoryId,
-  int Minutes,
-  string? Remark);
+public record GetWeekUserEntriesResponseDayEntry(int EntryCategoryId, int Minutes, string? Remark);

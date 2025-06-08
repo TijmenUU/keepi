@@ -5,61 +5,68 @@ namespace Keepi.Api.Authorization;
 
 public interface IResolveUserHelper
 {
-  Task<UserEntity?> GetUserOrNull(ClaimsPrincipal userClaimsPrincipal, CancellationToken cancellationToken);
+    Task<UserEntity?> GetUserOrNull(
+        ClaimsPrincipal userClaimsPrincipal,
+        CancellationToken cancellationToken
+    );
 }
 
 internal class ResolveUserHelper(IGetUser getUser) : IResolveUserHelper
 {
-  private readonly SemaphoreSlim getUserSemaphore = new(initialCount: 1, maxCount: 1);
+    private readonly SemaphoreSlim getUserSemaphore = new(initialCount: 1, maxCount: 1);
 
-  private bool hasCachedUser = false;
-  private UserEntity? cachedUser = null;
+    private bool hasCachedUser = false;
+    private UserEntity? cachedUser = null;
 
-  public async Task<UserEntity?> GetUserOrNull(
-    ClaimsPrincipal userClaimsPrincipal,
-    CancellationToken cancellationToken)
-  {
-    if (!hasCachedUser)
+    public async Task<UserEntity?> GetUserOrNull(
+        ClaimsPrincipal userClaimsPrincipal,
+        CancellationToken cancellationToken
+    )
     {
-      await getUserSemaphore.WaitAsync(cancellationToken: cancellationToken);
-      try
-      {
         if (!hasCachedUser)
         {
-          cachedUser = await InternalGetUserOrNull(
-            userClaimsPrincipal: userClaimsPrincipal,
-            cancellationToken: cancellationToken);
-          hasCachedUser = true;
+            await getUserSemaphore.WaitAsync(cancellationToken: cancellationToken);
+            try
+            {
+                if (!hasCachedUser)
+                {
+                    cachedUser = await InternalGetUserOrNull(
+                        userClaimsPrincipal: userClaimsPrincipal,
+                        cancellationToken: cancellationToken
+                    );
+                    hasCachedUser = true;
+                }
+            }
+            finally
+            {
+                getUserSemaphore.Release();
+            }
         }
-      }
-      finally
-      {
-        getUserSemaphore.Release();
-      }
+
+        return cachedUser;
     }
 
-    return cachedUser;
-  }
-
-  private async Task<UserEntity?> InternalGetUserOrNull(
-    ClaimsPrincipal userClaimsPrincipal,
-    CancellationToken cancellationToken)
-  {
-    if (!userClaimsPrincipal.TryGetUserInfo(out var userInfo))
+    private async Task<UserEntity?> InternalGetUserOrNull(
+        ClaimsPrincipal userClaimsPrincipal,
+        CancellationToken cancellationToken
+    )
     {
-      return null;
+        if (!userClaimsPrincipal.TryGetUserInfo(out var userInfo))
+        {
+            return null;
+        }
+
+        var result = await getUser.Execute(
+            externalId: userInfo.ExternalId,
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: cancellationToken
+        );
+
+        if (result.TrySuccess(out var success, out _))
+        {
+            return success;
+        }
+
+        return null;
     }
-
-    var result = await getUser.Execute(
-      externalId: userInfo.ExternalId,
-      identityProvider: UserIdentityProvider.GitHub,
-      cancellationToken: cancellationToken);
-
-    if (result.TrySuccess(out var success, out _))
-    {
-      return success;
-    }
-
-    return null;
-  }
 }

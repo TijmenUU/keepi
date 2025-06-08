@@ -2,42 +2,51 @@ namespace Keepi.Core.UserEntryCategories;
 
 public enum DeleteUserEntryCategoryUseCaseError
 {
-  Unknown,
-  UnknownUserEntryCategory,
+    Unknown,
+    UnknownUserEntryCategory,
 }
 
 public interface IDeleteUserEntryCategoryUseCase
 {
-  Task<IMaybeErrorResult<DeleteUserEntryCategoryUseCaseError>> Execute(
-    int userEntryCategoryId,
-    int userId,
-    CancellationToken cancellationToken);
+    Task<IMaybeErrorResult<DeleteUserEntryCategoryUseCaseError>> Execute(
+        int userEntryCategoryId,
+        int userId,
+        CancellationToken cancellationToken
+    );
 }
 
 internal class DeleteUserEntryCategoryUseCase(IDeleteUserEntryCategory deleteUserEntryCategory)
- : IDeleteUserEntryCategoryUseCase
+    : IDeleteUserEntryCategoryUseCase
 {
-  public async Task<IMaybeErrorResult<DeleteUserEntryCategoryUseCaseError>> Execute(
-    int userEntryCategoryId,
-    int userId,
-    CancellationToken cancellationToken)
-  {
-    var deleteResult = await deleteUserEntryCategory.Execute(
-      userEntryCategoryId: userEntryCategoryId,
-      userId: userId,
-      cancellationToken: cancellationToken);
-
-    if (deleteResult.TrySuccess(out var error))
+    public async Task<IMaybeErrorResult<DeleteUserEntryCategoryUseCaseError>> Execute(
+        int userEntryCategoryId,
+        int userId,
+        CancellationToken cancellationToken
+    )
     {
-      return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateSuccess();
-    }
+        var deleteResult = await deleteUserEntryCategory.Execute(
+            userEntryCategoryId: userEntryCategoryId,
+            userId: userId,
+            cancellationToken: cancellationToken
+        );
 
-    if (error == DeleteUserEntryCategoryError.UserEntryCategoryDoesNotExist ||
-      error == DeleteUserEntryCategoryError.UserEntryCategoryBelongsToOtherUser)
-    {
-      return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateFailure(DeleteUserEntryCategoryUseCaseError.UnknownUserEntryCategory);
-    }
+        if (deleteResult.TrySuccess(out var error))
+        {
+            return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateSuccess();
+        }
 
-    return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateFailure(DeleteUserEntryCategoryUseCaseError.Unknown);
-  }
+        if (
+            error == DeleteUserEntryCategoryError.UserEntryCategoryDoesNotExist
+            || error == DeleteUserEntryCategoryError.UserEntryCategoryBelongsToOtherUser
+        )
+        {
+            return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateFailure(
+                DeleteUserEntryCategoryUseCaseError.UnknownUserEntryCategory
+            );
+        }
+
+        return MaybeErrorResult<DeleteUserEntryCategoryUseCaseError>.CreateFailure(
+            DeleteUserEntryCategoryUseCaseError.Unknown
+        );
+    }
 }

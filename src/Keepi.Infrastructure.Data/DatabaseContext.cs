@@ -13,9 +13,7 @@ internal class DatabaseContext : DbContext
     public DbSet<UserEntryEntity> UserEntries { get; set; }
 
     public DatabaseContext(DbContextOptions<DatabaseContext> options)
-        : base(options)
-    {
-    }
+        : base(options) { }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

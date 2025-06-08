@@ -10,16 +10,18 @@ namespace Keepi.Infrastructure.Data.UserEntryCategories;
 [Index(nameof(ActiveFrom), nameof(ActiveTo))]
 internal sealed class UserEntryCategoryEntity
 {
-  public int Id { get; set; }
-  [Required, MaxLength(64)]
-  public string Name { get; set; }
-  public bool Enabled { get; set; }
-  public DateOnly? ActiveFrom { get; set; }
-  public DateOnly? ActiveTo { get; set; }
+    public int Id { get; set; }
 
-  public int UserId { get; set; }
-  [Required]
-  public UserEntity User { get; set; }
+    [Required, MaxLength(64)]
+    public string Name { get; set; }
+    public bool Enabled { get; set; }
+    public DateOnly? ActiveFrom { get; set; }
+    public DateOnly? ActiveTo { get; set; }
 
-  public List<UserEntryEntity> UserEntries { get; set; }
+    public int UserId { get; set; }
+
+    [Required]
+    public UserEntity User { get; set; }
+
+    public List<UserEntryEntity> UserEntries { get; set; }
 }
