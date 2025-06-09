@@ -14,6 +14,7 @@ public interface IUpdateUserEntryCategory
         int userEntryCategoryId,
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,

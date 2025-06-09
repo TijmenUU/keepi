@@ -70,6 +70,9 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Ordinal")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
@@ -80,6 +83,9 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.HasIndex("ActiveFrom", "ActiveTo");
 
                     b.HasIndex("Name", "UserId")
+                        .IsUnique();
+
+                    b.HasIndex("Ordinal", "UserId")
                         .IsUnique();
 
                     b.ToTable("UserEntryCategories");

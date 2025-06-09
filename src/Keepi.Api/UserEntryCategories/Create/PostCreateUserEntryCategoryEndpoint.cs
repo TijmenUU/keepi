@@ -43,6 +43,7 @@ public class PostCreateUserUserEntryCategoryEndpoint(
         var result = await createUserEntryCategoryUseCase.Execute(
             userId: user.Id,
             name: validatedRequest.Name,
+            ordinal: validatedRequest.Ordinal,
             enabled: validatedRequest.Enabled,
             activeFrom: validatedRequest.ActiveFrom,
             activeTo: validatedRequest.ActiveTo,
@@ -82,6 +83,12 @@ public class PostCreateUserUserEntryCategoryEndpoint(
         }
 
         if (!UserEntryCategoryEntity.IsValidName(request.Name))
+        {
+            validated = null;
+            return false;
+        }
+
+        if (!UserEntryCategoryEntity.IsValidOrdinal(request.Ordinal))
         {
             validated = null;
             return false;
@@ -128,6 +135,7 @@ public class PostCreateUserUserEntryCategoryEndpoint(
 
         validated = new ValidatedPostCreateUserEntryCategoryRequest(
             Name: request.Name,
+            Ordinal: request.Ordinal.Value,
             Enabled: request.Enabled.Value,
             ActiveFrom: parsedActiveFrom,
             ActiveTo: parsedActiveTo
@@ -137,6 +145,7 @@ public class PostCreateUserUserEntryCategoryEndpoint(
 
     record ValidatedPostCreateUserEntryCategoryRequest(
         string Name,
+        int Ordinal,
         bool Enabled,
         DateOnly? ActiveFrom,
         DateOnly? ActiveTo

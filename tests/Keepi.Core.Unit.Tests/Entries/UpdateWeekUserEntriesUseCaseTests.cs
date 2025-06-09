@@ -13,6 +13,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .WithUserEntryCategories(
                 new UserEntryCategoryEntity(
                     id: 1,
+                    ordinal: 981,
                     name: "Dev",
                     enabled: true,
                     activeFrom: null,
@@ -20,6 +21,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 ),
                 new UserEntryCategoryEntity(
                     id: 2,
+                    ordinal: 982,
                     name: "Administratie",
                     enabled: true,
                     activeFrom: null,
@@ -137,6 +139,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var context = new TestContext().WithUserEntryCategories(
             new UserEntryCategoryEntity(
                 id: 1,
+                ordinal: 981,
                 name: "Dev",
                 enabled: true,
                 activeFrom: null,
@@ -183,6 +186,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var context = new TestContext().WithUserEntryCategories(
             new UserEntryCategoryEntity(
                 id: 1,
+                ordinal: 981,
                 name: "Dev",
                 enabled: false,
                 activeFrom: null,
@@ -229,6 +233,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var context = new TestContext().WithUserEntryCategories(
             new UserEntryCategoryEntity(
                 id: 1,
+                ordinal: 981,
                 name: "Dev",
                 enabled: true,
                 activeFrom: new DateOnly(year: 2025, month: 1, day: 1),
@@ -275,6 +280,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var context = new TestContext().WithUserEntryCategories(
             new UserEntryCategoryEntity(
                 id: 1,
+                ordinal: 981,
                 name: "Dev",
                 enabled: true,
                 activeFrom: null,
@@ -322,6 +328,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             new UserEntryCategoryEntity(
                 id: 1,
                 name: "Dev",
+                ordinal: 981,
                 enabled: true,
                 activeFrom: null,
                 activeTo: null
@@ -370,6 +377,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .WithUserEntryCategories(
                 new UserEntryCategoryEntity(
                     id: 1,
+                    ordinal: 981,
                     name: "Dev",
                     enabled: true,
                     activeFrom: null,

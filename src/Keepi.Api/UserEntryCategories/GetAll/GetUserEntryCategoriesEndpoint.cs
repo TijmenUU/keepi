@@ -40,6 +40,7 @@ public class GetUserUserEntryCategoriesEndpoint(
                     .Select(c => new GetUserUserEntryCategoriesResponseCategory(
                         Id: c.Id,
                         Name: c.Name,
+                        Ordinal: c.Ordinal,
                         Enabled: c.Enabled,
                         ActiveFrom: c.ActiveFrom,
                         ActiveTo: c.ActiveTo

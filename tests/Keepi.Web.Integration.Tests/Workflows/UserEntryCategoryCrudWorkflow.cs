@@ -17,11 +17,13 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
 
         var firstCreatedUserEntryCategoryId = await CreateUserEntryCategory(
             client: client,
-            name: "Test 1"
+            name: "Test 1",
+            ordinal: 1
         );
         var secondCreatedUserEntryCategoryId = await CreateUserEntryCategory(
             client: client,
-            name: "Test 2"
+            name: "Test 2",
+            ordinal: 2
         );
 
         firstCreatedUserEntryCategoryId.ShouldNotBe(secondCreatedUserEntryCategoryId);
@@ -31,6 +33,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             new GetUserUserEntryCategoriesResponseCategory(
                 Id: firstCreatedUserEntryCategoryId,
                 Name: "Test 1",
+                Ordinal: 1,
                 Enabled: true,
                 ActiveFrom: null,
                 ActiveTo: null
@@ -38,6 +41,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             new GetUserUserEntryCategoriesResponseCategory(
                 Id: secondCreatedUserEntryCategoryId,
                 Name: "Test 2",
+                Ordinal: 2,
                 Enabled: true,
                 ActiveFrom: null,
                 ActiveTo: null
@@ -49,6 +53,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             value: new PutUpdateUserUserEntryCategoryRequest
             {
                 Name = "Test 1a",
+                Ordinal = 3,
                 ActiveFrom = "2025-01-01",
                 ActiveTo = "2025-12-31",
                 Enabled = false,
@@ -61,6 +66,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             new GetUserUserEntryCategoriesResponseCategory(
                 Id: firstCreatedUserEntryCategoryId,
                 Name: "Test 1a",
+                Ordinal: 3,
                 Enabled: false,
                 ActiveFrom: new DateOnly(2025, 1, 1),
                 ActiveTo: new DateOnly(2025, 12, 31)
@@ -68,6 +74,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             new GetUserUserEntryCategoriesResponseCategory(
                 Id: secondCreatedUserEntryCategoryId,
                 Name: "Test 2",
+                Ordinal: 2,
                 Enabled: true,
                 ActiveFrom: null,
                 ActiveTo: null
@@ -84,6 +91,7 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             new GetUserUserEntryCategoriesResponseCategory(
                 Id: secondCreatedUserEntryCategoryId,
                 Name: "Test 2",
+                Ordinal: 2,
                 Enabled: true,
                 ActiveFrom: null,
                 ActiveTo: null
@@ -91,13 +99,18 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
         );
     }
 
-    private static async Task<int> CreateUserEntryCategory(HttpClient client, string name)
+    private static async Task<int> CreateUserEntryCategory(
+        HttpClient client,
+        string name,
+        int ordinal
+    )
     {
         var httpResponse = await client.PostAsJsonAsync(
             requestUri: "/api/user/entrycategories",
             value: new PostCreateUserUserEntryCategoryRequest
             {
                 Name = name,
+                Ordinal = ordinal,
                 ActiveFrom = null,
                 ActiveTo = null,
                 Enabled = true,

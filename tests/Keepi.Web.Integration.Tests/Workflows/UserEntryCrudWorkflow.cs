@@ -18,11 +18,13 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
 
         var developmentUserEntryCategoryId = await CreateUserEntryCategory(
             client: client,
-            name: "Dev"
+            name: "Dev",
+            ordinal: 1
         );
         var administrationUserEntryCategoryId = await CreateUserEntryCategory(
             client: client,
-            name: "Administratie"
+            name: "Administratie",
+            ordinal: 2
         );
 
         // Initial create
@@ -318,13 +320,18 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
     }
 
-    private static async Task<int> CreateUserEntryCategory(HttpClient client, string name)
+    private static async Task<int> CreateUserEntryCategory(
+        HttpClient client,
+        string name,
+        int ordinal
+    )
     {
         var httpResponse = await client.PostAsJsonAsync(
             requestUri: "/api/user/entrycategories",
             value: new PostCreateUserUserEntryCategoryRequest
             {
                 Name = name,
+                Ordinal = ordinal,
                 ActiveFrom = null,
                 ActiveTo = null,
                 Enabled = true,

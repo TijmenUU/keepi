@@ -7,6 +7,7 @@ public sealed class UserEntryCategoryEntity
     public UserEntryCategoryEntity(
         int id,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo
@@ -14,6 +15,7 @@ public sealed class UserEntryCategoryEntity
     {
         Id = id;
         Name = name;
+        Ordinal = ordinal;
         Enabled = enabled;
         ActiveFrom = activeFrom;
         ActiveTo = activeTo;
@@ -21,6 +23,7 @@ public sealed class UserEntryCategoryEntity
 
     public int Id { get; }
     public string Name { get; set; }
+    public int Ordinal { get; set; }
     public bool Enabled { get; set; }
     public DateOnly? ActiveFrom { get; set; }
     public DateOnly? ActiveTo { get; set; }
@@ -28,6 +31,11 @@ public sealed class UserEntryCategoryEntity
     public static bool IsValidName([NotNullWhen(returnValue: true)] string? name)
     {
         return !string.IsNullOrWhiteSpace(name) && name.Length <= 64;
+    }
+
+    public static bool IsValidOrdinal([NotNullWhen(returnValue: true)] int? ordinal)
+    {
+        return ordinal.HasValue && ordinal.Value >= 0;
     }
 
     public static bool IsValidActiveDateRange(DateOnly? from, DateOnly? to)

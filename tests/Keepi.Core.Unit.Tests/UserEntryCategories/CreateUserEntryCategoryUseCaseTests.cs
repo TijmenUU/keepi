@@ -7,21 +7,25 @@ public class CreateUserEntryCategoryUseCaseTests
     [Fact]
     public async Task Execute_stores_expected_entity_for_valid_input()
     {
-        var context = new TestContext().WithSuccesfulUserEntryCategoryStore(
-            new UserEntryCategoryEntity(
-                id: 13,
-                name: "Dev",
-                enabled: true,
-                activeFrom: new DateOnly(2024, 4, 25),
-                activeTo: new DateOnly(2024, 12, 31)
+        var context = new TestContext()
+            .WithSuccesfulUserEntryCategoryStore(
+                new UserEntryCategoryEntity(
+                    id: 13,
+                    name: "Dev",
+                    ordinal: 1,
+                    enabled: true,
+                    activeFrom: new DateOnly(2024, 4, 25),
+                    activeTo: new DateOnly(2024, 12, 31)
+                )
             )
-        );
+            .WithoutExistingOrdinal();
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
             userId: 42,
             name: "Dev",
+            ordinal: 1,
             enabled: true,
             activeFrom: new DateOnly(2024, 4, 25),
             activeTo: new DateOnly(2024, 12, 31),
@@ -35,6 +39,7 @@ public class CreateUserEntryCategoryUseCaseTests
             x.Execute(
                 42,
                 "Dev",
+                1,
                 true,
                 new DateOnly(2024, 4, 25),
                 new DateOnly(2024, 12, 31),
@@ -46,15 +51,16 @@ public class CreateUserEntryCategoryUseCaseTests
     [Fact]
     public async Task Execute_returns_expected_error_for_duplicate_name()
     {
-        var context = new TestContext().WithFailedUserEntryCategoryStore(
-            StoreUserEntryCategoryError.DuplicateName
-        );
+        var context = new TestContext()
+            .WithFailedUserEntryCategoryStore(StoreUserEntryCategoryError.DuplicateName)
+            .WithoutExistingOrdinal();
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
             userId: 42,
             name: "Dev",
+            ordinal: 1,
             enabled: true,
             activeFrom: new DateOnly(2024, 4, 25),
             activeTo: new DateOnly(2024, 12, 31),
@@ -68,6 +74,7 @@ public class CreateUserEntryCategoryUseCaseTests
             x.Execute(
                 42,
                 "Dev",
+                1,
                 true,
                 new DateOnly(2024, 4, 25),
                 new DateOnly(2024, 12, 31),
@@ -77,17 +84,55 @@ public class CreateUserEntryCategoryUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_returns_expected_error_for_unknown_failure()
+    public async Task Execute_returns_expected_error_for_duplicate_ordinal()
     {
-        var context = new TestContext().WithFailedUserEntryCategoryStore(
-            StoreUserEntryCategoryError.Unknown
-        );
+        var context = new TestContext()
+            .WithSuccesfulUserEntryCategoryStore(
+                new UserEntryCategoryEntity(
+                    id: 13,
+                    name: "Dev",
+                    ordinal: 1,
+                    enabled: true,
+                    activeFrom: new DateOnly(2024, 4, 25),
+                    activeTo: new DateOnly(2024, 12, 31)
+                )
+            )
+            .WithExistingOrdinal(1);
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
             userId: 42,
             name: "Dev",
+            ordinal: 1,
+            enabled: true,
+            activeFrom: new DateOnly(2024, 4, 25),
+            activeTo: new DateOnly(2024, 12, 31),
+            cancellationToken: CancellationToken.None
+        );
+
+        result.Succeeded.ShouldBeFalse();
+        result.ErrorOrNull.ShouldBe(CreateUserEntryCategoryUseCaseError.DuplicateOrdinal);
+
+        context.GetUserEntryCategoryIdByOrdinalMock.Verify(x =>
+            x.Execute(42, 1, It.IsAny<CancellationToken>())
+        );
+        context.StoreUserEntryCategoryMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_returns_expected_error_for_unknown_failure()
+    {
+        var context = new TestContext()
+            .WithFailedUserEntryCategoryStore(StoreUserEntryCategoryError.Unknown)
+            .WithoutExistingOrdinal();
+
+        var useCase = context.BuildUseCase();
+
+        var result = await useCase.Execute(
+            userId: 42,
+            name: "Dev",
+            ordinal: 1,
             enabled: true,
             activeFrom: new DateOnly(2024, 4, 25),
             activeTo: new DateOnly(2024, 12, 31),
@@ -101,6 +146,7 @@ public class CreateUserEntryCategoryUseCaseTests
             x.Execute(
                 42,
                 "Dev",
+                1,
                 true,
                 new DateOnly(2024, 4, 25),
                 new DateOnly(2024, 12, 31),
@@ -114,6 +160,31 @@ public class CreateUserEntryCategoryUseCaseTests
         public Mock<IStoreUserEntryCategory> StoreUserEntryCategoryMock { get; } =
             new(MockBehavior.Strict);
 
+        public Mock<IGetUserEntryCategoryIdByOrdinal> GetUserEntryCategoryIdByOrdinalMock { get; } =
+            new(MockBehavior.Strict);
+
+        public TestContext WithExistingOrdinal(int userEntryCategoryId)
+        {
+            GetUserEntryCategoryIdByOrdinalMock
+                .Setup(x =>
+                    x.Execute(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())
+                )
+                .ReturnsAsync(userEntryCategoryId);
+
+            return this;
+        }
+
+        public TestContext WithoutExistingOrdinal()
+        {
+            GetUserEntryCategoryIdByOrdinalMock
+                .Setup(x =>
+                    x.Execute(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())
+                )
+                .ReturnsAsync((int?)null);
+
+            return this;
+        }
+
         public TestContext WithSuccesfulUserEntryCategoryStore(
             UserEntryCategoryEntity returnedEntity
         )
@@ -123,6 +194,7 @@ public class CreateUserEntryCategoryUseCaseTests
                     x.Execute(
                         It.IsAny<int>(),
                         It.IsAny<string>(),
+                        It.IsAny<int>(),
                         It.IsAny<bool>(),
                         It.IsAny<DateOnly?>(),
                         It.IsAny<DateOnly?>(),
@@ -146,6 +218,7 @@ public class CreateUserEntryCategoryUseCaseTests
                     x.Execute(
                         It.IsAny<int>(),
                         It.IsAny<string>(),
+                        It.IsAny<int>(),
                         It.IsAny<bool>(),
                         It.IsAny<DateOnly?>(),
                         It.IsAny<DateOnly?>(),
@@ -163,6 +236,9 @@ public class CreateUserEntryCategoryUseCaseTests
         }
 
         public CreateUserEntryCategoryUseCase BuildUseCase() =>
-            new(storeUserEntryCategory: StoreUserEntryCategoryMock.Object);
+            new(
+                storeUserEntryCategory: StoreUserEntryCategoryMock.Object,
+                getUserEntryCategoryIdByOrdinal: GetUserEntryCategoryIdByOrdinalMock.Object
+            );
     }
 }

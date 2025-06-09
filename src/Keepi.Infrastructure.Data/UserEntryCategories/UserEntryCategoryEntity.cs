@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Keepi.Infrastructure.Data.UserEntryCategories;
 
 [Index(nameof(Name), nameof(UserId), IsUnique = true)]
+[Index(nameof(Ordinal), nameof(UserId), IsUnique = true)]
 [Index(nameof(ActiveFrom), nameof(ActiveTo))]
 internal sealed class UserEntryCategoryEntity
 {
@@ -14,6 +15,7 @@ internal sealed class UserEntryCategoryEntity
 
     [Required, MaxLength(64)]
     public string Name { get; set; }
+    public int Ordinal { get; set; }
     public bool Enabled { get; set; }
     public DateOnly? ActiveFrom { get; set; }
     public DateOnly? ActiveTo { get; set; }

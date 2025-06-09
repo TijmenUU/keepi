@@ -7,6 +7,7 @@ public record GetUserUserEntryCategoriesResponse(
 public record GetUserUserEntryCategoriesResponseCategory(
     int Id,
     string Name,
+    int Ordinal,
     bool Enabled,
     DateOnly? ActiveFrom,
     DateOnly? ActiveTo

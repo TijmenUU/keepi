@@ -5,6 +5,7 @@ public enum UpdateUserEntryCategoryUseCaseError
     Unknown,
     MalformedName,
     DuplicateName,
+    DuplicateOrdinal,
     InvalidActiveDateRange,
     UnknownUserEntryCategory,
 }
@@ -15,6 +16,7 @@ public interface IUpdateUserEntryCategoryUseCase
         int userEntryCategoryId,
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -22,13 +24,16 @@ public interface IUpdateUserEntryCategoryUseCase
     );
 }
 
-internal class UpdateUserEntryCategoryUseCase(IUpdateUserEntryCategory updateUserEntryCategory)
-    : IUpdateUserEntryCategoryUseCase
+internal class UpdateUserEntryCategoryUseCase(
+    IUpdateUserEntryCategory updateUserEntryCategory,
+    IGetUserEntryCategoryIdByOrdinal getUserEntryCategoryIdByOrdinal
+) : IUpdateUserEntryCategoryUseCase
 {
     public async Task<IMaybeErrorResult<UpdateUserEntryCategoryUseCaseError>> Execute(
         int userEntryCategoryId,
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -49,10 +54,26 @@ internal class UpdateUserEntryCategoryUseCase(IUpdateUserEntryCategory updateUse
             );
         }
 
+        var existingUserEntryCategoryIdForOrdinal = await getUserEntryCategoryIdByOrdinal.Execute(
+            userId: userId,
+            ordinal: ordinal,
+            cancellationToken: cancellationToken
+        );
+        if (
+            existingUserEntryCategoryIdForOrdinal != null
+            && existingUserEntryCategoryIdForOrdinal.Value != userEntryCategoryId
+        )
+        {
+            return MaybeErrorResult<UpdateUserEntryCategoryUseCaseError>.CreateFailure(
+                UpdateUserEntryCategoryUseCaseError.DuplicateOrdinal
+            );
+        }
+
         var updateResult = await updateUserEntryCategory.Execute(
             userEntryCategoryId: userEntryCategoryId,
             userId: userId,
             name: name,
+            ordinal: ordinal,
             enabled: enabled,
             activeFrom: activeFrom,
             activeTo: activeTo,

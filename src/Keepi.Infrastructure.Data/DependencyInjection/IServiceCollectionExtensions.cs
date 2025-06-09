@@ -28,6 +28,9 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IGetUserUserEntryCategories>(sp =>
             sp.GetRequiredService<UserEntryCategoryRepository>()
         );
+        services.AddScoped<IGetUserEntryCategoryIdByOrdinal>(sp =>
+            sp.GetRequiredService<UserEntryCategoryRepository>()
+        );
         services.AddScoped<IStoreUserEntryCategory>(sp =>
             sp.GetRequiredService<UserEntryCategoryRepository>()
         );

@@ -3,6 +3,7 @@ namespace Keepi.Api.UserEntryCategories.Create;
 public class PostCreateUserUserEntryCategoryRequest
 {
     public string? Name { get; set; }
+    public int? Ordinal { get; set; }
     public bool? Enabled { get; set; }
 
     // yyyy-MM-dd

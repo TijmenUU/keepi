@@ -5,6 +5,7 @@ public enum CreateUserEntryCategoryUseCaseError
     Unknown,
     MalformedName,
     DuplicateName,
+    DuplicateOrdinal,
     InvalidActiveDateRange,
 }
 
@@ -20,6 +21,7 @@ public interface ICreateUserEntryCategoryUseCase
     > Execute(
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -27,8 +29,10 @@ public interface ICreateUserEntryCategoryUseCase
     );
 }
 
-internal class CreateUserEntryCategoryUseCase(IStoreUserEntryCategory storeUserEntryCategory)
-    : ICreateUserEntryCategoryUseCase
+internal class CreateUserEntryCategoryUseCase(
+    IStoreUserEntryCategory storeUserEntryCategory,
+    IGetUserEntryCategoryIdByOrdinal getUserEntryCategoryIdByOrdinal
+) : ICreateUserEntryCategoryUseCase
 {
     public async Task<
         IValueOrErrorResult<
@@ -38,6 +42,7 @@ internal class CreateUserEntryCategoryUseCase(IStoreUserEntryCategory storeUserE
     > Execute(
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -60,9 +65,24 @@ internal class CreateUserEntryCategoryUseCase(IStoreUserEntryCategory storeUserE
             >.CreateFailure(CreateUserEntryCategoryUseCaseError.InvalidActiveDateRange);
         }
 
+        if (
+            await getUserEntryCategoryIdByOrdinal.Execute(
+                userId: userId,
+                ordinal: ordinal,
+                cancellationToken: cancellationToken
+            ) != null
+        )
+        {
+            return ValueOrErrorResult<
+                CreateUserEntryCategoryUseCaseResult,
+                CreateUserEntryCategoryUseCaseError
+            >.CreateFailure(CreateUserEntryCategoryUseCaseError.DuplicateOrdinal);
+        }
+
         var createResult = await storeUserEntryCategory.Execute(
             userId: userId,
             name: name,
+            ordinal: ordinal,
             enabled: enabled,
             activeFrom: activeFrom,
             activeTo: activeTo,

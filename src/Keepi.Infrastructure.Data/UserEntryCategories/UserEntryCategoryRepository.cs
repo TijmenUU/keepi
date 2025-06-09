@@ -13,7 +13,8 @@ internal class UserEntryCategoryRepository(
     : IGetUserUserEntryCategories,
         IStoreUserEntryCategory,
         IUpdateUserEntryCategory,
-        IDeleteUserEntryCategory
+        IDeleteUserEntryCategory,
+        IGetUserEntryCategoryIdByOrdinal
 {
     async Task<Core.UserEntryCategories.UserEntryCategoryEntity[]> IGetUserUserEntryCategories.Execute(
         int userId,
@@ -48,6 +49,7 @@ internal class UserEntryCategoryRepository(
         new(
             id: c.Id,
             name: c.Name,
+            ordinal: c.Ordinal,
             enabled: c.Enabled,
             activeFrom: c.ActiveFrom,
             activeTo: c.ActiveTo
@@ -61,6 +63,7 @@ internal class UserEntryCategoryRepository(
     > IStoreUserEntryCategory.Execute(
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -73,6 +76,7 @@ internal class UserEntryCategoryRepository(
             {
                 Name = name,
                 Enabled = enabled,
+                Ordinal = ordinal,
                 ActiveFrom = activeFrom,
                 ActiveTo = activeTo,
                 UserId = userId,
@@ -86,6 +90,7 @@ internal class UserEntryCategoryRepository(
             >.CreateSuccess(
                 new Core.UserEntryCategories.UserEntryCategoryEntity(
                     id: entity.Id,
+                    ordinal: entity.Ordinal,
                     name: entity.Name,
                     enabled: entity.Enabled,
                     activeFrom: entity.ActiveFrom,
@@ -117,6 +122,7 @@ internal class UserEntryCategoryRepository(
         int userEntryCategoryId,
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
@@ -142,6 +148,7 @@ internal class UserEntryCategoryRepository(
             }
 
             entity.Name = name;
+            entity.Ordinal = ordinal;
             entity.Enabled = enabled;
             entity.ActiveFrom = activeFrom;
             entity.ActiveTo = activeTo;
@@ -203,5 +210,19 @@ internal class UserEntryCategoryRepository(
                 DeleteUserEntryCategoryError.Unknown
             );
         }
+    }
+
+    async Task<int?> IGetUserEntryCategoryIdByOrdinal.Execute(
+        int userId,
+        int ordinal,
+        CancellationToken cancellationToken
+    )
+    {
+        return (
+            await databaseContext
+                .UserEntryCategories.Where(uec => uec.UserId == userId && uec.Ordinal == ordinal)
+                .Select(uec => new { uec.Id })
+                .FirstOrDefaultAsync(cancellationToken: cancellationToken)
+        )?.Id;
     }
 }

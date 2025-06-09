@@ -11,6 +11,7 @@ public interface IStoreUserEntryCategory
     Task<IValueOrErrorResult<UserEntryCategoryEntity, StoreUserEntryCategoryError>> Execute(
         int userId,
         string name,
+        int ordinal,
         bool enabled,
         DateOnly? activeFrom,
         DateOnly? activeTo,
