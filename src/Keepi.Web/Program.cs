@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.GitHub;
 using FastEndpoints;
 using Keepi.Api.DependencyInjection;
@@ -131,6 +133,9 @@ public partial class Program
         app.UseFastEndpoints(config =>
         {
             config.Endpoints.RoutePrefix = "api";
+            config.Serializer.Options.Converters.Add(
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            );
         });
 
         if (builder.Environment.IsDevelopment())
