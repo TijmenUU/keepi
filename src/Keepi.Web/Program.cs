@@ -54,6 +54,32 @@ public partial class Program
             {
                 options.LoginPath = "/signin";
                 options.LogoutPath = "/signout";
+
+                options.Events = new CookieAuthenticationEvents()
+                {
+                    OnRedirectToLogin = (ctx) =>
+                    {
+                        if (
+                            ctx.Request.Path.StartsWithSegments("/api")
+                            && ctx.Response.StatusCode == 200
+                        )
+                        {
+                            ctx.Response.StatusCode = 401;
+                        }
+                        return Task.CompletedTask;
+                    },
+                    OnRedirectToAccessDenied = (ctx) =>
+                    {
+                        if (
+                            ctx.Request.Path.StartsWithSegments("/api")
+                            && ctx.Response.StatusCode == 200
+                        )
+                        {
+                            ctx.Response.StatusCode = 403;
+                        }
+                        return Task.CompletedTask;
+                    },
+                };
             })
             // https://github.com/aspnet-contrib/AspNet.Security.OAuth.Providers
             .AddGitHub(options =>
