@@ -105,6 +105,30 @@ public partial class Program
         app.UseHttpsRedirection();
 
         app.MapGet(
+            "/error",
+            () =>
+            {
+                return Results.Content(
+                    content: @"<!doctype html>
+<html lang=""en"">
+
+<head>
+    <meta charset=""UTF-8"" />
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
+    <title>Keepi</title>
+</head>
+
+<body>
+    <p>Er is iets helemaal stukgegaan!</p>
+</body>
+
+</html>",
+                    contentType: "text/html"
+                );
+            }
+        );
+
+        app.MapGet(
             "/signin",
             () =>
                 Results.Challenge(
