@@ -1,6 +1,5 @@
-using Keepi.Api.UserEntryCategories.Create;
 using Keepi.Api.UserEntryCategories.GetAll;
-using Keepi.Api.UserEntryCategories.Update;
+using Keepi.Api.UserEntryCategories.UpdateAll;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
 
@@ -15,18 +14,23 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             userSubjectClaim: Guid.NewGuid().ToString()
         );
 
-        var firstCreatedUserEntryCategoryId = await CreateUserEntryCategory(
-            client: client,
-            name: "Test 1",
-            ordinal: 1
-        );
-        var secondCreatedUserEntryCategoryId = await CreateUserEntryCategory(
-            client: client,
-            name: "Test 2",
-            ordinal: 2
-        );
+        await CreateUserEntryCategories(client, [("Test 1", 1), ("Test 2", 2)]);
 
-        firstCreatedUserEntryCategoryId.ShouldNotBe(secondCreatedUserEntryCategoryId);
+        var getUserUserEntryCategoriesResponse =
+            await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
+                requestUri: "/api/user/entrycategories",
+                options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+            );
+        getUserUserEntryCategoriesResponse.ShouldNotBeNull();
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 1");
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 2");
+
+        var firstCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 1")
+            .Id;
+        var secondCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 2")
+            .Id;
 
         await VerifyGetUserEntryCategoriesResponse(
             client,
@@ -48,18 +52,31 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             )
         );
 
-        var httpResponse = await client.PutAsJsonAsync(
-            requestUri: $"/api/user/entrycategories/{firstCreatedUserEntryCategoryId}",
-            value: new PutUpdateUserUserEntryCategoryRequest
-            {
-                Name = "Test 1a",
-                Ordinal = 3,
-                ActiveFrom = "2025-01-01",
-                ActiveTo = "2025-12-31",
-                Enabled = false,
-            }
+        // Should update Test 1 entry category only
+        await UpdateUserEntryCategories(
+            client: client,
+            values:
+            [
+                new()
+                {
+                    Id = firstCreatedUserEntryCategoryId,
+                    Name = "Test 1a",
+                    Ordinal = 3,
+                    ActiveFrom = "2025-01-01",
+                    ActiveTo = "2025-12-31",
+                    Enabled = false,
+                },
+                new()
+                {
+                    Id = secondCreatedUserEntryCategoryId,
+                    Name = "Test 2",
+                    Ordinal = 2,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+            ]
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
         await VerifyGetUserEntryCategoriesResponse(
             client,
@@ -81,10 +98,22 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
             )
         );
 
-        var httpResponseMessage = await client.DeleteAsync(
-            requestUri: $"/api/user/entrycategories/{firstCreatedUserEntryCategoryId}"
+        // Should delete Test 1a entry category only
+        await UpdateUserEntryCategories(
+            client: client,
+            values:
+            [
+                new()
+                {
+                    Id = secondCreatedUserEntryCategoryId,
+                    Name = "Test 2",
+                    Ordinal = 2,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+            ]
         );
-        httpResponseMessage.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
         await VerifyGetUserEntryCategoriesResponse(
             client,
@@ -99,32 +128,37 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
         );
     }
 
-    private static async Task<int> CreateUserEntryCategory(
+    private static async Task CreateUserEntryCategories(
         HttpClient client,
-        string name,
-        int ordinal
+        (string name, int ordinal)[] values
     )
     {
-        var httpResponse = await client.PostAsJsonAsync(
-            requestUri: "/api/user/entrycategories",
-            value: new PostCreateUserUserEntryCategoryRequest
-            {
-                Name = name,
-                Ordinal = ordinal,
-                ActiveFrom = null,
-                ActiveTo = null,
-                Enabled = true,
-            }
+        await UpdateUserEntryCategories(
+            client: client,
+            values: values
+                .Select(v => new PutUpdateUserEntryCategoriesRequestCategory
+                {
+                    Name = v.name,
+                    Ordinal = v.ordinal,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                })
+                .ToArray()
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-        httpResponse.Headers.Location?.OriginalString.ShouldBe("/api/user/entrycategories");
+    }
 
-        var postCreateUserEntryCategoryResponse =
-            await httpResponse.Content.ReadFromJsonAsync<PostCreateUserUserEntryCategoryResponse>();
-        postCreateUserEntryCategoryResponse.ShouldNotBeNull();
-        postCreateUserEntryCategoryResponse.Id.ShouldBeGreaterThan(0);
-
-        return postCreateUserEntryCategoryResponse.Id;
+    private static async Task UpdateUserEntryCategories(
+        HttpClient client,
+        PutUpdateUserEntryCategoriesRequestCategory[] values
+    )
+    {
+        var httpResponse = await client.PutAsJsonAsync(
+            requestUri: "/api/user/entrycategories",
+            value: new PutUpdateUserEntryCategoriesRequest { UserEntryCategories = values },
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        );
+        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
     }
 
     private static async Task VerifyGetUserEntryCategoriesResponse(
@@ -134,7 +168,8 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
     {
         var getUserUserEntryCategoriesResponse =
             await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
-                "/api/user/entrycategories"
+                requestUri: "/api/user/entrycategories",
+                options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
             );
         getUserUserEntryCategoriesResponse.ShouldNotBeNull();
         getUserUserEntryCategoriesResponse.Categories.ShouldBeEquivalentTo(

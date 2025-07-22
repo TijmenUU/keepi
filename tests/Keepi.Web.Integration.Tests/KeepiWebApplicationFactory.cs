@@ -8,6 +8,22 @@ namespace Keepi.Web.Integration.Tests;
 
 public class KeepiWebApplicationFactory : WebApplicationFactory<Keepi.Web.Program>
 {
+    private static readonly System.Text.Json.JsonSerializerOptions DefaultJsonSerializerOptions =
+        CreateDefaultJsonSerializerOptions();
+
+    private static System.Text.Json.JsonSerializerOptions CreateDefaultJsonSerializerOptions()
+    {
+        var options = new System.Text.Json.JsonSerializerOptions(
+            System.Text.Json.JsonSerializerDefaults.Web
+        );
+        options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+
+        return options;
+    }
+
+    public static System.Text.Json.JsonSerializerOptions GetDefaultJsonSerializerOptions() =>
+        DefaultJsonSerializerOptions;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");

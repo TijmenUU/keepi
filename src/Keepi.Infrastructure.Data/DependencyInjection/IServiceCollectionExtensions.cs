@@ -22,19 +22,10 @@ public static class IServiceCollectionExtensions
         });
 
         services.AddScoped<UserEntryCategoryRepository>();
-        services.AddScoped<IDeleteUserEntryCategory>(sp =>
-            sp.GetRequiredService<UserEntryCategoryRepository>()
-        );
         services.AddScoped<IGetUserUserEntryCategories>(sp =>
             sp.GetRequiredService<UserEntryCategoryRepository>()
         );
-        services.AddScoped<IGetUserEntryCategoryIdByOrdinal>(sp =>
-            sp.GetRequiredService<UserEntryCategoryRepository>()
-        );
-        services.AddScoped<IStoreUserEntryCategory>(sp =>
-            sp.GetRequiredService<UserEntryCategoryRepository>()
-        );
-        services.AddScoped<IUpdateUserEntryCategory>(sp =>
+        services.AddScoped<IUpdateUserEntryCategories>(sp =>
             sp.GetRequiredService<UserEntryCategoryRepository>()
         );
 

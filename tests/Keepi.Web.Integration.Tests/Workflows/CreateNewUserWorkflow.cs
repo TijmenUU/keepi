@@ -29,7 +29,9 @@ public class CreateNewUserWorkflow(KeepiWebApplicationFactory applicationFactory
         var httpResponse = await client.GetAsync("/api/user");
         httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
 
-        var getUserResponse = await httpResponse.Content.ReadFromJsonAsync<GetUserResponse>();
+        var getUserResponse = await httpResponse.Content.ReadFromJsonAsync<GetUserResponse>(
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        );
         getUserResponse.ShouldBeEquivalentTo(
             new GetUserResponse(name: "Henk de Vries", registered: expectedRegisteredValue)
         );
@@ -44,7 +46,9 @@ public class CreateNewUserWorkflow(KeepiWebApplicationFactory applicationFactory
         httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
 
         var postRegisterUserResponse =
-            await httpResponse.Content.ReadFromJsonAsync<PostRegisterUserResponse>();
+            await httpResponse.Content.ReadFromJsonAsync<PostRegisterUserResponse>(
+                options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+            );
         postRegisterUserResponse.ShouldBeEquivalentTo(
             new PostRegisterUserResponse(result: PostRegisterUserResponseResult.Created)
         );

@@ -1,25 +1,24 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Api.Authorization;
-using Keepi.Api.UserEntryCategories.GetAll;
 using Keepi.Core.UserEntryCategories;
 using Microsoft.Extensions.Logging;
 
-namespace Keepi.Api.UserEntryCategories.Create;
+namespace Keepi.Api.UserEntryCategories.UpdateAll;
 
-public class PostCreateUserUserEntryCategoryEndpoint(
+public class PutUpdateUserEntryCategoriesEndpoint(
     IResolveUserHelper resolveUserHelper,
-    ICreateUserEntryCategoryUseCase createUserEntryCategoryUseCase,
-    ILogger<PostCreateUserUserEntryCategoryEndpoint> logger
-) : Endpoint<PostCreateUserUserEntryCategoryRequest, PostCreateUserUserEntryCategoryResponse>
+    IUpdateUserEntryCategoriesUseCase updateUserEntryCategoriesUseCase,
+    ILogger<PutUpdateUserEntryCategoriesEndpoint> logger
+) : Endpoint<PutUpdateUserEntryCategoriesRequest>
 {
     public override void Configure()
     {
-        Post("/user/entrycategories");
+        Put("/user/entrycategories");
     }
 
     public override async Task HandleAsync(
-        PostCreateUserUserEntryCategoryRequest request,
+        PutUpdateUserEntryCategoriesRequest request,
         CancellationToken cancellationToken
     )
     {
@@ -29,7 +28,7 @@ public class PostCreateUserUserEntryCategoryEndpoint(
         );
         if (user == null)
         {
-            logger.LogDebug("Refusing to create entry category for unregistered user");
+            logger.LogDebug("Refusing to create entry categories for unregistered user");
             await SendForbiddenAsync(cancellation: cancellationToken);
             return;
         }
@@ -40,28 +39,33 @@ public class PostCreateUserUserEntryCategoryEndpoint(
             return;
         }
 
-        var result = await createUserEntryCategoryUseCase.Execute(
+        var result = await updateUserEntryCategoriesUseCase.Execute(
             userId: user.Id,
-            name: validatedRequest.Name,
-            ordinal: validatedRequest.Ordinal,
-            enabled: validatedRequest.Enabled,
-            activeFrom: validatedRequest.ActiveFrom,
-            activeTo: validatedRequest.ActiveTo,
+            userEntryCategories: validatedRequest
+                .Select(r => new UpdateUserEntryCategoriesUseCaseInput(
+                    Id: r.Id,
+                    Name: r.Name,
+                    Ordinal: r.Ordinal,
+                    Enabled: r.Enabled,
+                    ActiveFrom: r.ActiveFrom,
+                    ActiveTo: r.ActiveTo
+                ))
+                .ToArray(),
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var success, out var error))
+        if (result.TrySuccess(out var error))
         {
-            await SendCreatedAtAsync<GetUserUserEntryCategoriesEndpoint>(
-                responseBody: new PostCreateUserUserEntryCategoryResponse(
-                    id: success.UserEntryCategoryId
-                ),
-                cancellation: cancellationToken
-            );
+            await SendNoContentAsync(cancellation: cancellationToken);
             return;
         }
 
-        if (error == CreateUserEntryCategoryUseCaseError.Unknown)
+        if (error == UpdateUserEntryCategoriesUseCaseError.UserEntryCategoryDoesNotExist)
+        {
+            await SendErrorsAsync(statusCode: 404, cancellation: cancellationToken);
+            return;
+        }
+        if (error == UpdateUserEntryCategoriesUseCaseError.Unknown)
         {
             await SendErrorsAsync(statusCode: 500, cancellation: cancellationToken);
             return;
@@ -72,8 +76,34 @@ public class PostCreateUserUserEntryCategoryEndpoint(
     }
 
     private static bool TryGetValidatedModel(
-        PostCreateUserUserEntryCategoryRequest request,
-        [NotNullWhen(returnValue: true)] out ValidatedPostCreateUserEntryCategoryRequest? validated
+        PutUpdateUserEntryCategoriesRequest request,
+        [NotNullWhen(returnValue: true)] out ValidatedPostCreateUserEntryCategory[]? validated
+    )
+    {
+        if (request == null || request.UserEntryCategories == null)
+        {
+            validated = null;
+            return false;
+        }
+
+        List<ValidatedPostCreateUserEntryCategory> validatedCategories = [];
+        foreach (var category in request.UserEntryCategories)
+        {
+            if (!TryGetValidatedModel(category, out var validatedCategory))
+            {
+                validated = null;
+                return false;
+            }
+            validatedCategories.Add(validatedCategory);
+        }
+
+        validated = [.. validatedCategories];
+        return true;
+    }
+
+    private static bool TryGetValidatedModel(
+        PutUpdateUserEntryCategoriesRequestCategory? request,
+        [NotNullWhen(returnValue: true)] out ValidatedPostCreateUserEntryCategory? validated
     )
     {
         if (request == null)
@@ -133,7 +163,8 @@ public class PostCreateUserUserEntryCategoryEndpoint(
             return false;
         }
 
-        validated = new ValidatedPostCreateUserEntryCategoryRequest(
+        validated = new ValidatedPostCreateUserEntryCategory(
+            Id: request.Id,
             Name: request.Name,
             Ordinal: request.Ordinal.Value,
             Enabled: request.Enabled.Value,
@@ -143,7 +174,8 @@ public class PostCreateUserUserEntryCategoryEndpoint(
         return true;
     }
 
-    record ValidatedPostCreateUserEntryCategoryRequest(
+    record ValidatedPostCreateUserEntryCategory(
+        int? Id,
         string Name,
         int Ordinal,
         bool Enabled,

@@ -1,6 +1,7 @@
 using Keepi.Api.UserEntries.GetWeek;
 using Keepi.Api.UserEntries.UpdateWeek;
-using Keepi.Api.UserEntryCategories.Create;
+using Keepi.Api.UserEntryCategories.GetAll;
+using Keepi.Api.UserEntryCategories.UpdateAll;
 using Microsoft.VisualBasic;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
@@ -16,16 +17,12 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             userSubjectClaim: Guid.NewGuid().ToString()
         );
 
-        var developmentUserEntryCategoryId = await CreateUserEntryCategory(
+        var createdCategoryIds = await CreateUserEntryCategories(
             client: client,
-            name: "Dev",
-            ordinal: 1
+            values: [(name: "Dev", ordinal: 1), (name: "Administratie", ordinal: 2)]
         );
-        var administrationUserEntryCategoryId = await CreateUserEntryCategory(
-            client: client,
-            name: "Administratie",
-            ordinal: 2
-        );
+        var developmentUserEntryCategoryId = createdCategoryIds[0];
+        var administrationUserEntryCategoryId = createdCategoryIds[1];
 
         // Initial create
         await UpdateWeekEntries(
@@ -320,31 +317,44 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
     }
 
-    private static async Task<int> CreateUserEntryCategory(
+    private static async Task<int[]> CreateUserEntryCategories(
         HttpClient client,
-        string name,
-        int ordinal
+        (string name, int ordinal)[] values
     )
     {
-        var httpResponse = await client.PostAsJsonAsync(
+        var httpResponse = await client.PutAsJsonAsync(
             requestUri: "/api/user/entrycategories",
-            value: new PostCreateUserUserEntryCategoryRequest
+            value: new PutUpdateUserEntryCategoriesRequest
             {
-                Name = name,
-                Ordinal = ordinal,
-                ActiveFrom = null,
-                ActiveTo = null,
-                Enabled = true,
-            }
+                UserEntryCategories = values
+                    .Select(v => new PutUpdateUserEntryCategoriesRequestCategory()
+                    {
+                        Name = v.name,
+                        Ordinal = v.ordinal,
+                        ActiveFrom = null,
+                        ActiveTo = null,
+                        Enabled = true,
+                    })
+                    .ToArray(),
+            },
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-        httpResponse.Headers.Location?.OriginalString.ShouldBe("/api/user/entrycategories");
+        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
-        var postCreateUserEntryCategoryResponse =
-            await httpResponse.Content.ReadFromJsonAsync<PostCreateUserUserEntryCategoryResponse>();
-        postCreateUserEntryCategoryResponse.ShouldNotBeNull();
+        var userEntryCategories = await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
+            requestUri: "/api/user/entrycategories",
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        );
+        userEntryCategories.ShouldNotBeNull();
 
-        return postCreateUserEntryCategoryResponse.Id;
+        var ids = new List<int>();
+        foreach (var value in values)
+        {
+            userEntryCategories.Categories.ShouldContain(c => c.Name == value.name);
+            ids.Add(userEntryCategories.Categories.Single(c => c.Name == value.name).Id);
+        }
+
+        return ids.ToArray();
     }
 
     private static async Task UpdateWeekEntries(
@@ -356,7 +366,8 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     {
         var httpResponse = await client.PutAsJsonAsync(
             requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}",
-            value: request
+            value: request,
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
         );
         httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
         httpResponse.Headers.Location?.OriginalString.ShouldBe(
@@ -375,7 +386,9 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
         httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
 
-        var model = await httpResponse.Content.ReadFromJsonAsync<GetWeekUserEntriesResponse>();
+        var model = await httpResponse.Content.ReadFromJsonAsync<GetWeekUserEntriesResponse>(
+            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        );
         model.ShouldNotBeNull();
 
         return model;

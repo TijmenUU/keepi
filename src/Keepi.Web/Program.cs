@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.GitHub;
 using FastEndpoints;
 using Keepi.Api.DependencyInjection;
-using Keepi.Api.UserEntryCategories.Delete;
+using Keepi.Api.Users.Get;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,7 +19,7 @@ public partial class Program
         // https://fast-endpoints.com/docs/get-started#create-project-install-package
         builder.Services.AddFastEndpoints(options =>
         {
-            options.Assemblies = [typeof(DeleteUserUserEntryCategoryEndpoint).Assembly];
+            options.Assemblies = [typeof(GetUserEndpoint).Assembly];
         });
 
         if (builder.Environment.IsDevelopment())
