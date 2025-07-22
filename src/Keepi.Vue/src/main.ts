@@ -1,13 +1,28 @@
-import { createApp } from "vue";
-import "@/style.css";
-import App from "@/App.vue";
-import { router } from "@/router";
-import { createPinia } from "pinia";
-import { useApplicationStore } from "@/store/application-store";
+import '@/style.css'
 
-const pinia = createPinia();
-const applicationStore = useApplicationStore(pinia);
+import { createApp } from 'vue'
+import App from '@/App.vue'
+import { router } from '@/router'
+import ApiClient from '@/api-client'
 
-applicationStore
-  .hydrate()
-  .then(() => createApp(App).use(pinia).use(router).mount("#app"));
+if (location.pathname === '/error') {
+  mountApp()
+} else {
+  const apiClient = new ApiClient()
+  apiClient.ensureUserIsRegistered().match(
+    () => mountApp(),
+    (error) => {
+      if (error === 'forbidden' || error == 'unauthorized') {
+        location.pathname = '/signin'
+      } else {
+        location.pathname = '/error'
+      }
+    },
+  )
+}
+
+function mountApp() {
+  const app = createApp(App)
+  app.use(router)
+  app.mount('#app')
+}

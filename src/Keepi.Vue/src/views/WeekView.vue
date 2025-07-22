@@ -1,71 +1,94 @@
 <script setup lang="ts">
-import KeepiButton from "@/components/KeepiButton.vue";
-import WeekEditor from "@/components/WeekEditor.vue";
-import { DateRange, getWeekDaysFor, getWeekNumber } from "@/date";
-import { toShortDutchDate } from "@/format";
-import { INokoGetEntryResponse } from "@/responses";
-import { useApplicationStore } from "@/store/application-store";
-import { loggableDays } from "@/types";
-import { computed, ref } from "vue";
+import ApiClient, { type IGetWeekUserEntriesResponse } from '@/api-client'
+import KeepiButton from '@/components/KeepiButton.vue'
+import WeekEditor from '@/components/WeekEditor.vue'
+import { type DateRange, getWeekDaysFor, getWeekNumber } from '@/date'
+import { toShortDutchDate } from '@/format'
+import { loggableDays } from '@/types'
+import { computed, ref } from 'vue'
 
-const editorVersion = ref(0);
-const isReloading = ref(false);
-const startDate = ref(new Date());
-const entries = ref<INokoGetEntryResponse[]>([]);
+const apiClient = new ApiClient()
+const dateRange = ref<DateRange>(getWeekDaysFor(new Date()))
+const currentWeek = getWeekNumber(new Date())
 
-const applicationStore = useApplicationStore();
-const nokoClient = applicationStore.getNokoClient();
+const editorVersion = ref(0)
+const isReloading = ref(false)
+const weekEntries = ref<IGetWeekUserEntriesResponse>(
+  await apiClient.getWeekUserEntries(dateRange.value.year, dateRange.value.weekNumber).match(
+    (result) => result,
+    (error) =>
+      // TODO report this error to the user? Or at least refresh, redirect or retry?
+      <IGetWeekUserEntriesResponse>{
+        monday: { entries: [] },
+        tuesday: { entries: [] },
+        wednesday: { entries: [] },
+        thursday: { entries: [] },
+        friday: { entries: [] },
+        saturday: { entries: [] },
+        sunday: { entries: [] },
+      },
+  ),
+)
 
-const dateRange = computed<DateRange>(() => getWeekDaysFor(startDate.value));
-const currentWeek = getWeekNumber(new Date());
+// TODO rework the components to use the ApiClient
 
 const dateRangeDescription = computed<string>(
   () =>
     `${toShortDutchDate(dateRange.value.dates[0])} t/m ${toShortDutchDate(
       dateRange.value.dates[loggableDays.length - 1],
     )}`,
-);
+)
 
-const onReload = async (): Promise<void> => {
+const onReload = async () => {
   if (isReloading.value) {
-    return;
+    return
   }
 
-  isReloading.value = true;
-  try {
-    entries.value = await nokoClient.getEntries(
-      dateRange.value.dates[0],
-      dateRange.value.dates[dateRange.value.dates.length - 1],
-    );
-    editorVersion.value += 1;
-  } finally {
-    isReloading.value = false;
-  }
-};
-await onReload();
+  isReloading.value = true
+
+  weekEntries.value = await getWeekUserEntries()
+  editorVersion.value += 1
+
+  isReloading.value = false
+}
+
+const getWeekUserEntries = async () => {
+  return await apiClient.getWeekUserEntries(dateRange.value.year, dateRange.value.weekNumber).match(
+    (result) => result,
+    (error) =>
+      // TODO report this error to the user? Or at least refresh, redirect or retry?
+      <IGetWeekUserEntriesResponse>{
+        monday: { entries: [] },
+        tuesday: { entries: [] },
+        wednesday: { entries: [] },
+        thursday: { entries: [] },
+        friday: { entries: [] },
+        saturday: { entries: [] },
+        sunday: { entries: [] },
+      },
+  )
+}
 
 const onPreviousWeek = async () => {
-  const lastDatePreviousWeek = new Date(dateRange.value.dates[0]);
-  lastDatePreviousWeek.setDate(lastDatePreviousWeek.getDate() - 1);
-  startDate.value = lastDatePreviousWeek;
+  const lastDatePreviousWeek = new Date(dateRange.value.dates[0])
+  lastDatePreviousWeek.setDate(lastDatePreviousWeek.getDate() - 1)
+  dateRange.value = getWeekDaysFor(lastDatePreviousWeek)
 
-  await onReload();
-};
+  await onReload()
+}
 
 const onToday = async () => {
-  startDate.value = new Date();
-  await onReload();
-};
+  dateRange.value = getWeekDaysFor(new Date())
+  await onReload()
+}
 
 const onNextWeek = async () => {
-  const firstDateNextWeek = new Date(
-    dateRange.value.dates[dateRange.value.dates.length - 1],
-  );
-  firstDateNextWeek.setDate(firstDateNextWeek.getDate() + 1);
-  startDate.value = firstDateNextWeek;
+  const firstDateNextWeek = new Date(dateRange.value.dates[dateRange.value.dates.length - 1])
+  firstDateNextWeek.setDate(firstDateNextWeek.getDate() + 1)
+  dateRange.value = getWeekDaysFor(firstDateNextWeek)
 
-  await onReload();
-};
+  await onReload()
+}
 </script>
 
 <template>
@@ -76,10 +99,7 @@ const onNextWeek = async () => {
 
     <div class="flex space-x-2 py-3">
       <KeepiButton @click="onPreviousWeek">Vorige</KeepiButton>
-      <KeepiButton
-        :disabled="currentWeek === dateRange.weekNumber"
-        @click="onToday"
-      >
+      <KeepiButton :disabled="currentWeek === dateRange.weekNumber" @click="onToday">
         Vandaag
       </KeepiButton>
       <KeepiButton @click="onNextWeek">Volgende</KeepiButton>
@@ -89,7 +109,7 @@ const onNextWeek = async () => {
       class="mt-3"
       :date-range="dateRange"
       :key="editorVersion"
-      :entries="entries"
+      :week-entries="weekEntries"
       :disabled="isReloading"
       @reload="onReload"
     />

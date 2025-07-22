@@ -1,24 +1,19 @@
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
-import path from "path";
+import { fileURLToPath, URL } from 'node:url'
 
-// https://vitejs.dev/config/
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
+
+// https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [tailwindcss(), vue()],
   build: {
-    outDir: "../Keepi.Web/wwwroot/",
+    outDir: '../Keepi.Web/wwwroot/',
     emptyOutDir: true,
   },
   resolve: {
-    alias: [
-      {
-        find: "@",
-        replacement: path.resolve("./src"),
-      },
-      {
-        find: "@test/",
-        replacement: path.resolve("./test"),
-      },
-    ],
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
-});
+})

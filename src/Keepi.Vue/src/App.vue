@@ -1,18 +1,5 @@
 <script setup lang="ts">
 import NavigationMenu from "@/components/NavigationMenu.vue";
-import { router } from "@/router";
-import { useApplicationStore } from "@/store/application-store";
-import { onMounted } from "vue";
-
-const store = useApplicationStore();
-
-onMounted(async () => {
-  if (store.requiresSetup) {
-    await router.push("/setup");
-  } else if (store.requiresCategories) {
-    await router.push("/categories");
-  }
-});
 
 const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE;
 const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT;
@@ -21,7 +8,7 @@ const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT;
 <template>
   <div class="flex min-h-screen flex-col">
     <Transition name="fade" mode="out-in" appear>
-      <NavigationMenu v-if="store.isConfigured" />
+      <NavigationMenu />
     </Transition>
 
     <RouterView v-slot="{ Component }">

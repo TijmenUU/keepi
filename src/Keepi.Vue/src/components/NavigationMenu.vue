@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import MenuLink from "@/components/MenuLink.vue";
+import MenuLink from '@/components/MenuLink.vue'
 </script>
 
 <template>
@@ -7,13 +7,10 @@ import MenuLink from "@/components/MenuLink.vue";
     <div
       class="mx-auto flex max-w-screen-xl flex-nowrap items-center justify-between space-x-2 p-4"
     >
-      <router-link
-        to="/"
-        class="flex items-center space-x-3 rtl:space-x-reverse"
-      >
+      <router-link to="/" class="flex items-center space-x-3 rtl:space-x-reverse">
         <img src="/keepi.svg" class="" alt="Keepi Logo" />
         <span
-          class="hidden h-8 self-center whitespace-nowrap text-2xl font-semibold text-white sm:block"
+          class="hidden h-8 self-center text-2xl font-semibold whitespace-nowrap text-white sm:block"
           >Keepi</span
         >
       </router-link>
@@ -24,7 +21,6 @@ import MenuLink from "@/components/MenuLink.vue";
         >
           <MenuLink route="/"> Invoer </MenuLink>
           <MenuLink route="/categories"> Categorieën </MenuLink>
-          <MenuLink route="/setup"> Token </MenuLink>
         </div>
       </div>
     </div>
