@@ -101,18 +101,6 @@ namespace Keepi.Infrastructure.Data.Migrations
                 columns: new[] { "ActiveFrom", "ActiveTo" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserEntryCategories_Name_UserId",
-                table: "UserEntryCategories",
-                columns: new[] { "Name", "UserId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserEntryCategories_Ordinal_UserId",
-                table: "UserEntryCategories",
-                columns: new[] { "Ordinal", "UserId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserEntryCategories_UserId",
                 table: "UserEntryCategories",
                 column: "UserId");

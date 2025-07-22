@@ -128,6 +128,192 @@ public class UserUserEntryCategoryCrudWorkflow(KeepiWebApplicationFactory applic
         );
     }
 
+    [Fact]
+    public async Task Swap_ordinals_test()
+    {
+        var client = await applicationFactory.CreateRegisteredUserClient(
+            userName: "Yannick Meijer",
+            userSubjectClaim: Guid.NewGuid().ToString()
+        );
+
+        await CreateUserEntryCategories(client, [("Test 1", 1), ("Test 2", 2)]);
+
+        var getUserUserEntryCategoriesResponse =
+            await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
+                requestUri: "/api/user/entrycategories",
+                options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+            );
+        getUserUserEntryCategoriesResponse.ShouldNotBeNull();
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 1");
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 2");
+
+        var firstCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 1")
+            .Id;
+        var secondCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 2")
+            .Id;
+
+        await VerifyGetUserEntryCategoriesResponse(
+            client,
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: firstCreatedUserEntryCategoryId,
+                Name: "Test 1",
+                Ordinal: 1,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            ),
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: secondCreatedUserEntryCategoryId,
+                Name: "Test 2",
+                Ordinal: 2,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            )
+        );
+
+        // Swap the ordinals of the two entry categories
+        await UpdateUserEntryCategories(
+            client: client,
+            values:
+            [
+                new()
+                {
+                    Id = firstCreatedUserEntryCategoryId,
+                    Name = "Test 1",
+                    Ordinal = 2,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+                new()
+                {
+                    Id = secondCreatedUserEntryCategoryId,
+                    Name = "Test 2",
+                    Ordinal = 1,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+            ]
+        );
+
+        await VerifyGetUserEntryCategoriesResponse(
+            client,
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: firstCreatedUserEntryCategoryId,
+                Name: "Test 1",
+                Ordinal: 2,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            ),
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: secondCreatedUserEntryCategoryId,
+                Name: "Test 2",
+                Ordinal: 1,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            )
+        );
+    }
+
+    [Fact]
+    public async Task Swap_names_test()
+    {
+        var client = await applicationFactory.CreateRegisteredUserClient(
+            userName: "Yannick Meijer",
+            userSubjectClaim: Guid.NewGuid().ToString()
+        );
+
+        await CreateUserEntryCategories(client, [("Test 1", 1), ("Test 2", 2)]);
+
+        var getUserUserEntryCategoriesResponse =
+            await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
+                requestUri: "/api/user/entrycategories",
+                options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+            );
+        getUserUserEntryCategoriesResponse.ShouldNotBeNull();
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 1");
+        getUserUserEntryCategoriesResponse.Categories.ShouldContain(c => c.Name == "Test 2");
+
+        var firstCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 1")
+            .Id;
+        var secondCreatedUserEntryCategoryId = getUserUserEntryCategoriesResponse
+            .Categories.Single(c => c.Name == "Test 2")
+            .Id;
+
+        await VerifyGetUserEntryCategoriesResponse(
+            client,
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: firstCreatedUserEntryCategoryId,
+                Name: "Test 1",
+                Ordinal: 1,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            ),
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: secondCreatedUserEntryCategoryId,
+                Name: "Test 2",
+                Ordinal: 2,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            )
+        );
+
+        // Swap the ordinals of the two entry categories
+        await UpdateUserEntryCategories(
+            client: client,
+            values:
+            [
+                new()
+                {
+                    Id = firstCreatedUserEntryCategoryId,
+                    Name = "Test 2",
+                    Ordinal = 1,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+                new()
+                {
+                    Id = secondCreatedUserEntryCategoryId,
+                    Name = "Test 1",
+                    Ordinal = 2,
+                    ActiveFrom = null,
+                    ActiveTo = null,
+                    Enabled = true,
+                },
+            ]
+        );
+
+        await VerifyGetUserEntryCategoriesResponse(
+            client,
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: firstCreatedUserEntryCategoryId,
+                Name: "Test 2",
+                Ordinal: 1,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            ),
+            new GetUserUserEntryCategoriesResponseCategory(
+                Id: secondCreatedUserEntryCategoryId,
+                Name: "Test 1",
+                Ordinal: 2,
+                Enabled: true,
+                ActiveFrom: null,
+                ActiveTo: null
+            )
+        );
+    }
+
     private static async Task CreateUserEntryCategories(
         HttpClient client,
         (string name, int ordinal)[] values

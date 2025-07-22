@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Keepi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20250609161417_InitialCreate")]
+    [Migration("20250722140222_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -84,12 +84,6 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("ActiveFrom", "ActiveTo");
-
-                    b.HasIndex("Name", "UserId")
-                        .IsUnique();
-
-                    b.HasIndex("Ordinal", "UserId")
-                        .IsUnique();
 
                     b.ToTable("UserEntryCategories");
                 });

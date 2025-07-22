@@ -82,12 +82,6 @@ namespace Keepi.Infrastructure.Data.Migrations
 
                     b.HasIndex("ActiveFrom", "ActiveTo");
 
-                    b.HasIndex("Name", "UserId")
-                        .IsUnique();
-
-                    b.HasIndex("Ordinal", "UserId")
-                        .IsUnique();
-
                     b.ToTable("UserEntryCategories");
                 });
 
