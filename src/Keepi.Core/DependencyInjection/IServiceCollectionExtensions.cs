@@ -9,6 +9,7 @@ public static class IServiceCollectionExtensions
 {
     public static IServiceCollection AddUseCases(this IServiceCollection services)
     {
+        services.AddScoped<IExportUserEntriesUseCase, ExportUserEntriesUseCase>();
         services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
         services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
         services.AddScoped<IUpdateUserEntryCategoriesUseCase, UpdateUserEntryCategoriesUseCase>();

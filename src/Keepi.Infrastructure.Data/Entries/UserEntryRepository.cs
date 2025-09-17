@@ -9,7 +9,7 @@ namespace Keepi.Infrastructure.Data.Entries;
 internal class UserEntryRepository(
     DatabaseContext databaseContext,
     ILogger<UserEntryRepository> logger
-) : IOverwriteUserEntriesForDates, IGetUserEntriesForDates
+) : IOverwriteUserEntriesForDates, IGetUserEntriesForDates, IGetExportUserEntries
 {
     async Task<
         IMaybeErrorResult<OverwriteUserEntriesForDatesError>
@@ -100,5 +100,28 @@ internal class UserEntryRepository(
                 remark: ue.Remark
             ))
             .ToArray();
+    }
+
+    IAsyncEnumerable<ExportUserEntry> IGetExportUserEntries.Execute(
+        int userId,
+        DateOnly start,
+        DateOnly stop,
+        CancellationToken cancellationToken
+    )
+    {
+        Debug.Assert(start <= stop);
+
+        return databaseContext
+            .UserEntries.Where(e => e.UserId == userId)
+            .Where(e => e.Date >= start && e.Date <= stop)
+            .Select(ue => new ExportUserEntry(
+                ue.Id,
+                ue.Date,
+                ue.UserEntryCategoryId,
+                ue.UserEntryCategory.Name,
+                ue.Minutes,
+                ue.Remark
+            ))
+            .AsAsyncEnumerable();
     }
 }

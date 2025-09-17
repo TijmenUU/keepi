@@ -36,6 +36,9 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IOverwriteUserEntriesForDates>(sp =>
             sp.GetRequiredService<UserEntryRepository>()
         );
+        services.AddScoped<IGetExportUserEntries>(sp =>
+            sp.GetRequiredService<UserEntryRepository>()
+        );
 
         services.AddScoped<UserRepository>();
         services.AddScoped<IGetUser>(sp => sp.GetRequiredService<UserRepository>());
