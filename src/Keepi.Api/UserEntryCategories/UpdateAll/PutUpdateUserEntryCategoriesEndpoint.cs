@@ -29,13 +29,13 @@ public class PutUpdateUserEntryCategoriesEndpoint(
         if (user == null)
         {
             logger.LogDebug("Refusing to create entry categories for unregistered user");
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
         if (!TryGetValidatedModel(request, out var validatedRequest))
         {
-            await SendErrorsAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
@@ -56,22 +56,22 @@ public class PutUpdateUserEntryCategoriesEndpoint(
 
         if (result.TrySuccess(out var error))
         {
-            await SendNoContentAsync(cancellation: cancellationToken);
+            await Send.NoContentAsync(cancellation: cancellationToken);
             return;
         }
 
         if (error == UpdateUserEntryCategoriesUseCaseError.UserEntryCategoryDoesNotExist)
         {
-            await SendErrorsAsync(statusCode: 404, cancellation: cancellationToken);
+            await Send.NotFoundAsync(cancellation: cancellationToken);
             return;
         }
         if (error == UpdateUserEntryCategoriesUseCaseError.Unknown)
         {
-            await SendErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
             return;
         }
 
-        await SendErrorsAsync(cancellation: cancellationToken);
+        await Send.ErrorsAsync(cancellation: cancellationToken);
         return;
     }
 

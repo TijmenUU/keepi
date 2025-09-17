@@ -1,6 +1,6 @@
-using System.Net;
 using FastEndpoints;
 using Keepi.Api.Authorization;
+using Keepi.Api.Users.Get;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +22,7 @@ public class PostRegisterUserEndpoint(
         {
             logger.LogDebug("Refusing to register user without required claims present");
 
-            await SendErrorsAsync(statusCode: 400, cancellation: cancellationToken);
+            await Send.ErrorsAsync(statusCode: 400, cancellation: cancellationToken);
             return;
         }
 
@@ -38,7 +38,7 @@ public class PostRegisterUserEndpoint(
         {
             case RegisterUserUseCaseResult.UserAlreadyExists:
                 logger.LogDebug("Attempted to register a user that is already known");
-                await SendAsync(
+                await Send.OkAsync(
                     response: new PostRegisterUserResponse(
                         PostRegisterUserResponseResult.UserAlreadyExists
                     ),
@@ -47,9 +47,10 @@ public class PostRegisterUserEndpoint(
                 return;
 
             case RegisterUserUseCaseResult.UserCreated:
-                await SendAsync(
-                    response: new PostRegisterUserResponse(PostRegisterUserResponseResult.Created),
-                    statusCode: (int)HttpStatusCode.Created,
+                await Send.CreatedAtAsync<GetUserEndpoint>(
+                    responseBody: new PostRegisterUserResponse(
+                        PostRegisterUserResponseResult.Created
+                    ),
                     cancellation: cancellationToken
                 );
                 return;

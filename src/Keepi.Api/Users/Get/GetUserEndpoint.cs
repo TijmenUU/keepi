@@ -15,11 +15,11 @@ public class GetUserEndpoint(IGetUserExists getUserExists) : EndpointWithoutRequ
     {
         if (!User.TryGetUserInfo(out var userInfo))
         {
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
-        await SendAsync(
+        await Send.OkAsync(
             response: new GetUserResponse(
                 name: userInfo.Name,
                 registered: await getUserExists.Execute(

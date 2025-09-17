@@ -32,13 +32,13 @@ public class GetUserEntriesExportEndpoint(
         if (user == null)
         {
             logger.LogDebug("Refusing to export entries for unregistered user");
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
         if (!TryGetValidatedModel(request: request, out var validatedRequest))
         {
-            await SendErrorsAsync(cancellation: cancellationToken);
+            await Send.ErrorsAsync(cancellation: cancellationToken);
             return;
         }
 
@@ -70,7 +70,7 @@ public class GetUserEntriesExportEndpoint(
                 );
             }
 
-            await SendStreamAsync(
+            await Send.StreamAsync(
                 stream: File.OpenRead(temporaryFilePath),
                 fileName: $"export_{validatedRequest.Start}_{validatedRequest.Stop}.csv",
                 contentType: "text/csv",
@@ -82,11 +82,11 @@ public class GetUserEntriesExportEndpoint(
 
         if (error == ExportUserEntriesUseCaseError.StartGreaterThanStop)
         {
-            await SendErrorsAsync(cancellation: cancellationToken);
+            await Send.ErrorsAsync(cancellation: cancellationToken);
             return;
         }
 
-        await SendErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+        await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
         return;
     }
 

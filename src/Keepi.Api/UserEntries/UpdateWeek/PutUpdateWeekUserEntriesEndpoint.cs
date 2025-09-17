@@ -31,13 +31,13 @@ public class PutUpdateWeekUserEntriesEndpoint(
         if (user == null)
         {
             logger.LogDebug("Refusing to update week entries for unregistered user");
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
         if (!TryGetValidatedModel(request: request, out var validatedRequest))
         {
-            await SendErrorsAsync(cancellation: cancellationToken);
+            await Send.ErrorsAsync(cancellation: cancellationToken);
             return;
         }
 
@@ -54,7 +54,7 @@ public class PutUpdateWeekUserEntriesEndpoint(
 
         if (result.TrySuccess(out var error))
         {
-            await SendCreatedAtAsync<GetWeekUserEntriesEndpoint>(
+            await Send.CreatedAtAsync<GetWeekUserEntriesEndpoint>(
                 routeValues: new { Year = year, WeekNumber = weekNumber },
                 cancellation: cancellationToken
             );
@@ -63,11 +63,11 @@ public class PutUpdateWeekUserEntriesEndpoint(
 
         if (error == UpdateWeekUserEntriesUseCaseError.Unknown)
         {
-            await SendErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
             return;
         }
 
-        await SendErrorsAsync(cancellation: cancellationToken);
+        await Send.ErrorsAsync(cancellation: cancellationToken);
         return;
     }
 

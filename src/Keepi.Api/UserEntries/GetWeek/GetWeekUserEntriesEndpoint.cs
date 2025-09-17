@@ -25,7 +25,7 @@ public class GetWeekUserEntriesEndpoint(
         if (user == null)
         {
             logger.LogDebug("Refusing to get week entries for unregistered user");
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
@@ -36,7 +36,7 @@ public class GetWeekUserEntriesEndpoint(
             cancellationToken: cancellationToken
         );
 
-        await SendOkAsync(
+        await Send.OkAsync(
             response: new GetWeekUserEntriesResponse(
                 Monday: MapToResponseDay(result.Monday),
                 Tuesday: MapToResponseDay(result.Tuesday),

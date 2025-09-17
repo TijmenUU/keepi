@@ -25,7 +25,7 @@ public class GetUserUserEntryCategoriesEndpoint(
         if (user == null)
         {
             logger.LogDebug("Refusing to return entry categories for unregistered user");
-            await SendForbiddenAsync(cancellation: cancellationToken);
+            await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
 
@@ -34,7 +34,7 @@ public class GetUserUserEntryCategoriesEndpoint(
             cancellationToken: cancellationToken
         );
 
-        await SendAsync(
+        await Send.OkAsync(
             response: new GetUserUserEntryCategoriesResponse(
                 Categories: userEntryCategories
                     .Select(c => new GetUserUserEntryCategoriesResponseCategory(
