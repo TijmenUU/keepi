@@ -16,7 +16,7 @@ const isReloading = ref(false)
 const weekEntries = ref<IGetWeekUserEntriesResponse>(
   await apiClient.getWeekUserEntries(dateRange.value.year, dateRange.value.weekNumber).match(
     (result) => result,
-    (error) =>
+    () =>
       // TODO report this error to the user? Or at least refresh, redirect or retry?
       <IGetWeekUserEntriesResponse>{
         monday: { entries: [] },
@@ -55,7 +55,7 @@ const onReload = async () => {
 const getWeekUserEntries = async () => {
   return await apiClient.getWeekUserEntries(dateRange.value.year, dateRange.value.weekNumber).match(
     (result) => result,
-    (error) =>
+    () =>
       // TODO report this error to the user? Or at least refresh, redirect or retry?
       <IGetWeekUserEntriesResponse>{
         monday: { entries: [] },

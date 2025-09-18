@@ -12,10 +12,8 @@ import type { DateRange } from '@/date'
 import { toHoursMinutesNotation, tryParseTimeNotation, toShortDutchDate } from '@/format'
 import { type LoggableDay, loggableDays, type TimeTableEntry } from '@/types'
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 
 const apiClient = new ApiClient()
-const router = useRouter()
 const isSaving = ref(false)
 
 const props = defineProps<{
@@ -200,8 +198,8 @@ const onSubmit = async () => {
       sunday: getUpdateWeekUserEntriesRequestDay(6, timeTableEntries.value),
     })
     .match(
-      (ok) => {},
-      (error) => {
+      () => {},
+      () => {
         // TODO handle this gracefully without losing the user input preferably
       },
     )
@@ -284,7 +282,7 @@ function getUpdateWeekUserEntriesRequestDay(dayIndex: number, entries: TimeTable
             <tr>
               <td></td>
 
-              <td v-for="(_, index) in loggableDays" class="text-center text-gray-500">
+              <td v-for="(day, index) in loggableDays" class="text-center text-gray-500" :key="day">
                 <div class="min-h-6">
                   <span>
                     {{ daySummaries[index] }}

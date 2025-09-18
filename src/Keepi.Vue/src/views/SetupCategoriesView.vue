@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ApiClient, {
   type IGetUserEntryCategoriesResponse,
-  type IPutUpdateUserEntryCategoriesRequest as IPutUpdateUserEntryCategoriesRequest,
+  type IPutUpdateUserEntryCategoriesRequest,
 } from '@/api-client'
 import KeepiButton from '@/components/KeepiButton.vue'
 import KeepiCheckbox from '@/components/KeepiCheckbox.vue'
@@ -183,7 +183,7 @@ const onSubmit = async () => {
   router.push('/')
 }
 
-onBeforeRouteLeave((to, _) => {
+onBeforeRouteLeave((to) => {
   if (isSubmitting.value || ignoreUnsavedChanges.value) {
     return true
   }
