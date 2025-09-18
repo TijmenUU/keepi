@@ -11,6 +11,7 @@
     "types": [
       "node",
       "jsdom"
-    ]
+    ],
+    "noUncheckedIndexedAccess": false,
   }
 }
