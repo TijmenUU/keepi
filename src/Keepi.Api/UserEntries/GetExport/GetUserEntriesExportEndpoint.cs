@@ -72,7 +72,7 @@ public class GetUserEntriesExportEndpoint(
 
             await Send.StreamAsync(
                 stream: File.OpenRead(temporaryFilePath),
-                fileName: $"export_{validatedRequest.Start}_{validatedRequest.Stop}.csv",
+                fileName: $"export_{validatedRequest.Start:yyyy-MM-dd}_{validatedRequest.Stop:yyyy-MM-dd}.csv",
                 contentType: "text/csv",
                 cancellation: cancellationToken
             );
