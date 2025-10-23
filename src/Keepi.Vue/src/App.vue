@@ -1,15 +1,13 @@
 <script setup lang="ts">
-import NavigationMenu from "@/components/NavigationMenu.vue";
+import NavigationMenu from '@/components/NavigationMenu.vue'
 
-const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE;
-const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT;
+const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE
+const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col">
-    <Transition name="fade" mode="out-in" appear>
-      <NavigationMenu />
-    </Transition>
+    <NavigationMenu />
 
     <RouterView v-slot="{ Component }">
       <Transition name="fade" mode="out-in" appear>
@@ -32,11 +30,7 @@ const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT;
     <footer class="mb-2 text-center text-sm text-gray-500">
       <p>
         Opmerkingen of suggesties? Laat
-        <a
-          class="text-gray-300"
-          href="https://github.com/TijmenUU/keepi-vue/issues"
-          >hier</a
-        >
+        <a class="text-gray-300" href="https://github.com/TijmenUU/keepi-vue/issues">hier</a>
         je feedback achter.
       </p>
       <p class="text-xs">{{ buildDate }}+{{ buildCommit }}</p>
@@ -67,7 +61,7 @@ const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT;
 }
 .loader:before,
 .loader:after {
-  content: "";
+  content: '';
   height: inherit;
   aspect-ratio: 1;
   grid-area: 1/1;
