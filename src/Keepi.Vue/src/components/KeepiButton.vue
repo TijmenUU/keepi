@@ -1,25 +1,25 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    variant?: "outline" | "blue" | "green" | "red";
-    disabled?: boolean;
+    variant?: 'outline' | 'blue' | 'green' | 'red'
+    disabled?: boolean
   }>(),
   {
-    variant: "outline",
+    variant: 'outline',
     disabled: false,
   },
-);
+)
 
 const emits = defineEmits<{
-  (e: "click"): void;
-}>();
+  (e: 'click'): void
+}>()
 
 const onClick = () => {
   if (props.disabled) {
-    return;
+    return
   }
-  emits("click");
-};
+  emits('click')
+}
 </script>
 
 <template>
