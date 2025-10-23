@@ -27,7 +27,9 @@ const errorMessage = computed<string>(() => {
   return ''
 })
 
-const hasError = computed<boolean>(() => props.field.$error || props.forceShowError)
+const hasError = computed<boolean>(
+  () => props.field.$error || (props.forceShowError && props.field.$invalid),
+)
 </script>
 
 <template>

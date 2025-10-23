@@ -21,6 +21,7 @@ import MenuLink from '@/components/MenuLink.vue'
         >
           <MenuLink route="/"> Invoer </MenuLink>
           <MenuLink route="/categories"> Categorieën </MenuLink>
+          <MenuLink route="/export"> Export </MenuLink>
         </div>
       </div>
     </div>

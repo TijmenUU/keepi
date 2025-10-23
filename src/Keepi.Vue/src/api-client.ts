@@ -1,3 +1,4 @@
+import { toShortIsoDate } from '@/format'
 import { fromPromise, err, ok } from 'neverthrow'
 
 export default class ApiClient {
@@ -76,6 +77,46 @@ export default class ApiClient {
     ]).andThen(() => {
       return ok()
     })
+  }
+
+  public getUserEntriesExport(from: Date, to: Date) {
+    const options = this.getBaseRequestOptions({
+      method: 'POST',
+      json: JSON.stringify({
+        start: toShortIsoDate(from),
+        stop: toShortIsoDate(to),
+      }),
+    })
+
+    return this.makeRequest(`/user/entries/export`, options, [200]).andThen((result) =>
+      fromPromise(
+        result.blob().then((blob) => ({
+          blob,
+          fileName: ApiClient.getFileNameFromHeaderOrFallback(result.headers, 'export.csv'),
+        })),
+        () => err('unknown'),
+      ),
+    )
+  }
+
+  private static getFileNameFromHeaderOrFallback(headers: Headers, fallback: string) {
+    // Example expected header value:
+    // attachment; filename=export_2025-10-20_2025-10-26.csv; filename*=UTF-8''export_2025-10-20_2025-10-26.csv
+    const contentDisposition = headers.get('Content-Disposition')
+    if (contentDisposition == null) {
+      console.warn('Missing content disposition header')
+      return fallback
+    }
+
+    const contentDispositionParts = contentDisposition.split(';').map((p) => p.trim())
+    const fileNamePartKey = 'filename='
+    const fileNamePart = contentDispositionParts.find((p) => p.startsWith(fileNamePartKey))
+    if (fileNamePart == null) {
+      console.warn('Missing file name part in content disposition header', contentDisposition)
+      return fallback
+    }
+
+    return fileNamePart.substring(fileNamePartKey.length)
   }
 
   private makeRequest(subpath: string, options?: RequestInit, supportedResponseCodes?: number[]) {
