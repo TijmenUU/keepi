@@ -2,8 +2,13 @@
 import type { RegleFieldStatus } from '@regle/core'
 import { computed } from 'vue'
 import Popper from 'vue3-popper'
+import { useAttrs } from 'vue'
 
-const model = defineModel<string>()
+defineOptions({
+  inheritAttrs: false,
+})
+
+const model = defineModel<string>({ required: true })
 
 const props = defineProps<{
   forceShowError: boolean
@@ -21,13 +26,15 @@ const errorMessage = computed<string>(() => {
   }
   return ''
 })
+
+const hasError = computed<boolean>(() => props.field.$error || props.forceShowError)
 </script>
 
 <template>
   <div>
     <Popper
       :content="errorMessage"
-      :show="field.$error || forceShowError"
+      :show="hasError && errorMessage !== ''"
       placement="top"
       class="error-popup"
       arrow
@@ -35,8 +42,9 @@ const errorMessage = computed<string>(() => {
       close-delay="100"
     >
       <input
-        class="w-full rounded-md border border-gray-500 text-center"
-        :class="{ 'border-red-500': props.field.$invalid }"
+        class="w-full rounded-md border border-gray-500"
+        :class="{ 'border-red-500': hasError }"
+        v-bind="useAttrs()"
         :id="props.id"
         type="text"
         v-model="model"

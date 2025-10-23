@@ -14,7 +14,7 @@ import { useCustomSubmit } from '@/regle'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
 import WeekEditorDayLabel from '@/components/WeekEditorDayLabel.vue'
-import WeekEditorInput from '@/components/WeekEditorInput.vue'
+import KeepiValidatedInput from '@/components/KeepiValidatedInput.vue'
 
 const apiClient = new ApiClient()
 
@@ -230,53 +230,60 @@ const onKeyDown = (event: KeyboardEvent) => {
         <span class="col-span-2 truncate overflow-hidden text-gray-500">
           {{ category.name }}
         </span>
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[0 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[0 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${0 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[1 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[1 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${1 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[2 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[2 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${2 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[3 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[3 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${3 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[4 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[4 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${4 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[5 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[5 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${5 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
-        <WeekEditorInput
+        <KeepiValidatedInput
           v-model="r$.$value.days[6 + index * loggableDays.length].minutes"
           :field="r$.$fields.days.$each[6 + index * loggableDays.length].$fields.minutes"
           :force-show-error="forceShowError"
           :id="`${6 + index * loggableDays.length}`"
+          class="text-center"
           @keydown="onKeyDown"
         />
         <span class="text-center text-gray-500">
