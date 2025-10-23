@@ -9,7 +9,7 @@ import KeepiButton from '@/components/KeepiButton.vue'
 import type { DateRange } from '@/date'
 import { toHoursMinutesNotation, tryParseTimeNotation } from '@/format'
 import { loggableDays, type TimeTableEntry } from '@/types'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCustomSubmit } from '@/regle'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
@@ -26,6 +26,13 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'submit', value: TimeTableEntry[]): void
 }>()
+
+onMounted(() => {
+  const firstInput = document.getElementById('0')
+  if (firstInput != null) {
+    firstInput.focus()
+  }
+})
 
 // TODO consider sharing this piece of error handling logic between components instead of duplicating it
 const userEntryCategories = await apiClient.getAllUserEntryCategories().match(
