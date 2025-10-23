@@ -19,6 +19,5 @@ export type UserEntryCategory = {
 export type TimeTableEntry = {
   userEntryCategoryId: number
   dayIndex: number
-  initialMinutes: number
-  inputMinutes: number
+  minutes: number
 }

@@ -48,6 +48,18 @@ export function getWeekNumber(d: Date): number {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
-export function getDifferenceInSeconds(a: Date, b: Date): number {
-  return Math.abs((a.getTime() - b.getTime()) / 1000)
+export function formatDateAsTwoLetterDayName(date: Date): string {
+  return date
+    .toLocaleDateString('nl-NL', {
+      weekday: 'long',
+    })
+    .substring(0, 2)
+}
+
+export function areDatesEqual(d1: Date, d2: Date): boolean {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  )
 }

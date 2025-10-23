@@ -3,27 +3,28 @@ import type {
   IGetUserEntryCategoriesResponse,
   IGetWeekUserEntriesResponse,
   IGetWeekUserEntriesResponseDay,
-  IPutUpdateWeekUserEntriesRequestDay,
 } from '@/api-client'
 import ApiClient from '@/api-client'
 import KeepiButton from '@/components/KeepiButton.vue'
-import KeepiInput from '@/components/KeepiInput.vue'
 import type { DateRange } from '@/date'
-import { toHoursMinutesNotation, tryParseTimeNotation, toShortDutchDate } from '@/format'
-import { type LoggableDay, loggableDays, type TimeTableEntry } from '@/types'
-import { ref, computed } from 'vue'
+import { toHoursMinutesNotation, tryParseTimeNotation } from '@/format'
+import { loggableDays, type TimeTableEntry } from '@/types'
+import { computed } from 'vue'
+import { useCustomSubmit } from '@/regle'
+import { useRegle } from '@regle/core'
+import { withMessage } from '@regle/rules'
+import WeekEditorDayLabel from '@/components/WeekEditorDayLabel.vue'
+import WeekEditorInput from '@/components/WeekEditorInput.vue'
 
 const apiClient = new ApiClient()
-const isSaving = ref(false)
 
 const props = defineProps<{
   dateRange: DateRange
   weekEntries: IGetWeekUserEntriesResponse
-  disabled: boolean
 }>()
 
 const emits = defineEmits<{
-  (e: 'reload'): void
+  (e: 'submit', value: TimeTableEntry[]): void
 }>()
 
 // TODO consider sharing this piece of error handling logic between components instead of duplicating it
@@ -43,274 +44,258 @@ const userEntryCategories = await apiClient.getAllUserEntryCategories().match(
     return <IGetUserEntryCategoriesResponse['categories']>[]
   },
 )
-const timeTableEntries = ref<TimeTableEntry[]>([
-  ...getTimeTableEntriesForDay(0, props.weekEntries.monday),
-  ...getTimeTableEntriesForDay(1, props.weekEntries.tuesday),
-  ...getTimeTableEntriesForDay(2, props.weekEntries.wednesday),
-  ...getTimeTableEntriesForDay(3, props.weekEntries.thursday),
-  ...getTimeTableEntriesForDay(4, props.weekEntries.friday),
-  ...getTimeTableEntriesForDay(5, props.weekEntries.saturday),
-  ...getTimeTableEntriesForDay(6, props.weekEntries.sunday),
-])
 
-function getTimeTableEntriesForDay(dayIndex: number, dayEntries: IGetWeekUserEntriesResponseDay) {
-  return userEntryCategories.map<TimeTableEntry>((category) => {
-    const initialMinutes = dayEntries.entries
-      .filter((e) => e.entryCategoryId == category.id)
-      .reduce((previous, current) => previous + current.minutes, 0)
-    return {
-      userEntryCategoryId: category.id,
-      dayIndex: dayIndex,
-      initialMinutes: initialMinutes,
-      inputMinutes: initialMinutes,
+const mapWeekEntriesToFlatHoursPerDayPerCategoryArray = () => {
+  const entries = [
+    ...createDayIndexEntries(0, props.weekEntries.monday),
+    ...createDayIndexEntries(1, props.weekEntries.tuesday),
+    ...createDayIndexEntries(2, props.weekEntries.wednesday),
+    ...createDayIndexEntries(3, props.weekEntries.thursday),
+    ...createDayIndexEntries(4, props.weekEntries.friday),
+    ...createDayIndexEntries(5, props.weekEntries.saturday),
+    ...createDayIndexEntries(6, props.weekEntries.sunday),
+  ]
+
+  const result: { minutes: string }[] = []
+  userEntryCategories.forEach((category) =>
+    loggableDays.forEach((_, dayIndex) => {
+      const minutes = entries
+        .filter((entry) => entry.entryCategoryId === category.id && entry.dayIndex === dayIndex)
+        .reduce<number>((previous, current) => previous + current.minutes, 0)
+      result.push({ minutes: toHoursMinutesNotation(minutes) })
+    }),
+  )
+
+  return result
+}
+
+function createDayIndexEntries(dayIndex: number, dayEntries: IGetWeekUserEntriesResponseDay) {
+  return dayEntries.entries.map((entry) => ({
+    entryCategoryId: entry.entryCategoryId,
+    remark: entry.remark,
+    minutes: entry.minutes,
+    dayIndex,
+  }))
+}
+
+const { r$ } = useRegle(
+  {
+    days: mapWeekEntriesToFlatHoursPerDayPerCategoryArray(),
+  },
+  {
+    days: {
+      $each: {
+        minutes: {
+          isValidNotation: withMessage((value) => {
+            return (
+              value == null ||
+              typeof value !== 'string' ||
+              value === '' ||
+              tryParseTimeNotation(value) != null
+            )
+          }, 'Geen geldige tijd'),
+        },
+      },
+    },
+  },
+)
+
+const categoryTotals = computed<Record<number, number>>(() => {
+  const result: Record<string, number> = {}
+  userEntryCategories.forEach((category, index) => {
+    const start = 0 + index * loggableDays.length
+    const end = start + loggableDays.length
+    result[category.id] = r$.$value.days
+      .slice(start, end)
+      .map((v) => tryParseTimeNotation(v.minutes) ?? 0)
+      .reduce((previous, current) => previous + current)
+  })
+
+  return result
+})
+
+const dayTotals = computed<{
+  monday: number
+  tuesday: number
+  wednesday: number
+  thursday: number
+  friday: number
+  saturday: number
+  sunday: number
+}>(() => {
+  const totalsPerDay = loggableDays.map(() => 0)
+  r$.$value.days.forEach((value, index) => {
+    const minutes = tryParseTimeNotation(value.minutes)
+    if (minutes != null) {
+      totalsPerDay[index % loggableDays.length] += minutes
     }
   })
-}
-
-const inputValues = ref<string[]>(
-  timeTableEntries.value.map((v) => toHoursMinutesNotation(v.inputMinutes)),
-)
-const inputValidationMode = ref<'optional-time' | undefined>(undefined)
-
-const onDayInput = (value: string, index: number) => {
-  if (index < 0 || index > inputValues.value.length) {
-    console.error(`Input index ${index} is out of range`)
-    return
+  return {
+    monday: totalsPerDay[0],
+    tuesday: totalsPerDay[1],
+    wednesday: totalsPerDay[2],
+    thursday: totalsPerDay[3],
+    friday: totalsPerDay[4],
+    saturday: totalsPerDay[5],
+    sunday: totalsPerDay[6],
   }
-
-  inputValues.value[index] = value
-
-  const parsedValue = tryParseTimeNotation(value) ?? 0
-  timeTableEntries.value[index].inputMinutes = parsedValue
-}
-
-const daySummaries = computed<string[]>(() => {
-  const minutesPerDay: number[] = []
-  for (let i = 0; i < loggableDays.length; ++i) {
-    const inputeMatches = timeTableEntries.value.filter((v) => v.dayIndex === i)
-    minutesPerDay.push(
-      inputeMatches.reduce<number>((previous, current) => previous + current.inputMinutes, 0),
-    )
-  }
-
-  return minutesPerDay.map((m) => toHoursMinutesNotation(m))
 })
 
-const categorySummaries = computed<string[]>(() => {
-  const minutesPerProject: number[] = []
-  for (let i = 0; i < userEntryCategories.length; ++i) {
-    const category = userEntryCategories[i]
-    const matches = timeTableEntries.value.filter((v) => v.userEntryCategoryId === category.id)
-    minutesPerProject.push(
-      matches.reduce<number>((previous, current) => previous + current.inputMinutes, 0),
-    )
-  }
-
-  return minutesPerProject.map((m) => toHoursMinutesNotation(m))
-})
-
-const grandTotal = computed<string>(() => {
-  const totalMinutes = timeTableEntries.value.reduce<number>(
-    (previous, current) => previous + current.inputMinutes,
-    0,
+const grandTotal = computed<number>(() => {
+  return (
+    dayTotals.value.monday +
+    dayTotals.value.tuesday +
+    dayTotals.value.wednesday +
+    dayTotals.value.thursday +
+    dayTotals.value.friday +
+    dayTotals.value.saturday +
+    dayTotals.value.sunday
   )
-  return toHoursMinutesNotation(totalMinutes)
 })
 
-const today = computed<LoggableDay | null>(() => {
-  const today = new Date()
-  const dateIndex = props.dateRange.dates.findIndex(
-    (d) =>
-      d.getUTCFullYear() === today.getUTCFullYear() &&
-      d.getUTCMonth() === today.getUTCMonth() &&
-      d.getUTCDate() === today.getUTCDate(),
-  )
-  if (dateIndex < 0) {
-    return null
-  }
-  return loggableDays[dateIndex]
+const { onSubmit, forceShowError } = useCustomSubmit({
+  submitCallback: () => {
+    const result: TimeTableEntry[] = []
+
+    userEntryCategories.forEach((_, categoryIndex) =>
+      loggableDays.forEach((_, dayIndex) => {
+        const formValueIndex = dayIndex + categoryIndex * loggableDays.length
+        result.push({
+          userEntryCategoryId: userEntryCategories[categoryIndex].id,
+          dayIndex: dayIndex,
+          minutes: tryParseTimeNotation(r$.$value.days[formValueIndex].minutes) ?? 0,
+        })
+      }),
+    )
+
+    emits('submit', result)
+  },
 })
 
-const onKey = (direction: 'up' | 'down') => {
-  if (!(document.activeElement instanceof HTMLInputElement)) {
+const onKeyDown = (event: KeyboardEvent) => {
+  if (event.target == null || !(event.target instanceof HTMLInputElement)) {
+    console.error('Unexpected element as target', event.target)
     return
   }
 
-  const currentInputName = document.activeElement.name
-  if (!currentInputName || currentInputName.match(/^dayinput-[0-9]+$/) == null) {
-    console.debug(`Ignoring input key event on unexpected input with name ${currentInputName}`)
+  const inputId = parseInt(event.target.id)
+  if (Number.isNaN(inputId) || inputId < 0) {
+    console.error('Input element is missing a numeric ID attribute', event.target)
     return
   }
 
-  const currentEntryIndex = parseInt(currentInputName.split('-')[1])
-  let newIndex = currentEntryIndex
-  switch (direction) {
-    case 'up':
-      newIndex -= loggableDays.length
-      if (newIndex < 0) {
-        newIndex += inputValues.value.length
-      }
-      break
-
-    case 'down':
-      newIndex = (newIndex + loggableDays.length) % inputValues.value.length
-      break
-  }
-
-  tryFocusOn(`dayinput-${newIndex}`)
-}
-
-function tryFocusOn(name: string) {
-  const hits = document.getElementsByName(name)
-  if (hits.length > 0) {
-    hits[0].focus()
+  let focusOnIndex = inputId
+  if (event.code === 'ArrowDown') {
+    focusOnIndex = (inputId + loggableDays.length) % r$.$value.days.length
+  } else if (event.code === 'ArrowUp') {
+    focusOnIndex = inputId - loggableDays.length
+    if (focusOnIndex < 0) {
+      focusOnIndex += r$.$value.days.length
+    }
   } else {
-    console.debug(`Attempted focus on ${name} yielded no elements`)
-  }
-}
-
-const getInputIndex = (categoryIndex: number, dayIndex: number): number => {
-  if (categoryIndex < 0 || categoryIndex > userEntryCategories.length) {
-    throw new Error(`Category index value ${categoryIndex} is out of range`)
-  }
-  if (dayIndex < 0 || dayIndex > loggableDays.length) {
-    throw new Error(`Day index value ${dayIndex} is out of range`)
-  }
-
-  return categoryIndex * loggableDays.length + dayIndex
-}
-
-const onSubmit = async () => {
-  if (isSaving.value) {
     return
   }
 
-  isSaving.value = true
-
-  await apiClient
-    .updateWeekUserEntries(props.dateRange.year, props.dateRange.weekNumber, {
-      monday: getUpdateWeekUserEntriesRequestDay(0, timeTableEntries.value),
-      tuesday: getUpdateWeekUserEntriesRequestDay(1, timeTableEntries.value),
-      wednesday: getUpdateWeekUserEntriesRequestDay(2, timeTableEntries.value),
-      thursday: getUpdateWeekUserEntriesRequestDay(3, timeTableEntries.value),
-      friday: getUpdateWeekUserEntriesRequestDay(4, timeTableEntries.value),
-      saturday: getUpdateWeekUserEntriesRequestDay(5, timeTableEntries.value),
-      sunday: getUpdateWeekUserEntriesRequestDay(6, timeTableEntries.value),
-    })
-    .match(
-      () => {},
-      () => {
-        // TODO handle this gracefully without losing the user input preferably
-      },
-    )
-
-  isSaving.value = false
-  emits('reload')
-}
-
-function getUpdateWeekUserEntriesRequestDay(dayIndex: number, entries: TimeTableEntry[]) {
-  return <IPutUpdateWeekUserEntriesRequestDay>{
-    entries: entries
-      .filter((e) => e.dayIndex === 0)
-      .map((e) => ({
-        entryCategoryId: e.userEntryCategoryId,
-        minutes: e.inputMinutes,
-      })),
+  const candidateElement = document.getElementById(focusOnIndex.toString())
+  if (candidateElement == null) {
+    console.error(`Cannot focus element with ID ${focusOnIndex} because it does not exist`)
+    return
   }
+
+  candidateElement.focus()
 }
 </script>
 
 <template>
-  <div class="relative transition duration-200" :class="{ 'blur-sm': isSaving || props.disabled }">
-    <div
-      class="absolute top-0 left-0 z-10 h-full w-full cursor-not-allowed"
-      v-if="isSaving || props.disabled"
-    ></div>
-
-    <div>
-      <div>
-        <div class="flex justify-center" style="max-width: 100vw">
-          <table class="table-auto">
-            <tr>
-              <th></th>
-              <th v-for="(day, index) in loggableDays" :key="day">
-                <span :title="toShortDutchDate(dateRange.dates[index])">{{
-                  day.substring(0, 2)
-                }}</span>
-                <span
-                  class="text-blue-500"
-                  :class="{ invisible: day !== today }"
-                  :title="`Het is vandaag ${day}`"
-                  >*</span
-                >
-              </th>
-              <th></th>
-            </tr>
-
-            <tr v-for="(category, categoryIndex) in userEntryCategories" :key="category.id">
-              <td>
-                <span class="pr-1" :class="{ 'text-gray-500': !category.enabled }">{{
-                  category.name
-                }}</span>
-              </td>
-
-              <td v-for="(_, dayIndex) in loggableDays" :key="`${category.id}-${dayIndex}`">
-                <KeepiInput
-                  :name="`dayinput-${getInputIndex(categoryIndex, dayIndex)}`"
-                  :model-value="inputValues[getInputIndex(categoryIndex, dayIndex)]"
-                  @update:model-value="onDayInput($event, getInputIndex(categoryIndex, dayIndex))"
-                  :readonly="!category.enabled"
-                  :tabindex="category.enabled ? 0 : -1"
-                  :input-validation="inputValidationMode"
-                  class="text-center"
-                  :class="{ 'text-gray-500': !category.enabled }"
-                  style="width: 65px"
-                  @keyup.up="onKey('up')"
-                  @keyup.down="onKey('down')"
-                />
-              </td>
-
-              <td class="text-center text-gray-500">
-                <div style="min-width: 65px">
-                  <span class="pl-1">
-                    {{ categorySummaries[categoryIndex] }}
-                  </span>
-                </div>
-              </td>
-            </tr>
-
-            <tr>
-              <td></td>
-
-              <td v-for="(day, index) in loggableDays" class="text-center text-gray-500" :key="day">
-                <div class="min-h-6">
-                  <span>
-                    {{ daySummaries[index] }}
-                  </span>
-                </div>
-              </td>
-
-              <td class="text-center text-gray-500">
-                <div class="min-h-6" style="min-width: 65px">
-                  <span>
-                    {{ grandTotal }}
-                  </span>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="grid w-full grid-cols-3 space-x-2 p-3">
-          <div></div>
-
-          <div></div>
-
-          <div class="flex justify-end">
-            <KeepiButton class="self-end" @click="onSubmit" variant="green"> Opslaan </KeepiButton>
-          </div>
-        </div>
+  <div class="flex flex-col space-y-4">
+    <div class="flex flex-col gap-2 overflow-x-scroll overflow-y-hidden">
+      <div class="grid grid-cols-[repeat(10,minmax(4rem,1fr))] gap-2 font-bold">
+        <span class="col-span-2">Categorie</span>
+        <WeekEditorDayLabel v-for="date in dateRange.dates" :key="date.getTime()" :date="date" />
+        <span>Totalen</span>
       </div>
+
+      <div
+        class="grid grid-cols-[repeat(10,minmax(4rem,1fr))] gap-2"
+        v-for="(category, index) in userEntryCategories"
+        :key="category.id"
+      >
+        <span class="col-span-2 truncate overflow-hidden text-gray-500">
+          {{ category.name }}
+        </span>
+        <WeekEditorInput
+          v-model="r$.$value.days[0 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[0 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${0 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[1 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[1 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${1 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[2 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[2 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${2 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[3 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[3 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${3 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[4 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[4 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${4 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[5 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[5 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${5 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <WeekEditorInput
+          v-model="r$.$value.days[6 + index * loggableDays.length].minutes"
+          :field="r$.$fields.days.$each[6 + index * loggableDays.length].$fields.minutes"
+          :force-show-error="forceShowError"
+          :id="`${6 + index * loggableDays.length}`"
+          @keydown="onKeyDown"
+        />
+        <span class="text-center text-gray-500">
+          {{ toHoursMinutesNotation(categoryTotals[category.id]) }}
+        </span>
+      </div>
+
+      <div
+        class="grid min-h-6 grid-cols-[repeat(10,minmax(4rem,1fr))] gap-2 text-center text-gray-500"
+      >
+        <span class="col-span-2"></span>
+        <span>{{ toHoursMinutesNotation(dayTotals.monday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.tuesday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.wednesday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.thursday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.friday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.saturday) }}</span>
+        <span>{{ toHoursMinutesNotation(dayTotals.sunday) }}</span>
+        <span>
+          {{ toHoursMinutesNotation(grandTotal) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="text-right">
+      <KeepiButton :disabled="r$.$invalid" variant="green" @click="onSubmit">Opslaan</KeepiButton>
     </div>
   </div>
 </template>
