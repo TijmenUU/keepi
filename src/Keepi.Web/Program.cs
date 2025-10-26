@@ -1,17 +1,26 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AspNet.Security.OAuth.GitHub;
+using Castle.DynamicProxy;
 using FastEndpoints;
 using Keepi.Api.DependencyInjection;
 using Keepi.Api.Users.Get;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Keepi.Web;
 
 public partial class Program
 {
+    const string serviceName = "keepi.web";
+
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -100,6 +109,27 @@ public partial class Program
                 options.Scope.Add("user:email");
             });
 
+        builder.Services.Configure<OtlpExporterOptions>(
+            builder.Configuration.GetSection("OpenTelemetry:Otlp")
+        );
+        builder
+            .Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(serviceName))
+            .UseOtlpExporter()
+            .WithLogging()
+            .WithTracing(tracing =>
+                tracing
+                    .AddAspNetCoreInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddSource(UseCaseTraceInterceptor.ActivitySourceName)
+            )
+            .WithMetrics(metrics => metrics.AddAspNetCoreInstrumentation());
+
+        builder.Services.AddSingleton(new ProxyGenerator()); // Used to generate interceptors in order to trace the use cases (open telemetry)
+
+        // Note that the steps below should be last in the service registration process
+        RegisterTraceInterceptorForUseCases(builder.Services);
+
         var app = builder.Build();
 
         app.UseHttpsRedirection();
@@ -173,5 +203,82 @@ public partial class Program
         }
 
         app.Run();
+    }
+
+    private static void RegisterTraceInterceptorForUseCases(IServiceCollection services)
+    {
+        services.AddSingleton<UseCaseTraceInterceptor>();
+
+        var targetAssembly =
+            typeof(Core.UserEntryCategories.IUpdateUserEntryCategoriesUseCase).Assembly;
+        var useCaseRegistrations = services
+            .Where(s =>
+                s.ServiceType.Assembly == targetAssembly
+                && s.ServiceType.IsInterface
+                && s.ServiceType.Name.EndsWith("UseCase")
+            )
+            .ToArray();
+        foreach (var registration in useCaseRegistrations)
+        {
+            Debug.Assert(registration.ImplementationType != null);
+
+            var serviceType = registration.ServiceType;
+            var implementationType = registration.ImplementationType;
+            var lifetime = registration.Lifetime;
+
+            services.Remove(registration);
+            services.Add(
+                new ServiceDescriptor(
+                    serviceType,
+                    provider =>
+                    {
+                        var implemtation = ActivatorUtilities.CreateInstance(
+                            provider,
+                            implementationType
+                        );
+
+                        var proxyGenerator = provider.GetRequiredService<ProxyGenerator>();
+                        var interceptor = provider.GetRequiredService<UseCaseTraceInterceptor>();
+                        return proxyGenerator.CreateInterfaceProxyWithTargetInterface(
+                            serviceType,
+                            implemtation,
+                            interceptor
+                        );
+                    },
+                    lifetime
+                )
+            );
+        }
+    }
+
+#pragma warning disable CS8634 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'class' constraint.
+    // The type parameter is allowed to have null values according to the documentation, see
+    // https://github.com/JSkimming/Castle.Core.AsyncInterceptor?tab=readme-ov-file#option-3-extend-processingasyncinterceptortstate-class-to-intercept-invocations
+    class UseCaseTraceInterceptor : ProcessingAsyncInterceptor<Activity?>, IDisposable
+#pragma warning restore CS8634 // The type cannot be used as type parameter in the generic type or method. Nullability of type argument doesn't match 'class' constraint.
+    {
+        public const string ActivitySourceName = "UseCaseTraceActivitySource";
+        private readonly ActivitySource activitySource = new(ActivitySourceName);
+
+        public void Dispose()
+        {
+            activitySource.Dispose();
+        }
+
+        protected override Activity? StartingInvocation(IInvocation invocation)
+        {
+            // See https://learn.microsoft.com/en-us/dotnet/core/diagnostics/distributed-tracing-instrumentation-walkthroughs
+            // for more information how/why this works
+            return activitySource.StartActivity(
+                $"{invocation.TargetType.Name}.{invocation.Method.Name}",
+                ActivityKind.Internal
+            );
+        }
+
+        protected override void CompletedInvocation(IInvocation invocation, Activity? state)
+        {
+            state?.Dispose();
+            base.CompletedInvocation(invocation, state);
+        }
     }
 }

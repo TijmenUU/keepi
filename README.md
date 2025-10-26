@@ -64,3 +64,25 @@ dotnet linux-dev-certs install
 ### EF Core exceptions
 
 By default the EF core exceptions are not exactly developer friendly, hence a third party strongly typed exceptions [package](https://github.com/Giorgi/EntityFramework.Exceptions) is used to make it easier to implement specific exception behaviour.
+
+### Telemetry
+
+This project uses Open Telemetry and locally you can use this by running the Aspire dashboard standalone:
+
+```bash
+docker run --rm -it -d \
+    -p 18888:18888 \
+    -p 4317:18889 \
+    --name aspire-dashboard \
+    mcr.microsoft.com/dotnet/aspire-dashboard:latest
+```
+
+Once the container is running, use the `docker logs` functionality or similar to find the API token:
+
+```bash
+user@DESKTOP$~ docker logs 413946f9acdf
+...
+info: Aspire.Dashboard.DashboardWebApplication[0]
+      Login to the dashboard at http://localhost:18888/login?t=f9ed81434d7ec8903db5fb34b1be12e7 . The URL may need changes depending on how network access to the container is configured.
+...
+```
