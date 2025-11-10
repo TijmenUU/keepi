@@ -74,7 +74,7 @@ internal class UserEntryCategoryRepository(
                     var existingEntity = existingEntities.FirstOrDefault(e => e.Id == entity.Id);
                     if (existingEntity == null)
                     {
-                        return MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateFailure(
+                        return Result.Failure(
                             UpdateUserEntryCategoriesError.UserEntryCategoryDoesNotExist
                         );
                     }
@@ -111,23 +111,19 @@ internal class UserEntryCategoryRepository(
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
             await transaction.CommitAsync(cancellationToken: cancellationToken);
 
-            return MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateSuccess();
+            return Result.Success<UpdateUserEntryCategoriesError>();
         }
         // This is a bit of a rough catch as it is not known what caused the
         // exception. Sqlite does not provide the exact constraint nor column name
         // so for now this seems all that can be done.
         catch (UniqueConstraintException)
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateFailure(
-                UpdateUserEntryCategoriesError.DuplicateName
-            );
+            return Result.Failure(UpdateUserEntryCategoriesError.DuplicateName);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst updating existing entry category");
-            return MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateFailure(
-                UpdateUserEntryCategoriesError.Unknown
-            );
+            return Result.Failure(UpdateUserEntryCategoriesError.Unknown);
         }
     }
 }

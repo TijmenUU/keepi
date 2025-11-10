@@ -62,30 +62,26 @@ internal class UpdateWeekUserEntriesUseCase(
                 );
                 if (userEntrCategory == null)
                 {
-                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                    return Result.Failure(
                         UpdateWeekUserEntriesUseCaseError.UnknownUserEntryCategory
                     );
                 }
 
                 if (!userEntrCategory.IsEntryAllowedForDate(date))
                 {
-                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
+                    return Result.Failure(
                         UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory
                     );
                 }
 
                 if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
                 {
-                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
-                        UpdateWeekUserEntriesUseCaseError.InvalidMinutes
-                    );
+                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
                 }
 
                 if (!UserEntryEntity.IsValidRemark(entry.Remark))
                 {
-                    return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
-                        UpdateWeekUserEntriesUseCaseError.InvalidRemark
-                    );
+                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
                 }
 
                 userEntryEntities.Add(
@@ -110,11 +106,9 @@ internal class UpdateWeekUserEntriesUseCase(
 
         if (result.Succeeded)
         {
-            return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateSuccess();
+            return Result.Success<UpdateWeekUserEntriesUseCaseError>();
         }
-        return MaybeErrorResult<UpdateWeekUserEntriesUseCaseError>.CreateFailure(
-            UpdateWeekUserEntriesUseCaseError.Unknown
-        );
+        return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
     }
 }
 

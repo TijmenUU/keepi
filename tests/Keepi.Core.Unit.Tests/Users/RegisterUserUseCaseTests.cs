@@ -177,7 +177,7 @@ public class RegisterUserUseCaseTests
                         It.IsAny<CancellationToken>()
                     )
                 )
-                .ReturnsAsync(MaybeErrorResult<StoreNewUserError>.CreateSuccess());
+                .ReturnsAsync(Result.Success<StoreNewUserError>());
 
             return this;
         }
@@ -194,7 +194,7 @@ public class RegisterUserUseCaseTests
                         It.IsAny<CancellationToken>()
                     )
                 )
-                .ReturnsAsync(MaybeErrorResult<StoreNewUserError>.CreateFailure(error));
+                .ReturnsAsync(Result.Failure(error));
 
             return this;
         }

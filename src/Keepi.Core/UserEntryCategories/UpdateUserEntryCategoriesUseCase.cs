@@ -56,18 +56,14 @@ internal class UpdateUserEntryCategoriesUseCase(
                 .Any(c => c > 1)
         )
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.DuplicateId
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.DuplicateId);
         }
 
         if (
             userEntryCategories.Select(c => c.Name).Distinct().Count() != userEntryCategories.Length
         )
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.DuplicateName
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.DuplicateName);
         }
 
         if (
@@ -75,9 +71,7 @@ internal class UpdateUserEntryCategoriesUseCase(
             != userEntryCategories.Length
         )
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.DuplicateOrdinal
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.DuplicateOrdinal);
         }
 
         var updateResult = await updateUserEntryCategories.Execute(
@@ -97,25 +91,21 @@ internal class UpdateUserEntryCategoriesUseCase(
 
         if (updateResult.TrySuccess(out var error))
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateSuccess();
+            return Result.Success<UpdateUserEntryCategoriesUseCaseError>();
         }
 
         if (error == UpdateUserEntryCategoriesError.DuplicateName)
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.DuplicateName
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.DuplicateName);
         }
         if (error == UpdateUserEntryCategoriesError.UserEntryCategoryDoesNotExist)
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
+            return Result.Failure(
                 UpdateUserEntryCategoriesUseCaseError.UserEntryCategoryDoesNotExist
             );
         }
 
-        return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-            UpdateUserEntryCategoriesUseCaseError.Unknown
-        );
+        return Result.Failure(UpdateUserEntryCategoriesUseCaseError.Unknown);
     }
 
     private static IMaybeErrorResult<UpdateUserEntryCategoriesUseCaseError> ValidateUserEntryCategory(
@@ -124,9 +114,7 @@ internal class UpdateUserEntryCategoriesUseCase(
     {
         if (!UserEntryCategoryEntity.IsValidName(category.Name))
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.MalformedName
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.MalformedName);
         }
 
         if (
@@ -136,11 +124,9 @@ internal class UpdateUserEntryCategoriesUseCase(
             )
         )
         {
-            return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateFailure(
-                UpdateUserEntryCategoriesUseCaseError.InvalidActiveDateRange
-            );
+            return Result.Failure(UpdateUserEntryCategoriesUseCaseError.InvalidActiveDateRange);
         }
 
-        return MaybeErrorResult<UpdateUserEntryCategoriesUseCaseError>.CreateSuccess();
+        return Result.Success<UpdateUserEntryCategoriesUseCaseError>();
     }
 }

@@ -44,21 +44,19 @@ internal sealed class UserRepository(
             );
             await databaseContext.SaveChangesAsync(cancellationToken);
 
-            return MaybeErrorResult<StoreNewUserError>.CreateSuccess();
+            return Result.Success<StoreNewUserError>();
         }
         // This is a bit of a rough catch as it is not known what caused the
         // exception. Sqlite does not provide the exact constraint nor column name
         // so for now this seems all that can be done.
         catch (UniqueConstraintException)
         {
-            return MaybeErrorResult<StoreNewUserError>.CreateFailure(
-                StoreNewUserError.DuplicateUser
-            );
+            return Result.Failure(StoreNewUserError.DuplicateUser);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst storing new user");
-            return MaybeErrorResult<StoreNewUserError>.CreateFailure(StoreNewUserError.Unknown);
+            return Result.Failure(StoreNewUserError.Unknown);
         }
     }
 
@@ -78,12 +76,12 @@ internal sealed class UserRepository(
 
             if (user == null)
             {
-                return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateFailure(
+                return Result.Failure<Core.Users.UserEntity, GetUserError>(
                     GetUserError.DoesNotExist
                 );
             }
 
-            return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateSuccess(
+            return Result.Success<Core.Users.UserEntity, GetUserError>(
                 new Core.Users.UserEntity(
                     id: user.Id,
                     emailAddress: user.EmailAddress,
@@ -95,9 +93,7 @@ internal sealed class UserRepository(
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst trying to get user");
-            return ValueOrErrorResult<Core.Users.UserEntity, GetUserError>.CreateFailure(
-                GetUserError.Unknown
-            );
+            return Result.Failure<Core.Users.UserEntity, GetUserError>(GetUserError.Unknown);
         }
     }
 

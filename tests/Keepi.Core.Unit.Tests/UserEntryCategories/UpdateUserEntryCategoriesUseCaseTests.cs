@@ -7,7 +7,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
     [Fact]
     public async Task Execute_stores_existing_user_entry_categories()
     {
-        var context = new TestContext().WithSuccessfulUpdateUserentryCategoryStore();
+        var context = new TestContext().WithSuccessfulUpdateUserEntryCategoryStore();
 
         var useCase = context.BuildUseCase();
 
@@ -63,7 +63,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
     [Fact]
     public async Task Execute_stores_new_user_entry_categories()
     {
-        var context = new TestContext().WithSuccessfulUpdateUserentryCategoryStore();
+        var context = new TestContext().WithSuccessfulUpdateUserEntryCategoryStore();
 
         var useCase = context.BuildUseCase();
 
@@ -119,7 +119,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
     [Fact]
     public async Task Execute_rejects_duplicate_ids()
     {
-        var context = new TestContext().WithSuccessfulUpdateUserentryCategoryStore();
+        var context = new TestContext().WithSuccessfulUpdateUserEntryCategoryStore();
 
         var useCase = context.BuildUseCase();
 
@@ -153,7 +153,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
     [Fact]
     public async Task Execute_rejects_duplicate_names()
     {
-        var context = new TestContext().WithSuccessfulUpdateUserentryCategoryStore();
+        var context = new TestContext().WithSuccessfulUpdateUserEntryCategoryStore();
 
         var useCase = context.BuildUseCase();
 
@@ -187,7 +187,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
     [Fact]
     public async Task Execute_rejects_duplicate_ordinals()
     {
-        var context = new TestContext().WithSuccessfulUpdateUserentryCategoryStore();
+        var context = new TestContext().WithSuccessfulUpdateUserEntryCategoryStore();
 
         var useCase = context.BuildUseCase();
 
@@ -236,7 +236,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
         UpdateUserEntryCategoriesUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithUpdateUserentryCategoryStoreError(storeError);
+        var context = new TestContext().WithUpdateUserEntryCategoryStoreError(storeError);
 
         var useCase = context.BuildUseCase();
 
@@ -264,7 +264,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
         public Mock<IUpdateUserEntryCategories> UpdateUserEntryCategoryMock { get; } =
             new(MockBehavior.Strict);
 
-        public TestContext WithSuccessfulUpdateUserentryCategoryStore()
+        public TestContext WithSuccessfulUpdateUserEntryCategoryStore()
         {
             UpdateUserEntryCategoryMock
                 .Setup(x =>
@@ -274,12 +274,12 @@ public class UpdateUserEntryCategoriesUseCaseTests
                         It.IsAny<CancellationToken>()
                     )
                 )
-                .ReturnsAsync(MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateSuccess());
+                .ReturnsAsync(Result.Success<UpdateUserEntryCategoriesError>());
 
             return this;
         }
 
-        public TestContext WithUpdateUserentryCategoryStoreError(
+        public TestContext WithUpdateUserEntryCategoryStoreError(
             UpdateUserEntryCategoriesError error
         )
         {
@@ -292,7 +292,7 @@ public class UpdateUserEntryCategoriesUseCaseTests
                     )
                 )
                 .ReturnsAsync(
-                    MaybeErrorResult<UpdateUserEntryCategoriesError>.CreateFailure(error)
+                    Result.Failure(error)
                 );
 
             return this;

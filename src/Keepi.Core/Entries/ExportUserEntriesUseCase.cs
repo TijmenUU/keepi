@@ -25,16 +25,12 @@ internal class ExportUserEntriesUseCase(IGetExportUserEntries getExportUserEntri
     {
         if (start >= stop)
         {
-            return ValueOrErrorResult<
-                IAsyncEnumerable<ExportUserEntry>,
-                ExportUserEntriesUseCaseError
-            >.CreateFailure(ExportUserEntriesUseCaseError.StartGreaterThanStop);
+            return Result.Failure<IAsyncEnumerable<ExportUserEntry>, ExportUserEntriesUseCaseError>(
+                ExportUserEntriesUseCaseError.StartGreaterThanStop
+            );
         }
 
-        return ValueOrErrorResult<
-            IAsyncEnumerable<ExportUserEntry>,
-            ExportUserEntriesUseCaseError
-        >.CreateSuccess(
+        return Result.Success<IAsyncEnumerable<ExportUserEntry>, ExportUserEntriesUseCaseError>(
             getExportUserEntries.Execute(
                 userId: userId,
                 start: start,

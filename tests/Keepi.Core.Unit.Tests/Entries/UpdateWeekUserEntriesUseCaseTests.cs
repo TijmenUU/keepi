@@ -29,7 +29,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             )
             .WithOverwriteUserEntriesResult(
-                MaybeErrorResult<OverwriteUserEntriesForDatesError>.CreateSuccess()
+                Result.Success<OverwriteUserEntriesForDatesError>()
             );
 
         var useCase = context.BuildUseCase();
@@ -385,7 +385,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             )
             .WithOverwriteUserEntriesResult(
-                MaybeErrorResult<OverwriteUserEntriesForDatesError>.CreateFailure(
+                Result.Failure(
                     OverwriteUserEntriesForDatesError.Unknown
                 )
             );

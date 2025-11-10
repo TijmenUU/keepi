@@ -52,7 +52,7 @@ internal class UserEntryRepository(
                 cancellationToken: cancellationToken
             );
 
-            return MaybeErrorResult<OverwriteUserEntriesForDatesError>.CreateSuccess();
+            return Result.Success<OverwriteUserEntriesForDatesError>();
         }
         catch (Exception ex)
         {
@@ -63,9 +63,7 @@ internal class UserEntryRepository(
                 dates.FirstOrDefault(),
                 dates.LastOrDefault()
             );
-            return MaybeErrorResult<OverwriteUserEntriesForDatesError>.CreateFailure(
-                OverwriteUserEntriesForDatesError.Unknown
-            );
+            return Result.Failure(OverwriteUserEntriesForDatesError.Unknown);
         }
         finally
         {
