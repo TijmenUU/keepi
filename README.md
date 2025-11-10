@@ -10,12 +10,12 @@ Keepi is a simple time tracking web application. It supports the user registerin
 
 ## Repository structure
 
-This repository roughly follows the [.NET example](https://devblogs.microsoft.com/ise/next-level-clean-architecture-boilerplate/) of clean architecture. Key to the concept of clean architecture is that dependencies flow inward and any implementation details are provided through so called plug-ins. In practice this means that the `src/Keepi.Core` project represents the center towards which all projects "point" in terms of dependency. A project such as the `src/Keepi.Infrastructure.Data` provides a persistence plug-in to the core by implementing the persistence related interfaces declared by the core.
+This repository roughly follows the [.NET example](https://devblogs.microsoft.com/ise/next-level-clean-architecture-boilerplate/) of clean architecture. Key to the concept of clean architecture is that dependencies flow inward and any implementation details are provided through so-called plug-ins. In practice this means that the `src/Keepi.Core` project represents the center towards which all projects "point" in terms of dependency. A project such as the `src/Keepi.Infrastructure.Data` provides a persistence plug-in to the core by implementing the persistence related interfaces declared by the core.
 
-The following (non testing) projects are part of this repository, followed by a short description:
+The following (non-testing) projects are part of this repository, followed by a short description:
 
 | Name                      | Description                                                                                                                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+|---------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | Keepi.Core                | The project containing all business logic without concerning itself with the exact implementation of input and output.                              |
 | Keepi.Infrastructure.Data | A persistence layer implemented through EF Core and Sqlite3.                                                                                        |
 | Keepi.Api                 | A JSON API serving as an input output wrapper around Keepi.Core                                                                                     |
@@ -67,7 +67,7 @@ By default the EF core exceptions are not exactly developer friendly, hence a th
 
 ### Telemetry
 
-This project uses Open Telemetry and locally you can use this by running the Aspire dashboard standalone:
+This project uses Open Telemetry. Locally you can use this by running the Aspire dashboard standalone:
 
 ```bash
 docker run --rm -it -d \
