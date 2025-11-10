@@ -9,3 +9,7 @@ published/
 keepi.db
 keepi.db-wal
 keepi.db-shm
+
+# JetBrains Rider IDE
+.idea/
+Keepi.sln.DotSettings.user
