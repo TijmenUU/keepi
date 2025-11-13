@@ -92,7 +92,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
         exportStream.ReadLine().ShouldBe("16-06-2025;Administratie;45;Project Flyby");
         exportStream.ReadLine().ShouldBe("17-06-2025;Dev;30;");
         exportStream.ReadLine().ShouldBe("18-06-2025;Administratie;15;");
-        exportStream.EndOfStream.ShouldBeTrue();
+        (await exportStream.ReadLineAsync()).ShouldBeNull();
     }
 
     private static async Task<int[]> CreateUserEntryCategories(
