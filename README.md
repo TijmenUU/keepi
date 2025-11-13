@@ -28,7 +28,7 @@ The following (non-testing) projects are part of this repository, followed by a 
 
 - [bun](https://bun.sh/)
 - [Csharpier](https://csharpier.com/)
-- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) including the ASP.Net runtime
+- [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/10.0) including the ASP.Net runtime
 - [SQLite3](https://sqlite.org/)
 
 ### Secrets
