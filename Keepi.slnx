@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Keepi.Infrastructure.Data/Keepi.Infrastructure.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Keepi.Core.Unit.Tests/Keepi.Core.Unit.Tests.csproj" />
+    <Project Path="tests/Keepi.Web.Integration.Tests/Keepi.Web.Integration.Tests.csproj" />
+  </Folder>
+  <Project Path="src/Keepi.Api/Keepi.Api.csproj" />
+  <Project Path="src/Keepi.Core/Keepi.Core.csproj" />
+  <Project Path="src/Keepi.Web/Keepi.Web.csproj" />
+</Solution>
