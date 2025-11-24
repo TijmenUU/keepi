@@ -2,6 +2,24 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Keepi.Core;
 
+public interface IResult
+{
+    bool Succeeded { get; }
+}
+
+public interface IMaybeErrorResult<TError> : IResult
+{
+    bool TrySuccess([NotNullWhen(returnValue: false)] out TError? errorResult);
+}
+
+public interface IValueOrErrorResult<TSuccess, TError> : IResult
+{
+    bool TrySuccess(
+        [NotNullWhen(returnValue: true)] out TSuccess? successResult,
+        [NotNullWhen(returnValue: false)] out TError? errorResult
+    );
+}
+
 public static class Result
 {
     public static IMaybeErrorResult<TError> Success<TError>()
@@ -32,10 +50,11 @@ public static class Result
         );
     }
 
-    private class MaybeErrorResult<TError> : IMaybeErrorResult<TError>
+    private sealed class MaybeErrorResult<TError> : IMaybeErrorResult<TError>
     {
+        private readonly TError? errorOrNull;
+
         public bool Succeeded { get; }
-        public TError? ErrorOrNull { get; }
 
         public MaybeErrorResult(bool succeeded, TError? errorResult)
         {
@@ -47,39 +66,24 @@ public static class Result
                 );
             }
 
+            errorOrNull = errorResult;
             Succeeded = succeeded;
-            ErrorOrNull = errorResult;
         }
 
         public bool TrySuccess([NotNullWhen(false)] out TError? errorResult)
         {
-            errorResult = ErrorOrNull;
+            errorResult = errorOrNull;
             return Succeeded;
         }
     }
 
-    private class ValueOrErrorResult<TSuccess, TError> : IValueOrErrorResult<TSuccess, TError>
+    private sealed class ValueOrErrorResult<TSuccess, TError>
+        : IValueOrErrorResult<TSuccess, TError>
     {
-        private TSuccess? SuccessOrNull { get; }
-
-        public TSuccess SuccessOrThrow
-        {
-            get
-            {
-                if (!Succeeded || SuccessOrNull == null)
-                {
-                    throw new InvalidOperationException(
-                        "Non successful result cannot return a success value"
-                    );
-                }
-
-                return SuccessOrNull;
-            }
-        }
+        private readonly TError? errorOrNull;
+        private readonly TSuccess? successOrNull;
 
         public bool Succeeded { get; }
-
-        public TError? ErrorOrNull { get; }
 
         public ValueOrErrorResult(bool succeeded, TSuccess? successResult, TError? errorResult)
         {
@@ -99,9 +103,9 @@ public static class Result
                 );
             }
 
+            successOrNull = successResult;
+            errorOrNull = errorResult;
             Succeeded = succeeded;
-            SuccessOrNull = successResult;
-            ErrorOrNull = errorResult;
         }
 
         public bool TrySuccess(
@@ -109,31 +113,9 @@ public static class Result
             [NotNullWhen(false)] out TError? errorResult
         )
         {
-            successResult = SuccessOrNull;
-            errorResult = ErrorOrNull;
+            successResult = successOrNull;
+            errorResult = errorOrNull;
             return Succeeded;
         }
     }
-}
-
-public interface IResult
-{
-    bool Succeeded { get; }
-}
-
-public interface IMaybeErrorResult<TError> : IResult
-{
-    bool TrySuccess([NotNullWhen(returnValue: false)] out TError? errorResult);
-    TError? ErrorOrNull { get; }
-}
-
-public interface IValueOrErrorResult<TSuccess, TError> : IResult
-{
-    bool TrySuccess(
-        [NotNullWhen(returnValue: true)] out TSuccess? successResult,
-        [NotNullWhen(returnValue: false)] out TError? errorResult
-    );
-
-    TSuccess SuccessOrThrow { get; }
-    TError? ErrorOrNull { get; }
 }

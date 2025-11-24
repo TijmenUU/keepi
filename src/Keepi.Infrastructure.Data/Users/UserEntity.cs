@@ -1,12 +1,13 @@
 #nullable disable
 using System.ComponentModel.DataAnnotations;
 using Keepi.Infrastructure.Data.Entries;
-using Keepi.Infrastructure.Data.UserEntryCategories;
+using Keepi.Infrastructure.Data.Projects;
+using Keepi.Infrastructure.Data.UserInvoiceItemCustomizations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Keepi.Infrastructure.Data.Users;
 
-[Index(nameof(ExternalId), IsUnique = true)]
+[Index(nameof(IdentityOrigin), nameof(ExternalId), IsUnique = true)]
 [Index(nameof(EmailAddress), IsUnique = true)]
 internal sealed class UserEntity
 {
@@ -20,8 +21,9 @@ internal sealed class UserEntity
 
     [Required, MaxLength(128)]
     public string Name { get; set; }
-    public UserIdentityOrigin IdentityOrigin { get; set; }
+    public UserIdentityProvider IdentityOrigin { get; set; }
 
-    public List<UserEntryCategoryEntity> UserEntryCategories { get; set; }
+    public List<ProjectEntity> Projects { get; set; }
     public List<UserEntryEntity> Entries { get; set; }
+    public List<UserInvoiceItemCustomizationEntity> UserInvoiceItemCustomizations { get; set; }
 }

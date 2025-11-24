@@ -5,6 +5,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <!-- For Moq mocking -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="Keepi.Core.Unit.Tests" />
   </ItemGroup>
   <ItemGroup>
@@ -12,5 +14,6 @@
       Include="Microsoft.Extensions.DependencyInjection.Abstractions"
       Version="10.0.0"
     />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 </Project>

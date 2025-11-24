@@ -6,24 +6,8 @@ using Microsoft.AspNetCore.TestHost;
 
 namespace Keepi.Web.Integration.Tests;
 
-public class KeepiWebApplicationFactory : WebApplicationFactory<Keepi.Web.Program>
+public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private static readonly System.Text.Json.JsonSerializerOptions DefaultJsonSerializerOptions =
-        CreateDefaultJsonSerializerOptions();
-
-    private static System.Text.Json.JsonSerializerOptions CreateDefaultJsonSerializerOptions()
-    {
-        var options = new System.Text.Json.JsonSerializerOptions(
-            System.Text.Json.JsonSerializerDefaults.Web
-        );
-        options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-
-        return options;
-    }
-
-    public static System.Text.Json.JsonSerializerOptions GetDefaultJsonSerializerOptions() =>
-        DefaultJsonSerializerOptions;
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("IntegrationTest");
@@ -44,29 +28,18 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Keepi.Web.Progra
         });
     }
 
-    public HttpClient CreateAuthorizedClient(string userName, string userSubjectClaim)
+    public async Task<KeepiClient> CreateClientWithRandomUser()
     {
-        var client = CreateClient();
-        client.DefaultRequestHeaders.Add("X-User-Name", userName);
-        client.DefaultRequestHeaders.Add("X-User-Subject-Claim", userSubjectClaim);
-
-        return client;
+        return await KeepiClient.CreateWithRandomUser(httpClient: CreateClient());
     }
 
-    public async Task<HttpClient> CreateRegisteredUserClient(
-        string userName,
-        string userSubjectClaim
-    )
+    public async Task<KeepiClient> CreateClientWithUser(string fullName, string subjectClaim)
     {
-        var client = CreateAuthorizedClient(userName: userName, userSubjectClaim: userSubjectClaim);
-
-        var httpResponse = await client.PostAsync(
-            "/api/registeruser",
-            new StringContent(string.Empty)
+        return await KeepiClient.CreateWithUser(
+            httpClient: CreateClient(),
+            fullName: fullName,
+            subjectClaim: subjectClaim
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-
-        return client;
     }
 }
 

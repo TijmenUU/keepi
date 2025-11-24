@@ -1,8 +1,5 @@
-using Keepi.Core.Entries;
-using Keepi.Core.UserEntryCategories;
-using Keepi.Core.Users;
 using Keepi.Infrastructure.Data.Entries;
-using Keepi.Infrastructure.Data.UserEntryCategories;
+using Keepi.Infrastructure.Data.Projects;
 using Keepi.Infrastructure.Data.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,30 +18,23 @@ public static class IServiceCollectionExtensions
             options.UseSqlite(connectionString: sqliteConnectionString);
         });
 
-        services.AddScoped<UserEntryCategoryRepository>();
-        services.AddScoped<IGetUserUserEntryCategories>(sp =>
-            sp.GetRequiredService<UserEntryCategoryRepository>()
-        );
-        services.AddScoped<IUpdateUserEntryCategories>(sp =>
-            sp.GetRequiredService<UserEntryCategoryRepository>()
-        );
-
-        services.AddScoped<UserEntryRepository>();
-        services.AddScoped<IGetUserEntriesForDates>(sp =>
-            sp.GetRequiredService<UserEntryRepository>()
-        );
-        services.AddScoped<IOverwriteUserEntriesForDates>(sp =>
-            sp.GetRequiredService<UserEntryRepository>()
-        );
-        services.AddScoped<IGetExportUserEntries>(sp =>
-            sp.GetRequiredService<UserEntryRepository>()
-        );
-
-        services.AddScoped<UserRepository>();
-        services.AddScoped<IGetUser>(sp => sp.GetRequiredService<UserRepository>());
-        services.AddScoped<IGetUserExists>(sp => sp.GetRequiredService<UserRepository>());
-        services.AddScoped<IStoreNewUser>(sp => sp.GetRequiredService<UserRepository>());
+        AddRepositoryWithInterfaces<ProjectRepository>(services);
+        AddRepositoryWithInterfaces<UserEntryRepository>(services);
+        AddRepositoryWithInterfaces<UserRepository>(services);
 
         return services;
+    }
+
+    private static void AddRepositoryWithInterfaces<TRepository>(IServiceCollection services)
+        where TRepository : class
+    {
+        var repositoryType = typeof(TRepository);
+        services.AddScoped(repositoryType);
+
+        var interfaceTypes = repositoryType.GetInterfaces();
+        foreach (var interfaceType in interfaceTypes)
+        {
+            services.AddScoped(interfaceType, sp => sp.GetRequiredService(repositoryType));
+        }
     }
 }

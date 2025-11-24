@@ -2,5 +2,15 @@ namespace Keepi.Core.Users;
 
 public interface IGetUserExists
 {
-    Task<bool> Execute(string externalId, string emailAddress, CancellationToken cancellationToken);
+    Task<IValueOrErrorResult<bool, GetUserExistsError>> Execute(
+        string externalId,
+        UserIdentityProvider userIdentityProvider,
+        string emailAddress,
+        CancellationToken cancellationToken
+    );
+}
+
+public enum GetUserExistsError
+{
+    Unknown = 0,
 }

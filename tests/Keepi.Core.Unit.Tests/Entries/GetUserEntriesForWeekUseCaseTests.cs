@@ -1,4 +1,5 @@
 using Keepi.Core.Entries;
+using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Unit.Tests.Entries;
 
@@ -7,38 +8,34 @@ public class GetUserEntriesForWeekUseCaseTests
     [Fact]
     public async Task Execute_stores_expected_entities()
     {
-        var context = new TestContext().WithGetUserEntriesForDatesResult(
-            new UserEntryEntity(
-                id: 1,
-                userId: 42,
-                userEntryCategoryId: 101,
-                date: new DateOnly(2025, 6, 16),
-                minutes: 60,
-                remark: "Nieuwe feature"
+        var context = new TestContext().WithGetUserEntriesForDatesSuccessResult(
+            new GetUserEntriesForDatesResultEntry(
+                Id: 1,
+                InvoiceItemId: 101,
+                Date: new DateOnly(2025, 6, 16),
+                Minutes: 60,
+                Remark: "Nieuwe feature"
             ),
-            new UserEntryEntity(
-                id: 2,
-                userId: 42,
-                userEntryCategoryId: 102,
-                date: new DateOnly(2025, 6, 16),
-                minutes: 45,
-                remark: "Project Flyby"
+            new GetUserEntriesForDatesResultEntry(
+                Id: 2,
+                InvoiceItemId: 102,
+                Date: new DateOnly(2025, 6, 16),
+                Minutes: 45,
+                Remark: "Project Flyby"
             ),
-            new UserEntryEntity(
-                id: 3,
-                userId: 42,
-                userEntryCategoryId: 101,
-                date: new DateOnly(2025, 6, 17),
-                minutes: 30,
-                remark: null
+            new GetUserEntriesForDatesResultEntry(
+                Id: 3,
+                InvoiceItemId: 101,
+                Date: new DateOnly(2025, 6, 17),
+                Minutes: 30,
+                Remark: null
             ),
-            new UserEntryEntity(
-                id: 4,
-                userId: 42,
-                userEntryCategoryId: 102,
-                date: new DateOnly(2025, 6, 18),
-                minutes: 15,
-                remark: null
+            new GetUserEntriesForDatesResultEntry(
+                Id: 4,
+                InvoiceItemId: 102,
+                Date: new DateOnly(2025, 6, 18),
+                Minutes: 15,
+                Remark: null
             )
         );
 
@@ -51,18 +48,20 @@ public class GetUserEntriesForWeekUseCaseTests
                 cancellationToken: CancellationToken.None
             );
 
-        result.ShouldBeEquivalentTo(
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
             new GetUserEntriesForWeekUseCaseOutput(
                 Monday: new GetUserEntriesForWeekUseCaseOutputDay(
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            EntryCategoryId: 101,
+                            InvoiceItemId: 101,
                             Minutes: 60,
                             Remark: "Nieuwe feature"
                         ),
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            EntryCategoryId: 102,
+                            InvoiceItemId: 102,
                             Minutes: 45,
                             Remark: "Project Flyby"
                         ),
@@ -72,7 +71,7 @@ public class GetUserEntriesForWeekUseCaseTests
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            EntryCategoryId: 101,
+                            InvoiceItemId: 101,
                             Minutes: 30,
                             Remark: null
                         ),
@@ -82,7 +81,7 @@ public class GetUserEntriesForWeekUseCaseTests
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            EntryCategoryId: 102,
+                            InvoiceItemId: 102,
                             Minutes: 15,
                             Remark: null
                         ),
@@ -96,12 +95,37 @@ public class GetUserEntriesForWeekUseCaseTests
         );
     }
 
+    [Fact]
+    public async Task Execute_returns_unknown_get_user_entries_error()
+    {
+        var context = new TestContext().WithGetUserEntriesForDatesFailureResult(
+            GetUserEntriesForDatesError.Unknown
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                userId: 42,
+                year: 2025,
+                weekNumber: 25,
+                cancellationToken: CancellationToken.None
+            );
+
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(GetUserEntriesForWeekUseCaseError.Unknown);
+    }
+
     class TestContext
     {
         public Mock<IGetUserEntriesForDates> GetUserEntriesForDatesMock { get; } =
             new(MockBehavior.Strict);
 
-        public TestContext WithGetUserEntriesForDatesResult(params UserEntryEntity[] entities)
+        public Mock<ILogger<GetUserEntriesForWeekUseCase>> LoggerMock { get; } =
+            new(MockBehavior.Loose);
+
+        public TestContext WithGetUserEntriesForDatesSuccessResult(
+            params GetUserEntriesForDatesResultEntry[] entities
+        )
         {
             GetUserEntriesForDatesMock
                 .Setup(x =>
@@ -111,13 +135,41 @@ public class GetUserEntriesForWeekUseCaseTests
                         It.IsAny<CancellationToken>()
                     )
                 )
-                .ReturnsAsync(entities);
+                .ReturnsAsync(
+                    Result.Success<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
+                        new(Entries: entities)
+                    )
+                );
+
+            return this;
+        }
+
+        public TestContext WithGetUserEntriesForDatesFailureResult(
+            GetUserEntriesForDatesError result
+        )
+        {
+            GetUserEntriesForDatesMock
+                .Setup(x =>
+                    x.Execute(
+                        It.IsAny<int>(),
+                        It.IsAny<DateOnly[]>(),
+                        It.IsAny<CancellationToken>()
+                    )
+                )
+                .ReturnsAsync(
+                    Result.Failure<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
+                        result
+                    )
+                );
 
             return this;
         }
 
         public GetUserEntriesForWeekUseCase BuildUseCase() =>
-            new(getUserEntriesForDates: GetUserEntriesForDatesMock.Object);
+            new(
+                getUserEntriesForDates: GetUserEntriesForDatesMock.Object,
+                logger: LoggerMock.Object
+            );
 
         public void VerifyNoOtherCalls()
         {

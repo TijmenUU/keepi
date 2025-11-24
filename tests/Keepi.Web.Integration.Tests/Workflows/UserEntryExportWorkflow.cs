@@ -1,9 +1,3 @@
-using Keepi.Api.UserEntries.GetExport;
-using Keepi.Api.UserEntries.UpdateWeek;
-using Keepi.Api.UserEntryCategories.GetAll;
-using Keepi.Api.UserEntryCategories.UpdateAll;
-using Microsoft.VisualBasic;
-
 namespace Keepi.Web.Integration.Tests.Workflows;
 
 [Collection(DefaultCollection.Name)]
@@ -12,21 +6,29 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
     [Fact]
     public async Task Export_entries_test()
     {
-        var client = await applicationFactory.CreateRegisteredUserClient(
-            userName: "Ton de Maks",
-            userSubjectClaim: Guid.NewGuid().ToString()
-        );
+        var client = await applicationFactory.CreateClientWithRandomUser();
 
-        var createdCategoryIds = await CreateUserEntryCategories(
-            client: client,
-            values: [(name: "Dev", ordinal: 1), (name: "Administratie", ordinal: 2)]
+        var user = await client.GetUser();
+
+        var firstProjectCreated = await client.CreateProject(
+            new Api.Projects.Create.CreateProjectRequest
+            {
+                Name = "UserEntryExportWorkflow",
+                Enabled = true,
+                UserIds = [user.Id],
+                InvoiceItemNames = ["Dev", "Administratie"],
+            }
         );
-        var developmentUserEntryCategoryId = createdCategoryIds[0];
-        var administrationUserEntryCategoryId = createdCategoryIds[1];
+        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
+        var developmentUserInvoiceItemId = firstProject
+            .InvoiceItems.Single(i => i.Name == "Dev")
+            .Id;
+        var administrationUserInvoiceItemId = firstProject
+            .InvoiceItems.Single(i => i.Name == "Administratie")
+            .Id;
 
         // Initial create
-        await UpdateWeekEntries(
-            client: client,
+        await client.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -37,13 +39,13 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 60,
                             Remark = "Nieuwe feature",
                         },
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 45,
                             Remark = "Project Flyby",
                         },
@@ -55,7 +57,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 30,
                             Remark = null,
                         },
@@ -67,7 +69,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
                     [
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 15,
                             Remark = null,
                         },
@@ -81,91 +83,20 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
         );
 
         using var exportStream = new StreamReader(
-            await GetExportStream(
-                client: client,
+            await client.GetUserEntriesExportStream(
                 start: new DateOnly(2025, 6, 16),
                 stop: new DateOnly(2025, 6, 22)
             )
         );
-        exportStream.ReadLine().ShouldBe("Datum;Categorie;Minuten;Opmerking");
-        exportStream.ReadLine().ShouldBe("16-06-2025;Dev;60;Nieuwe feature");
-        exportStream.ReadLine().ShouldBe("16-06-2025;Administratie;45;Project Flyby");
-        exportStream.ReadLine().ShouldBe("17-06-2025;Dev;30;");
-        exportStream.ReadLine().ShouldBe("18-06-2025;Administratie;15;");
+        exportStream.ReadLine().ShouldBe("Datum;Project;Post;Minuten;Opmerking");
+        exportStream
+            .ReadLine()
+            .ShouldBe("16-06-2025;UserEntryExportWorkflow;Dev;60;Nieuwe feature");
+        exportStream
+            .ReadLine()
+            .ShouldBe("16-06-2025;UserEntryExportWorkflow;Administratie;45;Project Flyby");
+        exportStream.ReadLine().ShouldBe("17-06-2025;UserEntryExportWorkflow;Dev;30;");
+        exportStream.ReadLine().ShouldBe("18-06-2025;UserEntryExportWorkflow;Administratie;15;");
         (await exportStream.ReadLineAsync()).ShouldBeNull();
-    }
-
-    private static async Task<int[]> CreateUserEntryCategories(
-        HttpClient client,
-        (string name, int ordinal)[] values
-    )
-    {
-        var httpResponse = await client.PutAsJsonAsync(
-            requestUri: "/api/user/entrycategories",
-            value: new PutUpdateUserEntryCategoriesRequest
-            {
-                UserEntryCategories = values
-                    .Select(v => new PutUpdateUserEntryCategoriesRequestCategory()
-                    {
-                        Name = v.name,
-                        Ordinal = v.ordinal,
-                        ActiveFrom = null,
-                        ActiveTo = null,
-                        Enabled = true,
-                    })
-                    .ToArray(),
-            },
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
-        );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
-
-        var userEntryCategories = await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
-            requestUri: "/api/user/entrycategories",
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
-        );
-        userEntryCategories.ShouldNotBeNull();
-
-        var ids = new List<int>();
-        foreach (var value in values)
-        {
-            userEntryCategories.Categories.ShouldContain(c => c.Name == value.name);
-            ids.Add(userEntryCategories.Categories.Single(c => c.Name == value.name).Id);
-        }
-
-        return ids.ToArray();
-    }
-
-    private static async Task UpdateWeekEntries(
-        HttpClient client,
-        int year,
-        int weekNumber,
-        PutUpdateWeekUserEntriesRequest request
-    )
-    {
-        var httpResponse = await client.PutAsJsonAsync(
-            requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}",
-            value: request,
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
-        );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-        httpResponse.Headers.Location?.OriginalString.ShouldBe(
-            $"/api/user/entries/year/{year}/week/{weekNumber}"
-        );
-    }
-
-    private static async Task<Stream> GetExportStream(
-        HttpClient client,
-        DateOnly start,
-        DateOnly stop
-    )
-    {
-        var httpResponse = await client.PostAsJsonAsync(
-            requestUri: "/api/user/entries/export",
-            value: new GetUserEntriesExportEndpointRequest { Start = start, Stop = stop },
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
-        );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
-
-        return await httpResponse.Content.ReadAsStreamAsync();
     }
 }

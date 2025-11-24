@@ -30,21 +30,21 @@ internal static class ClaimsPrincipalExtensions
             externalId: externalIdClaim.Value,
             name: userName,
             emailAddress: emailAddress,
-            origin: UserIdentityOrigin.GitHub
+            origin: UserIdentityProvider.GitHub
         );
         return true;
     }
 }
 
-internal class UserInfo(
+internal sealed class UserInfo(
     string externalId,
     string name,
     string emailAddress,
-    UserIdentityOrigin origin
+    UserIdentityProvider origin
 )
 {
     public readonly string ExternalId = externalId;
     public readonly string Name = name;
     public readonly string EmailAddress = emailAddress;
-    public readonly UserIdentityOrigin Origin = origin;
+    public readonly UserIdentityProvider Origin = origin;
 }

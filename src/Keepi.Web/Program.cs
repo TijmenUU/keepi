@@ -164,7 +164,7 @@ public partial class Program
                 Results.Challenge(
                     properties: new Microsoft.AspNetCore.Authentication.AuthenticationProperties
                     {
-                        RedirectUri = "/",
+                        RedirectUri = "/", // TODO redirect to the actual page the user came from?
                     },
                     authenticationSchemes: [GitHubAuthenticationDefaults.AuthenticationScheme]
                 )
@@ -209,8 +209,7 @@ public partial class Program
     {
         services.AddSingleton<UseCaseTraceInterceptor>();
 
-        var targetAssembly =
-            typeof(Core.UserEntryCategories.IUpdateUserEntryCategoriesUseCase).Assembly;
+        var targetAssembly = typeof(Core.Projects.IUpdateProjectUseCase).Assembly;
         var useCaseRegistrations = services
             .Where(s =>
                 s.ServiceType.Assembly == targetAssembly

@@ -1,24 +1,33 @@
 using System.Security.Claims;
 using Keepi.Core.Users;
+using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Authorization;
 
 public interface IResolveUserHelper
 {
-    Task<UserEntity?> GetUserOrNull(
+    Task<ResolvedUser?> GetUserOrNull(
         ClaimsPrincipal userClaimsPrincipal,
         CancellationToken cancellationToken
     );
 }
 
-internal class ResolveUserHelper(IGetUser getUser) : IResolveUserHelper
+public sealed record ResolvedUser(int Id, string Name, string EmailAddress);
+
+internal sealed class ResolveUserHelper(
+    IGetUser getUser,
+    IRegisterUserUseCase registerUserUseCase,
+    ILogger<ResolveUserHelper> logger
+) : IResolveUserHelper
 {
+    private const UserIdentityProvider identityProvider = UserIdentityProvider.GitHub;
+
     private readonly SemaphoreSlim getUserSemaphore = new(initialCount: 1, maxCount: 1);
 
     private bool hasCachedUser = false;
-    private UserEntity? cachedUser = null;
+    private GetUserResult? cachedUser = null;
 
-    public async Task<UserEntity?> GetUserOrNull(
+    public async Task<ResolvedUser?> GetUserOrNull(
         ClaimsPrincipal userClaimsPrincipal,
         CancellationToken cancellationToken
     )
@@ -43,10 +52,19 @@ internal class ResolveUserHelper(IGetUser getUser) : IResolveUserHelper
             }
         }
 
-        return cachedUser;
+        if (cachedUser == null)
+        {
+            return null;
+        }
+
+        return new ResolvedUser(
+            Id: cachedUser.Id,
+            Name: cachedUser.Name,
+            EmailAddress: cachedUser.EmailAddress
+        );
     }
 
-    private async Task<UserEntity?> InternalGetUserOrNull(
+    private async Task<GetUserResult?> InternalGetUserOrNull(
         ClaimsPrincipal userClaimsPrincipal,
         CancellationToken cancellationToken
     )
@@ -56,17 +74,74 @@ internal class ResolveUserHelper(IGetUser getUser) : IResolveUserHelper
             return null;
         }
 
-        var result = await getUser.Execute(
+        var getUserResult = await getUser.Execute(
             externalId: userInfo.ExternalId,
-            identityProvider: UserIdentityProvider.GitHub,
+            identityProvider: identityProvider,
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var success, out _))
+        if (getUserResult.TrySuccess(out var getUserSuccess, out var getUserError))
         {
-            return success;
+            return getUserSuccess;
         }
 
+        if (getUserError != GetUserError.DoesNotExist)
+        {
+            logger.LogError(
+                "Failed to retrieve user {SubjectClaim} {Provider} due to {Error}",
+                userInfo.ExternalId,
+                identityProvider,
+                getUserError
+            );
+            return null;
+        }
+
+        logger.LogInformation(
+            "Registering first time user {SubjectClaim} {Provider}",
+            userInfo.ExternalId,
+            identityProvider
+        );
+        var registrationResult = await registerUserUseCase.Execute(
+            externalId: userInfo.ExternalId,
+            emailAddress: userInfo.EmailAddress,
+            name: userInfo.Name,
+            provider: identityProvider,
+            cancellationToken: cancellationToken
+        );
+
+        if (registrationResult != RegisterUserUseCaseResult.UserCreated)
+        {
+            logger.LogError(
+                "Failed to register first time user {SubjectClaim} {Provider} due to {Error}",
+                userInfo.ExternalId,
+                identityProvider,
+                registrationResult
+            );
+            return null;
+        }
+
+        getUserResult = await getUser.Execute(
+            externalId: userInfo.ExternalId,
+            identityProvider: identityProvider,
+            cancellationToken: cancellationToken
+        );
+
+        if (
+            getUserResult.TrySuccess(
+                out var secondGetUserResultSuccess,
+                out var secondGetUserResultError
+            )
+        )
+        {
+            return secondGetUserResultSuccess;
+        }
+
+        logger.LogError(
+            "Failed to retrieve first time user {SubjectClaim} {Provider} after registration due to {Error}",
+            userInfo.ExternalId,
+            identityProvider,
+            secondGetUserResultError
+        );
         return null;
     }
 }

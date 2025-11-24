@@ -9,25 +9,39 @@ namespace Keepi.Infrastructure.Data.Users;
 internal sealed class UserRepository(
     DatabaseContext databaseContext,
     ILogger<UserRepository> logger
-) : IGetUserExists, IGetUser, IStoreNewUser
+) : IGetUserExists, IGetUser, ISaveNewUser, IGetUsers
 {
-    async Task<bool> IGetUserExists.Execute(
+    async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
         string externalId,
+        Core.Users.UserIdentityProvider userIdentityProvider,
         string emailAddress,
         CancellationToken cancellationToken
     )
     {
-        return await databaseContext.Users.AnyAsync(
-            u => u.ExternalId == externalId || u.EmailAddress == emailAddress,
-            cancellationToken
-        );
+        try
+        {
+            var databaseIdentityProvider = ToDatabaseEnum(userIdentityProvider);
+            var result = await databaseContext
+                .Users.Where(u =>
+                    u.EmailAddress == emailAddress
+                    || (u.IdentityOrigin == databaseIdentityProvider && u.ExternalId == externalId)
+                )
+                .AnyAsync(cancellationToken: cancellationToken);
+
+            return Result.Success<bool, GetUserExistsError>(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error whilst checking for existing user");
+            return Result.Failure<bool, GetUserExistsError>(GetUserExistsError.Unknown);
+        }
     }
 
-    async Task<IMaybeErrorResult<StoreNewUserError>> IStoreNewUser.Execute(
+    async Task<IMaybeErrorResult<SaveNewUserError>> ISaveNewUser.Execute(
         string externalId,
         string emailAddress,
         string name,
-        UserIdentityProvider userIdentityProvider,
+        Core.Users.UserIdentityProvider userIdentityProvider,
         CancellationToken cancellationToken
     )
     {
@@ -44,65 +58,105 @@ internal sealed class UserRepository(
             );
             await databaseContext.SaveChangesAsync(cancellationToken);
 
-            return Result.Success<StoreNewUserError>();
+            return Result.Success<SaveNewUserError>();
         }
         // This is a bit of a rough catch as it is not known what caused the
         // exception. Sqlite does not provide the exact constraint nor column name
         // so for now this seems all that can be done.
         catch (UniqueConstraintException)
         {
-            return Result.Failure(StoreNewUserError.DuplicateUser);
+            return Result.Failure(SaveNewUserError.DuplicateUser);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst storing new user");
-            return Result.Failure(StoreNewUserError.Unknown);
+            return Result.Failure(SaveNewUserError.Unknown);
         }
     }
 
-    async Task<IValueOrErrorResult<Core.Users.UserEntity, GetUserError>> IGetUser.Execute(
+    async Task<IValueOrErrorResult<GetUserResult, GetUserError>> IGetUser.Execute(
         string externalId,
-        UserIdentityProvider identityProvider,
+        Core.Users.UserIdentityProvider identityProvider,
         CancellationToken cancellationToken
     )
     {
         var identityOrigin = ToDatabaseEnum(identityProvider);
         try
         {
-            var user = await databaseContext.Users.FirstOrDefaultAsync(
-                predicate: u => u.ExternalId == externalId && u.IdentityOrigin == identityOrigin,
-                cancellationToken: cancellationToken
-            );
+            var user = await databaseContext
+                .Users.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    predicate: u =>
+                        u.ExternalId == externalId && u.IdentityOrigin == identityOrigin,
+                    cancellationToken: cancellationToken
+                );
 
             if (user == null)
             {
-                return Result.Failure<Core.Users.UserEntity, GetUserError>(
-                    GetUserError.DoesNotExist
-                );
+                return Result.Failure<GetUserResult, GetUserError>(GetUserError.DoesNotExist);
             }
 
-            return Result.Success<Core.Users.UserEntity, GetUserError>(
-                new Core.Users.UserEntity(
-                    id: user.Id,
-                    emailAddress: user.EmailAddress,
-                    name: user.Name,
-                    identityOrigin: user.IdentityOrigin.MapToDomainModel()
+            return Result.Success<GetUserResult, GetUserError>(
+                new GetUserResult(
+                    Id: user.Id,
+                    EmailAddress: user.EmailAddress,
+                    Name: user.Name,
+                    IdentityOrigin: ToResultEnum(user.IdentityOrigin)
                 )
             );
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst trying to get user");
-            return Result.Failure<Core.Users.UserEntity, GetUserError>(GetUserError.Unknown);
+            return Result.Failure<GetUserResult, GetUserError>(GetUserError.Unknown);
         }
     }
 
-    private static UserIdentityOrigin ToDatabaseEnum(UserIdentityProvider userIdentityProvider)
+    private static UserIdentityProvider ToDatabaseEnum(
+        Core.Users.UserIdentityProvider userIdentityProvider
+    )
     {
         return userIdentityProvider switch
         {
-            UserIdentityProvider.GitHub => UserIdentityOrigin.GitHub,
+            Core.Users.UserIdentityProvider.GitHub => UserIdentityProvider.GitHub,
             _ => throw new ArgumentOutOfRangeException(paramName: nameof(userIdentityProvider)),
+        };
+    }
+
+    async Task<IValueOrErrorResult<GetUsersResult, GetUsersError>> IGetUsers.Execute(
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            return Result.Success<GetUsersResult, GetUsersError>(new(Users: (
+                        await databaseContext
+                            .Users.Select(u => new
+                            {
+                                u.Id,
+                                u.Name,
+                                u.EmailAddress,
+                                u.IdentityOrigin,
+                            })
+                            .ToArrayAsync(cancellationToken: cancellationToken)
+                    ).Select(u => new GetUsersResultUser(Id: u.Id, Name: u.Name, EmailAddress: u.EmailAddress, IdentityOrigin: ToResultEnum(u.IdentityOrigin))).ToArray()));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error whilst trying to get all users");
+            return Result.Failure<GetUsersResult, GetUsersError>(GetUsersError.Unknown);
+        }
+    }
+
+    private static Core.Users.UserIdentityProvider ToResultEnum(UserIdentityProvider value)
+    {
+        return value switch
+        {
+            UserIdentityProvider.GitHub => Core.Users.UserIdentityProvider.GitHub,
+            _ => throw new ArgumentOutOfRangeException(
+                paramName: nameof(value),
+                message: $"Value {value} does not exist in the domain"
+            ),
         };
     }
 }

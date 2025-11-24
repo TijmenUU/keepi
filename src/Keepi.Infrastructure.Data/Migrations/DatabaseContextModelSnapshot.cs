@@ -15,7 +15,7 @@ namespace Keepi.Infrastructure.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
             modelBuilder.Entity("Keepi.Infrastructure.Data.Entries.UserEntryEntity", b =>
                 {
@@ -26,15 +26,15 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("InvoiceItemId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Minutes")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Remark")
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("UserEntryCategoryId")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
@@ -43,24 +43,42 @@ namespace Keepi.Infrastructure.Data.Migrations
 
                     b.HasIndex("Date");
 
-                    b.HasIndex("UserEntryCategoryId");
+                    b.HasIndex("InvoiceItemId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("UserEntries");
                 });
 
-            modelBuilder.Entity("Keepi.Infrastructure.Data.UserEntryCategories.UserEntryCategoryEntity", b =>
+            modelBuilder.Entity("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateOnly?>("ActiveFrom")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateOnly?>("ActiveTo")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.HasIndex("Name", "ProjectId")
+                        .IsUnique();
+
+                    b.ToTable("InvoiceItems");
+                });
+
+            modelBuilder.Entity("Keepi.Infrastructure.Data.Projects.ProjectEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("Enabled")
                         .HasColumnType("INTEGER");
@@ -70,6 +88,26 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("Keepi.Infrastructure.Data.UserInvoiceItemCustomizations.UserInvoiceItemCustomizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<uint?>("Color")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("InvoiceItemId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Ordinal")
                         .HasColumnType("INTEGER");
 
@@ -78,11 +116,12 @@ namespace Keepi.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("InvoiceItemId");
 
-                    b.HasIndex("ActiveFrom", "ActiveTo");
+                    b.HasIndex("UserId", "InvoiceItemId")
+                        .IsUnique();
 
-                    b.ToTable("UserEntryCategories");
+                    b.ToTable("UserInvoiceItemCustomizations");
                 });
 
             modelBuilder.Entity("Keepi.Infrastructure.Data.Users.UserEntity", b =>
@@ -114,17 +153,32 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.HasIndex("EmailAddress")
                         .IsUnique();
 
-                    b.HasIndex("ExternalId")
+                    b.HasIndex("IdentityOrigin", "ExternalId")
                         .IsUnique();
 
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ProjectEntityUserEntity", b =>
+                {
+                    b.Property<int>("ProjectsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UsersId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ProjectsId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("ProjectEntityUserEntity");
+                });
+
             modelBuilder.Entity("Keepi.Infrastructure.Data.Entries.UserEntryEntity", b =>
                 {
-                    b.HasOne("Keepi.Infrastructure.Data.UserEntryCategories.UserEntryCategoryEntity", "UserEntryCategory")
+                    b.HasOne("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", "InvoiceItem")
                         .WithMany("UserEntries")
-                        .HasForeignKey("UserEntryCategoryId")
+                        .HasForeignKey("InvoiceItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -134,32 +188,73 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("InvoiceItem");
 
-                    b.Navigation("UserEntryCategory");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Keepi.Infrastructure.Data.UserEntryCategories.UserEntryCategoryEntity", b =>
+            modelBuilder.Entity("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", b =>
                 {
+                    b.HasOne("Keepi.Infrastructure.Data.Projects.ProjectEntity", "Project")
+                        .WithMany("InvoiceItems")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Keepi.Infrastructure.Data.UserInvoiceItemCustomizations.UserInvoiceItemCustomizationEntity", b =>
+                {
+                    b.HasOne("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", "InvoiceItem")
+                        .WithMany("UserInvoiceItemCustomizations")
+                        .HasForeignKey("InvoiceItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Keepi.Infrastructure.Data.Users.UserEntity", "User")
-                        .WithMany("UserEntryCategories")
+                        .WithMany("UserInvoiceItemCustomizations")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("InvoiceItem");
+
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Keepi.Infrastructure.Data.UserEntryCategories.UserEntryCategoryEntity", b =>
+            modelBuilder.Entity("ProjectEntityUserEntity", b =>
+                {
+                    b.HasOne("Keepi.Infrastructure.Data.Projects.ProjectEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ProjectsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Keepi.Infrastructure.Data.Users.UserEntity", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", b =>
                 {
                     b.Navigation("UserEntries");
+
+                    b.Navigation("UserInvoiceItemCustomizations");
+                });
+
+            modelBuilder.Entity("Keepi.Infrastructure.Data.Projects.ProjectEntity", b =>
+                {
+                    b.Navigation("InvoiceItems");
                 });
 
             modelBuilder.Entity("Keepi.Infrastructure.Data.Users.UserEntity", b =>
                 {
                     b.Navigation("Entries");
 
-                    b.Navigation("UserEntryCategories");
+                    b.Navigation("UserInvoiceItemCustomizations");
                 });
 #pragma warning restore 612, 618
         }

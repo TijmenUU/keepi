@@ -1,11 +1,6 @@
-namespace Keepi.Core.Users;
+using Microsoft.Extensions.Logging;
 
-public enum RegisterUserUseCaseResult
-{
-    Unknown,
-    UserAlreadyExists,
-    UserCreated,
-};
+namespace Keepi.Core.Users;
 
 public interface IRegisterUserUseCase
 {
@@ -18,8 +13,18 @@ public interface IRegisterUserUseCase
     );
 }
 
-internal class RegisterUserUseCase(IGetUserExists getUserExists, IStoreNewUser storeNewUser)
-    : IRegisterUserUseCase
+public enum RegisterUserUseCaseResult
+{
+    Unknown,
+    UserAlreadyExists,
+    UserCreated,
+};
+
+internal sealed class RegisterUserUseCase(
+    IGetUserExists getUserExists,
+    ISaveNewUser saveNewUser,
+    ILogger<RegisterUserUseCase> logger
+) : IRegisterUserUseCase
 {
     public async Task<RegisterUserUseCaseResult> Execute(
         string externalId,
@@ -29,18 +34,29 @@ internal class RegisterUserUseCase(IGetUserExists getUserExists, IStoreNewUser s
         CancellationToken cancellationToken
     )
     {
-        if (
-            await getUserExists.Execute(
-                externalId: externalId,
-                emailAddress: emailAddress,
-                cancellationToken: cancellationToken
-            )
-        )
+        var getUserExistsResult = await getUserExists.Execute(
+            externalId: externalId,
+            userIdentityProvider: provider,
+            emailAddress: emailAddress,
+            cancellationToken: cancellationToken
+        );
+        if (!getUserExistsResult.TrySuccess(out var successResult, out var errorResult))
+        {
+            logger.LogError(
+                "Unexpected error {Error} whilst checking if user {ExternalId} {IdentityProvider} already exists",
+                errorResult,
+                externalId,
+                provider
+            );
+            return RegisterUserUseCaseResult.Unknown;
+        }
+
+        if (successResult)
         {
             return RegisterUserUseCaseResult.UserAlreadyExists;
         }
 
-        var result = await storeNewUser.Execute(
+        var saveResult = await saveNewUser.Execute(
             externalId: externalId,
             emailAddress: emailAddress,
             name: name,
@@ -48,16 +64,22 @@ internal class RegisterUserUseCase(IGetUserExists getUserExists, IStoreNewUser s
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var error))
+        if (saveResult.TrySuccess(out var saveErrorResult))
         {
             return RegisterUserUseCaseResult.UserCreated;
         }
 
-        if (error == StoreNewUserError.DuplicateUser)
+        if (saveErrorResult == SaveNewUserError.DuplicateUser)
         {
             return RegisterUserUseCaseResult.UserAlreadyExists;
         }
 
+        logger.LogError(
+            "Unexpected error {Error} whilst saving new user {ExternalId} {IdentityProvider}",
+            saveErrorResult,
+            externalId,
+            provider
+        );
         return RegisterUserUseCaseResult.Unknown;
     }
 }

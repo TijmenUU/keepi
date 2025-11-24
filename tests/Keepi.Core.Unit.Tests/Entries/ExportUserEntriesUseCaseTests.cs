@@ -11,16 +11,20 @@ public class ExportUserEntriesUseCaseTests
             new ExportUserEntry(
                 Id: 1,
                 Date: new DateOnly(2025, 6, 22),
-                UserEntryCategoryId: 2,
-                UserEntryCategoryName: "Dev",
+                ProjectId: 5,
+                ProjectName: "Ontwikkeling",
+                InvoiceItemId: 2,
+                InvoiceItemName: "Dev",
                 Minutes: 60,
                 Remark: "Project Flyby"
             ),
             new ExportUserEntry(
                 Id: 3,
                 Date: new DateOnly(2025, 6, 23),
-                UserEntryCategoryId: 4,
-                UserEntryCategoryName: "Administratie",
+                ProjectId: 6,
+                ProjectName: "Intern",
+                InvoiceItemId: 4,
+                InvoiceItemName: "Administratie",
                 Minutes: 45,
                 Remark: "ISO controle"
             )
@@ -34,17 +38,20 @@ public class ExportUserEntriesUseCaseTests
                 stop: new DateOnly(2025, 6, 23),
                 CancellationToken.None
             );
-        result.Succeeded.ShouldBeTrue();
 
-        var entries = await result.SuccessOrThrow.ToArrayAsync();
+        result.TrySuccess(out var entriesTask, out _).ShouldBeTrue();
+
+        var entries = await entriesTask.ToArrayAsync();
         entries.Length.ShouldBe(2);
         entries[0]
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
                     Id: 1,
                     Date: new DateOnly(2025, 6, 22),
-                    UserEntryCategoryId: 2,
-                    UserEntryCategoryName: "Dev",
+                    ProjectId: 5,
+                    ProjectName: "Ontwikkeling",
+                    InvoiceItemId: 2,
+                    InvoiceItemName: "Dev",
                     Minutes: 60,
                     Remark: "Project Flyby"
                 )
@@ -54,8 +61,10 @@ public class ExportUserEntriesUseCaseTests
                 new ExportUserEntry(
                     Id: 3,
                     Date: new DateOnly(2025, 6, 23),
-                    UserEntryCategoryId: 4,
-                    UserEntryCategoryName: "Administratie",
+                    ProjectId: 6,
+                    ProjectName: "Intern",
+                    InvoiceItemId: 4,
+                    InvoiceItemName: "Administratie",
                     Minutes: 45,
                     Remark: "ISO controle"
                 )
@@ -79,16 +88,20 @@ public class ExportUserEntriesUseCaseTests
             new ExportUserEntry(
                 Id: 1,
                 Date: new DateOnly(2025, 6, 22),
-                UserEntryCategoryId: 2,
-                UserEntryCategoryName: "Dev",
+                ProjectId: 5,
+                ProjectName: "Ontwikkeling",
+                InvoiceItemId: 2,
+                InvoiceItemName: "Dev",
                 Minutes: 60,
                 Remark: "Project Flyby"
             ),
             new ExportUserEntry(
                 Id: 3,
                 Date: new DateOnly(2025, 6, 23),
-                UserEntryCategoryId: 4,
-                UserEntryCategoryName: "Administratie",
+                ProjectId: 6,
+                ProjectName: "Intern",
+                InvoiceItemId: 4,
+                InvoiceItemName: "Administratie",
                 Minutes: 45,
                 Remark: "ISO controle"
             )
@@ -102,8 +115,8 @@ public class ExportUserEntriesUseCaseTests
                 stop: new DateOnly(2025, 6, 23),
                 CancellationToken.None
             );
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(ExportUserEntriesUseCaseError.StartGreaterThanStop);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(ExportUserEntriesUseCaseError.StartGreaterThanStop);
     }
 
     class TestContext

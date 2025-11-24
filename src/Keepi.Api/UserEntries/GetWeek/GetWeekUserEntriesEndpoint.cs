@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetWeek;
 
-public class GetWeekUserEntriesEndpoint(
+public sealed class GetWeekUserEntriesEndpoint(
     IResolveUserHelper resolveUserHelper,
     IGetUserEntriesForWeekUseCase getUserEntriesForWeekUseCase,
     ILogger<GetWeekUserEntriesEndpoint> logger
@@ -24,7 +24,7 @@ public class GetWeekUserEntriesEndpoint(
         );
         if (user == null)
         {
-            logger.LogDebug("Refusing to get week entries for unregistered user");
+            logger.LogDebug("Refusing to get week entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
@@ -35,31 +35,37 @@ public class GetWeekUserEntriesEndpoint(
             weekNumber: Route<int>(paramName: "WeekNumber"),
             cancellationToken: cancellationToken
         );
+        if (result.TrySuccess(out var successResult, out _))
+        {
+            await Send.OkAsync(
+                response: new GetWeekUserEntriesResponse(
+                    Monday: MapToResponseDay(successResult.Monday),
+                    Tuesday: MapToResponseDay(successResult.Tuesday),
+                    Wednesday: MapToResponseDay(successResult.Wednesday),
+                    Thursday: MapToResponseDay(successResult.Thursday),
+                    Friday: MapToResponseDay(successResult.Friday),
+                    Saturday: MapToResponseDay(successResult.Saturday),
+                    Sunday: MapToResponseDay(successResult.Sunday)
+                ),
+                cancellation: cancellationToken
+            );
+            return;
+        }
 
-        await Send.OkAsync(
-            response: new GetWeekUserEntriesResponse(
-                Monday: MapToResponseDay(result.Monday),
-                Tuesday: MapToResponseDay(result.Tuesday),
-                Wednesday: MapToResponseDay(result.Wednesday),
-                Thursday: MapToResponseDay(result.Thursday),
-                Friday: MapToResponseDay(result.Friday),
-                Saturday: MapToResponseDay(result.Saturday),
-                Sunday: MapToResponseDay(result.Sunday)
-            ),
-            cancellation: cancellationToken
-        );
+        await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
     }
 
     private static GetWeekUserEntriesResponseDay MapToResponseDay(
         GetUserEntriesForWeekUseCaseOutputDay input
     ) =>
         new GetWeekUserEntriesResponseDay(
-            Entries: input
-                .Entries.Select(e => new GetWeekUserEntriesResponseDayEntry(
-                    EntryCategoryId: e.EntryCategoryId,
+            Entries:
+            [
+                .. input.Entries.Select(e => new GetWeekUserEntriesResponseDayEntry(
+                    InvoiceItemId: e.InvoiceItemId,
                     Minutes: e.Minutes,
                     Remark: e.Remark
-                ))
-                .ToArray()
+                )),
+            ]
         );
 }

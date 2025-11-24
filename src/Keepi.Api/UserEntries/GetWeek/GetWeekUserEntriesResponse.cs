@@ -12,4 +12,4 @@ public record GetWeekUserEntriesResponse(
 
 public record GetWeekUserEntriesResponseDay(GetWeekUserEntriesResponseDayEntry[] Entries);
 
-public record GetWeekUserEntriesResponseDayEntry(int EntryCategoryId, int Minutes, string? Remark);
+public record GetWeekUserEntriesResponseDayEntry(int InvoiceItemId, int Minutes, string? Remark);

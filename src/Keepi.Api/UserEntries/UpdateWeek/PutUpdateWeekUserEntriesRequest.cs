@@ -1,6 +1,6 @@
 namespace Keepi.Api.UserEntries.UpdateWeek;
 
-public class PutUpdateWeekUserEntriesRequest
+public sealed class PutUpdateWeekUserEntriesRequest
 {
     public PutUpdateWeekUserEntriesRequestDay? Monday { get; set; }
     public PutUpdateWeekUserEntriesRequestDay? Tuesday { get; set; }
@@ -11,14 +11,14 @@ public class PutUpdateWeekUserEntriesRequest
     public PutUpdateWeekUserEntriesRequestDay? Sunday { get; set; }
 }
 
-public class PutUpdateWeekUserEntriesRequestDay
+public sealed class PutUpdateWeekUserEntriesRequestDay
 {
     public PutUpdateWeekUserEntriesRequestDayEntry?[]? Entries { get; set; }
 }
 
-public class PutUpdateWeekUserEntriesRequestDayEntry
+public sealed class PutUpdateWeekUserEntriesRequestDayEntry
 {
-    public int? EntryCategoryId { get; set; }
+    public int? InvoiceItemId { get; set; }
     public int? Minutes { get; set; }
     public string? Remark { get; set; }
 }

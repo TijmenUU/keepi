@@ -13,8 +13,10 @@ public interface IGetExportUserEntries
 public record ExportUserEntry(
     int Id,
     DateOnly Date,
-    int UserEntryCategoryId,
-    string UserEntryCategoryName,
+    int ProjectId,
+    string ProjectName,
+    int InvoiceItemId,
+    string InvoiceItemName,
     int Minutes,
     string Remark
 );

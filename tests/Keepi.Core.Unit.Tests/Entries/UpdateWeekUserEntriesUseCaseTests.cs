@@ -1,6 +1,7 @@
 using System.Text;
 using Keepi.Core.Entries;
-using Keepi.Core.UserEntryCategories;
+using Keepi.Core.UserProjects;
+using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Unit.Tests.Entries;
 
@@ -10,27 +11,40 @@ public class UpdateWeekUserEntriesUseCaseTests
     public async Task Execute_stores_expected_entities()
     {
         var context = new TestContext()
-            .WithUserEntryCategories(
-                new UserEntryCategoryEntity(
-                    id: 1,
-                    ordinal: 981,
-                    name: "Dev",
-                    enabled: true,
-                    activeFrom: null,
-                    activeTo: null
-                ),
-                new UserEntryCategoryEntity(
-                    id: 2,
-                    ordinal: 982,
-                    name: "Administratie",
-                    enabled: true,
-                    activeFrom: null,
-                    activeTo: null
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                        new(
+                            Id: 2,
+                            Name: "Intern",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 20, Name: "Administratie")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                        new(
+                            InvoiceItemId: 20,
+                            Ordinal: 982,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
                 )
             )
-            .WithOverwriteUserEntriesResult(
-                Result.Success<OverwriteUserEntriesForDatesError>()
-            );
+            .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
+            .WithSaveUserEntriesResult(Result.Success<SaveUserEntriesError>());
 
         var useCase = context.BuildUseCase();
 
@@ -43,7 +57,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: 60,
                             Remark: "Nieuwe feature"
                         ),
@@ -53,12 +67,12 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: 60,
                             Remark: "Nieuwe feature"
                         ),
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 2,
+                            InvoiceItemId: 20,
                             Minutes: 30,
                             Remark: "Project Flyby"
                         ),
@@ -68,7 +82,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 2,
+                            InvoiceItemId: 20,
                             Minutes: 15,
                             Remark: null
                         ),
@@ -84,48 +98,41 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         result.Succeeded.ShouldBeTrue();
 
-        context.GetUserUserEntryCategoriesMock.Verify(x =>
+        context.GetUserProjectsMock.Verify(x => x.Execute(42, It.IsAny<CancellationToken>()));
+        context.DeleteUserEntriesForDateRangeMock.Verify(x =>
             x.Execute(
-                42,
-                It.Is<int[]>(a => a.Length == 2 && a[0] == 1 && a[1] == 2),
+                It.Is<DeleteUserEntriesForDateRangeInput>(i =>
+                    i.UserId == 42
+                    && i.From == new DateOnly(2025, 6, 16)
+                    && i.ToInclusive == new DateOnly(2025, 6, 22)
+                    && i.ProjectIds.Length == 2
+                    && i.ProjectIds[0] == 1
+                    && i.ProjectIds[1] == 2
+                ),
                 It.IsAny<CancellationToken>()
             )
         );
-        context.OverwriteUserEntriesForDatesMock.Verify(x =>
+        context.SaveUserEntriesMock.Verify(x =>
             x.Execute(
-                42,
-                It.Is<DateOnly[]>(a =>
-                    a.Length == 7
-                    && a[0] == new DateOnly(2025, 6, 16)
-                    && a[1] == new DateOnly(2025, 6, 17)
-                    && a[2] == new DateOnly(2025, 6, 18)
-                    && a[3] == new DateOnly(2025, 6, 19)
-                    && a[4] == new DateOnly(2025, 6, 20)
-                    && a[5] == new DateOnly(2025, 6, 21)
-                    && a[6] == new DateOnly(2025, 6, 22)
-                ),
-                It.Is<UserEntryEntity[]>(a =>
-                    a.Length == 4
-                    && a[0].UserEntryCategoryId == 1
-                    && a[0].Date == new DateOnly(2025, 6, 16)
-                    && a[0].UserId == 42
-                    && a[0].Minutes == 60
-                    && a[0].Remark == "Nieuwe feature"
-                    && a[1].UserEntryCategoryId == 1
-                    && a[1].Date == new DateOnly(2025, 6, 17)
-                    && a[1].UserId == 42
-                    && a[1].Minutes == 60
-                    && a[1].Remark == "Nieuwe feature"
-                    && a[2].UserEntryCategoryId == 2
-                    && a[2].Date == new DateOnly(2025, 6, 17)
-                    && a[2].UserId == 42
-                    && a[2].Minutes == 30
-                    && a[2].Remark == "Project Flyby"
-                    && a[3].UserEntryCategoryId == 2
-                    && a[3].Date == new DateOnly(2025, 6, 18)
-                    && a[3].UserId == 42
-                    && a[3].Minutes == 15
-                    && a[3].Remark == null
+                It.Is<SaveUserEntriesInput>(i =>
+                    i.UserId == 42
+                    && i.Entries.Length == 4
+                    && i.Entries[0].InvoiceItemId == 10
+                    && i.Entries[0].Date == new DateOnly(2025, 6, 16)
+                    && i.Entries[0].Minutes == 60
+                    && i.Entries[0].Remark == "Nieuwe feature"
+                    && i.Entries[1].InvoiceItemId == 10
+                    && i.Entries[1].Date == new DateOnly(2025, 6, 17)
+                    && i.Entries[1].Minutes == 60
+                    && i.Entries[1].Remark == "Nieuwe feature"
+                    && i.Entries[2].InvoiceItemId == 20
+                    && i.Entries[2].Date == new DateOnly(2025, 6, 17)
+                    && i.Entries[2].Minutes == 30
+                    && i.Entries[2].Remark == "Project Flyby"
+                    && i.Entries[3].InvoiceItemId == 20
+                    && i.Entries[3].Date == new DateOnly(2025, 6, 18)
+                    && i.Entries[3].Minutes == 15
+                    && i.Entries[3].Remark == null
                 ),
                 It.IsAny<CancellationToken>()
             )
@@ -134,18 +141,43 @@ public class UpdateWeekUserEntriesUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_returns_error_for_non_existing_user_entry_category()
+    public async Task Execute_only_deleted_enabled_projects()
     {
-        var context = new TestContext().WithUserEntryCategories(
-            new UserEntryCategoryEntity(
-                id: 1,
-                ordinal: 981,
-                name: "Dev",
-                enabled: true,
-                activeFrom: null,
-                activeTo: null
+        var context = new TestContext()
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                        new(
+                            Id: 2,
+                            Name: "Intern",
+                            Enabled: false,
+                            InvoiceItems: [new(Id: 20, Name: "Administratie")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                        new(
+                            InvoiceItemId: 20,
+                            Ordinal: 982,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
             )
-        );
+            .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
+            .WithSaveUserEntriesResult(Result.Success<SaveUserEntriesError>());
 
         var useCase = context.BuildUseCase();
 
@@ -158,9 +190,9 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 2,
+                            InvoiceItemId: 10,
                             Minutes: 60,
-                            Remark: null
+                            Remark: "Nieuwe feature"
                         ),
                     ]
                 ),
@@ -174,23 +206,40 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.UnknownUserEntryCategory);
+        result.Succeeded.ShouldBeTrue();
 
-        context.OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+        context.DeleteUserEntriesForDateRangeMock.Verify(x =>
+            x.Execute(
+                It.Is<DeleteUserEntriesForDateRangeInput>(i =>
+                    i.ProjectIds.Length == 1 && i.ProjectIds[0] == 1
+                ),
+                It.IsAny<CancellationToken>()
+            )
+        );
     }
 
     [Fact]
-    public async Task Execute_returns_error_for_disabled_user_entry_category()
+    public async Task Execute_returns_error_for_non_existing_invoice_item()
     {
-        var context = new TestContext().WithUserEntryCategories(
-            new UserEntryCategoryEntity(
-                id: 1,
-                ordinal: 981,
-                name: "Dev",
-                enabled: false,
-                activeFrom: null,
-                activeTo: null
+        var context = new TestContext().WithUserProjectsSuccessResult(
+            new(
+                Projects:
+                [
+                    new(
+                        Id: 1,
+                        Name: "Algemeen",
+                        Enabled: true,
+                        InvoiceItems: [new(Id: 10, Name: "Dev")]
+                    ),
+                ],
+                Customizations:
+                [
+                    new(
+                        InvoiceItemId: 10,
+                        Ordinal: 981,
+                        Color: new(Red: 255, Green: 255, Blue: 255)
+                    ),
+                ]
             )
         );
 
@@ -205,7 +254,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 20,
                             Minutes: 60,
                             Remark: null
                         ),
@@ -221,23 +270,34 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.UnknownUserInvoiceItem);
 
-        context.OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task Execute_returns_error_using_existing_user_entry_category_out_of_active_date_range()
+    public async Task Execute_returns_error_for_disabled_project()
     {
-        var context = new TestContext().WithUserEntryCategories(
-            new UserEntryCategoryEntity(
-                id: 1,
-                ordinal: 981,
-                name: "Dev",
-                enabled: true,
-                activeFrom: new DateOnly(year: 2025, month: 1, day: 1),
-                activeTo: new DateOnly(year: 2025, month: 2, day: 28)
+        var context = new TestContext().WithUserProjectsSuccessResult(
+            new(
+                Projects:
+                [
+                    new(
+                        Id: 1,
+                        Name: "Algemeen",
+                        Enabled: false,
+                        InvoiceItems: [new(Id: 10, Name: "Dev")]
+                    ),
+                ],
+                Customizations:
+                [
+                    new(
+                        InvoiceItemId: 10,
+                        Ordinal: 981,
+                        Color: new(Red: 255, Green: 255, Blue: 255)
+                    ),
+                ]
             )
         );
 
@@ -252,7 +312,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: 60,
                             Remark: null
                         ),
@@ -268,23 +328,34 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidUserInvoiceItem);
 
-        context.OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
     }
 
     [Fact]
     public async Task Execute_returns_error_for_invalid_minutes()
     {
-        var context = new TestContext().WithUserEntryCategories(
-            new UserEntryCategoryEntity(
-                id: 1,
-                ordinal: 981,
-                name: "Dev",
-                enabled: true,
-                activeFrom: null,
-                activeTo: null
+        var context = new TestContext().WithUserProjectsSuccessResult(
+            new(
+                Projects:
+                [
+                    new(
+                        Id: 1,
+                        Name: "Algemeen",
+                        Enabled: true,
+                        InvoiceItems: [new(Id: 10, Name: "Dev")]
+                    ),
+                ],
+                Customizations:
+                [
+                    new(
+                        InvoiceItemId: 10,
+                        Ordinal: 981,
+                        Color: new(Red: 255, Green: 255, Blue: 255)
+                    ),
+                ]
             )
         );
 
@@ -299,7 +370,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: -45,
                             Remark: null
                         ),
@@ -315,23 +386,34 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
 
-        context.OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
     }
 
     [Fact]
     public async Task Execute_returns_error_for_invalid_remark()
     {
-        var context = new TestContext().WithUserEntryCategories(
-            new UserEntryCategoryEntity(
-                id: 1,
-                name: "Dev",
-                ordinal: 981,
-                enabled: true,
-                activeFrom: null,
-                activeTo: null
+        var context = new TestContext().WithUserProjectsSuccessResult(
+            new(
+                Projects:
+                [
+                    new(
+                        Id: 1,
+                        Name: "Algemeen",
+                        Enabled: true,
+                        InvoiceItems: [new(Id: 10, Name: "Dev")]
+                    ),
+                ],
+                Customizations:
+                [
+                    new(
+                        InvoiceItemId: 10,
+                        Ordinal: 981,
+                        Color: new(Red: 255, Green: 255, Blue: 255)
+                    ),
+                ]
             )
         );
 
@@ -346,7 +428,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: 60,
                             Remark: new StringBuilder()
                                 .Append(value: 'a', repeatCount: 260)
@@ -364,31 +446,16 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
 
-        context.OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
     }
 
     [Fact]
-    public async Task Execute_returns_overwrite_user_entries_error()
+    public async Task Execute_returns_unknown_get_user_projects_error()
     {
-        var context = new TestContext()
-            .WithUserEntryCategories(
-                new UserEntryCategoryEntity(
-                    id: 1,
-                    ordinal: 981,
-                    name: "Dev",
-                    enabled: true,
-                    activeFrom: null,
-                    activeTo: null
-                )
-            )
-            .WithOverwriteUserEntriesResult(
-                Result.Failure(
-                    OverwriteUserEntriesForDatesError.Unknown
-                )
-            );
+        var context = new TestContext().WithUserProjectsFailureResult(GetUserProjectsError.Unknown);
 
         var useCase = context.BuildUseCase();
 
@@ -401,7 +468,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            EntryCategoryId: 1,
+                            InvoiceItemId: 10,
                             Minutes: 60,
                             Remark: null
                         ),
@@ -417,38 +484,164 @@ public class UpdateWeekUserEntriesUseCaseTests
             cancellationToken: CancellationToken.None
         );
 
-        result.Succeeded.ShouldBeFalse();
-        result.ErrorOrNull.ShouldBe(UpdateWeekUserEntriesUseCaseError.Unknown);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.Unknown);
+    }
+
+    [Fact]
+    public async Task Execute_returns_delete_user_entries_error()
+    {
+        var context = new TestContext()
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            )
+            .WithDeleteUserEntriesResult(
+                Result.Failure(DeleteUserEntriesForDateRangeError.Unknown)
+            );
+
+        var useCase = context.BuildUseCase();
+
+        var result = await useCase.Execute(
+            userId: 42,
+            year: 2025,
+            weekNumber: 25,
+            input: new UpdateWeekUserEntriesUseCaseInput(
+                Monday: new UpdateWeekUserEntriesUseCaseInputDay(
+                    Entries:
+                    [
+                        new UpdateWeekUserEntriesUseCaseInputDayEntry(
+                            InvoiceItemId: 10,
+                            Minutes: 60,
+                            Remark: null
+                        ),
+                    ]
+                ),
+                Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
+            ),
+            cancellationToken: CancellationToken.None
+        );
+
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.Unknown);
+    }
+
+    [Fact]
+    public async Task Execute_returns_save_user_entries_error()
+    {
+        var context = new TestContext()
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            )
+            .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
+            .WithSaveUserEntriesResult(Result.Failure(SaveUserEntriesError.Unknown));
+
+        var useCase = context.BuildUseCase();
+
+        var result = await useCase.Execute(
+            userId: 42,
+            year: 2025,
+            weekNumber: 25,
+            input: new UpdateWeekUserEntriesUseCaseInput(
+                Monday: new UpdateWeekUserEntriesUseCaseInputDay(
+                    Entries:
+                    [
+                        new UpdateWeekUserEntriesUseCaseInputDayEntry(
+                            InvoiceItemId: 10,
+                            Minutes: 60,
+                            Remark: null
+                        ),
+                    ]
+                ),
+                Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
+            ),
+            cancellationToken: CancellationToken.None
+        );
+
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.Unknown);
     }
 
     class TestContext
     {
-        public Mock<IGetUserUserEntryCategories> GetUserUserEntryCategoriesMock { get; } =
+        public Mock<IGetUserProjects> GetUserProjectsMock { get; } = new(MockBehavior.Strict);
+        public Mock<IDeleteUserEntriesForDateRange> DeleteUserEntriesForDateRangeMock { get; } =
             new(MockBehavior.Strict);
-        public Mock<IOverwriteUserEntriesForDates> OverwriteUserEntriesForDatesMock { get; } =
-            new(MockBehavior.Strict);
+        public Mock<ISaveUserEntries> SaveUserEntriesMock { get; } = new(MockBehavior.Strict);
 
-        public TestContext WithUserEntryCategories(params UserEntryCategoryEntity[] entities)
+        public Mock<ILogger<UpdateWeekUserEntriesUseCase>> LoggerMock = new(MockBehavior.Loose);
+
+        public TestContext WithUserProjectsSuccessResult(GetUserProjectResult result)
         {
-            GetUserUserEntryCategoriesMock
-                .Setup(x =>
-                    x.Execute(It.IsAny<int>(), It.IsAny<int[]>(), It.IsAny<CancellationToken>())
-                )
-                .ReturnsAsync(entities);
+            GetUserProjectsMock
+                .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success<GetUserProjectResult, GetUserProjectsError>(result));
 
             return this;
         }
 
-        public TestContext WithOverwriteUserEntriesResult(
-            IMaybeErrorResult<OverwriteUserEntriesForDatesError> result
+        public TestContext WithUserProjectsFailureResult(GetUserProjectsError result)
+        {
+            GetUserProjectsMock
+                .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<GetUserProjectResult, GetUserProjectsError>(result));
+
+            return this;
+        }
+
+        public TestContext WithDeleteUserEntriesResult(
+            IMaybeErrorResult<DeleteUserEntriesForDateRangeError> result
         )
         {
-            OverwriteUserEntriesForDatesMock
+            DeleteUserEntriesForDateRangeMock
                 .Setup(x =>
                     x.Execute(
-                        It.IsAny<int>(),
-                        It.IsAny<DateOnly[]>(),
-                        It.IsAny<UserEntryEntity[]>(),
+                        It.IsAny<DeleteUserEntriesForDateRangeInput>(),
                         It.IsAny<CancellationToken>()
                     )
                 )
@@ -457,16 +650,30 @@ public class UpdateWeekUserEntriesUseCaseTests
             return this;
         }
 
+        public TestContext WithSaveUserEntriesResult(IMaybeErrorResult<SaveUserEntriesError> result)
+        {
+            SaveUserEntriesMock
+                .Setup(x =>
+                    x.Execute(It.IsAny<SaveUserEntriesInput>(), It.IsAny<CancellationToken>())
+                )
+                .ReturnsAsync(result);
+
+            return this;
+        }
+
         public UpdateWeekUserEntriesUseCase BuildUseCase() =>
             new(
-                getUserUserEntryCategories: GetUserUserEntryCategoriesMock.Object,
-                overwriteUserEntriesForDates: OverwriteUserEntriesForDatesMock.Object
+                getUserProjects: GetUserProjectsMock.Object,
+                deleteUserEntriesForDateRange: DeleteUserEntriesForDateRangeMock.Object,
+                saveUserEntries: SaveUserEntriesMock.Object,
+                logger: LoggerMock.Object
             );
 
         public void VerifyNoOtherCalls()
         {
-            GetUserUserEntryCategoriesMock.VerifyNoOtherCalls();
-            OverwriteUserEntriesForDatesMock.VerifyNoOtherCalls();
+            GetUserProjectsMock.VerifyNoOtherCalls();
+            DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
+            SaveUserEntriesMock.VerifyNoOtherCalls();
         }
     }
 }

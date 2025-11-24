@@ -1,7 +1,5 @@
+using Keepi.Api.Projects.Update;
 using Keepi.Api.UserEntries.GetWeek;
-using Keepi.Api.UserEntries.UpdateWeek;
-using Keepi.Api.UserEntryCategories.GetAll;
-using Keepi.Api.UserEntryCategories.UpdateAll;
 using Microsoft.VisualBasic;
 
 namespace Keepi.Web.Integration.Tests.Workflows;
@@ -12,21 +10,29 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     [Fact]
     public async Task Create_read_update_delete_entries_test()
     {
-        var client = await applicationFactory.CreateRegisteredUserClient(
-            userName: "Paul de Groot",
-            userSubjectClaim: Guid.NewGuid().ToString()
-        );
+        var client = await applicationFactory.CreateClientWithRandomUser();
 
-        var createdCategoryIds = await CreateUserEntryCategories(
-            client: client,
-            values: [(name: "Dev", ordinal: 1), (name: "Administratie", ordinal: 2)]
+        var user = await client.GetUser();
+
+        var firstProjectCreated = await client.CreateProject(
+            new Api.Projects.Create.CreateProjectRequest
+            {
+                Name = Guid.NewGuid().ToString(),
+                Enabled = true,
+                UserIds = [user.Id],
+                InvoiceItemNames = ["Dev", "Administratie"],
+            }
         );
-        var developmentUserEntryCategoryId = createdCategoryIds[0];
-        var administrationUserEntryCategoryId = createdCategoryIds[1];
+        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
+        var developmentUserInvoiceItemId = firstProject
+            .InvoiceItems.Single(i => i.Name == "Dev")
+            .Id;
+        var administrationUserInvoiceItemId = firstProject
+            .InvoiceItems.Single(i => i.Name == "Administratie")
+            .Id;
 
         // Initial create
-        await UpdateWeekEntries(
-            client: client,
+        await client.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -37,13 +43,13 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 60,
                             Remark = "Nieuwe feature",
                         },
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 45,
                             Remark = "Project Flyby",
                         },
@@ -55,7 +61,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 30,
                             Remark = null,
                         },
@@ -67,7 +73,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 15,
                             Remark = null,
                         },
@@ -80,19 +86,19 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        var savedWeek = await GetWeekEntries(client: client, year: 2025, weekNumber: 25);
+        var savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
+                            InvoiceItemId: developmentUserInvoiceItemId,
                             Minutes: 60,
                             Remark: "Nieuwe feature"
                         ),
                         new(
-                            EntryCategoryId: administrationUserEntryCategoryId,
+                            InvoiceItemId: administrationUserInvoiceItemId,
                             Minutes: 45,
                             Remark: "Project Flyby"
                         ),
@@ -101,18 +107,14 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 Tuesday: new(
                     Entries:
                     [
-                        new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
-                            Minutes: 30,
-                            Remark: null
-                        ),
+                        new(InvoiceItemId: developmentUserInvoiceItemId, Minutes: 30, Remark: null),
                     ]
                 ),
                 Wednesday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: administrationUserEntryCategoryId,
+                            InvoiceItemId: administrationUserInvoiceItemId,
                             Minutes: 15,
                             Remark: null
                         ),
@@ -126,8 +128,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Update "existing" entries
-        await UpdateWeekEntries(
-            client: client,
+        await client.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -138,13 +139,13 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 61,
                             Remark = "Nieuwe feature1",
                         },
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 46,
                             Remark = "Project Flyby1",
                         },
@@ -156,7 +157,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 31,
                             Remark = "1",
                         },
@@ -168,7 +169,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 16,
                             Remark = "2",
                         },
@@ -181,19 +182,19 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        savedWeek = await GetWeekEntries(client: client, year: 2025, weekNumber: 25);
+        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
+                            InvoiceItemId: developmentUserInvoiceItemId,
                             Minutes: 61,
                             Remark: "Nieuwe feature1"
                         ),
                         new(
-                            EntryCategoryId: administrationUserEntryCategoryId,
+                            InvoiceItemId: administrationUserInvoiceItemId,
                             Minutes: 46,
                             Remark: "Project Flyby1"
                         ),
@@ -202,18 +203,14 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 Tuesday: new(
                     Entries:
                     [
-                        new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
-                            Minutes: 31,
-                            Remark: "1"
-                        ),
+                        new(InvoiceItemId: developmentUserInvoiceItemId, Minutes: 31, Remark: "1"),
                     ]
                 ),
                 Wednesday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: administrationUserEntryCategoryId,
+                            InvoiceItemId: administrationUserInvoiceItemId,
                             Minutes: 16,
                             Remark: "2"
                         ),
@@ -227,8 +224,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Deleting a single entry
-        await UpdateWeekEntries(
-            client: client,
+        await client.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -239,7 +235,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 61,
                             Remark = "Nieuwe feature1",
                         },
@@ -251,7 +247,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = developmentUserEntryCategoryId,
+                            InvoiceItemId = developmentUserInvoiceItemId,
                             Minutes = 31,
                             Remark = "1",
                         },
@@ -263,7 +259,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                     [
                         new()
                         {
-                            EntryCategoryId = administrationUserEntryCategoryId,
+                            InvoiceItemId = administrationUserInvoiceItemId,
                             Minutes = 16,
                             Remark = "2",
                         },
@@ -276,14 +272,14 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        savedWeek = await GetWeekEntries(client: client, year: 2025, weekNumber: 25);
+        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
+                            InvoiceItemId: developmentUserInvoiceItemId,
                             Minutes: 61,
                             Remark: "Nieuwe feature1"
                         ),
@@ -292,18 +288,14 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 Tuesday: new(
                     Entries:
                     [
-                        new(
-                            EntryCategoryId: developmentUserEntryCategoryId,
-                            Minutes: 31,
-                            Remark: "1"
-                        ),
+                        new(InvoiceItemId: developmentUserInvoiceItemId, Minutes: 31, Remark: "1"),
                     ]
                 ),
                 Wednesday: new(
                     Entries:
                     [
                         new(
-                            EntryCategoryId: administrationUserEntryCategoryId,
+                            InvoiceItemId: administrationUserInvoiceItemId,
                             Minutes: 16,
                             Remark: "2"
                         ),
@@ -317,80 +309,187 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
     }
 
-    private static async Task<int[]> CreateUserEntryCategories(
-        HttpClient client,
-        (string name, int ordinal)[] values
-    )
+    [Fact]
+    public async Task Disabled_project_entries_should_not_be_modified_by_week_entries_update()
     {
-        var httpResponse = await client.PutAsJsonAsync(
-            requestUri: "/api/user/entrycategories",
-            value: new PutUpdateUserEntryCategoriesRequest
+        var client = await applicationFactory.CreateClientWithRandomUser();
+
+        var user = await client.GetUser();
+
+        var firstProjectCreated = await client.CreateProject(
+            new Api.Projects.Create.CreateProjectRequest
             {
-                UserEntryCategories = values
-                    .Select(v => new PutUpdateUserEntryCategoriesRequestCategory()
+                Name = Guid.NewGuid().ToString(),
+                Enabled = true,
+                UserIds = [user.Id],
+                InvoiceItemNames = ["Dev"],
+            }
+        );
+        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
+        var developmentUserInvoiceItemId = firstProject
+            .InvoiceItems.Single(i => i.Name == "Dev")
+            .Id;
+
+        var secondProjectCreated = await client.CreateProject(
+            new Api.Projects.Create.CreateProjectRequest
+            {
+                Name = Guid.NewGuid().ToString(),
+                Enabled = true,
+                UserIds = [user.Id],
+                InvoiceItemNames = ["Administratie"],
+            }
+        );
+        var secondProject = await client.GetProject(projectId: secondProjectCreated.Id);
+        var administrationUserInvoiceItemId = secondProject
+            .InvoiceItems.Single(i => i.Name == "Administratie")
+            .Id;
+
+        // Initial create
+        await client.UpdateUserWeekEntries(
+            year: 2025,
+            weekNumber: 25,
+            request: new()
+            {
+                Monday = new()
+                {
+                    Entries =
+                    [
+                        new()
+                        {
+                            InvoiceItemId = developmentUserInvoiceItemId,
+                            Minutes = 60,
+                            Remark = "Nieuwe feature",
+                        },
+                        new()
+                        {
+                            InvoiceItemId = administrationUserInvoiceItemId,
+                            Minutes = 45,
+                            Remark = "Project Flyby",
+                        },
+                    ],
+                },
+                Tuesday = new() { Entries = [] },
+                Wednesday = new() { Entries = [] },
+                Thursday = new() { Entries = [] },
+                Friday = new() { Entries = [] },
+                Saturday = new() { Entries = [] },
+                Sunday = new() { Entries = [] },
+            }
+        );
+
+        var savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        savedWeek.ShouldBeEquivalentTo(
+            new GetWeekUserEntriesResponse(
+                Monday: new(
+                    Entries:
+                    [
+                        new(
+                            InvoiceItemId: developmentUserInvoiceItemId,
+                            Minutes: 60,
+                            Remark: "Nieuwe feature"
+                        ),
+                        new(
+                            InvoiceItemId: administrationUserInvoiceItemId,
+                            Minutes: 45,
+                            Remark: "Project Flyby"
+                        ),
+                    ]
+                ),
+                Tuesday: new(Entries: []),
+                Wednesday: new(Entries: []),
+                Thursday: new(Entries: []),
+                Friday: new(Entries: []),
+                Saturday: new(Entries: []),
+                Sunday: new(Entries: [])
+            )
+        );
+
+        // Disable the second project
+        await client.UpdateProject(
+            projectId: secondProject.Id,
+            new()
+            {
+                Name = secondProject.Name,
+                Enabled = false,
+                InvoiceItems = secondProject
+                    .InvoiceItems.Select(i => new UpdateProjectRequestInvoiceItem
                     {
-                        Name = v.name,
-                        Ordinal = v.ordinal,
-                        ActiveFrom = null,
-                        ActiveTo = null,
-                        Enabled = true,
+                        Id = i.Id,
+                        Name = i.Name,
                     })
                     .ToArray(),
-            },
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+                UserIds = secondProject.Users.Select(u => (int?)u.Id).ToArray(),
+            }
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
 
-        var userEntryCategories = await client.GetFromJsonAsync<GetUserUserEntryCategoriesResponse>(
-            requestUri: "/api/user/entrycategories",
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        // Update "existing" entries
+        await client.UpdateUserWeekEntries(
+            year: 2025,
+            weekNumber: 25,
+            request: new()
+            {
+                Monday = new()
+                {
+                    Entries =
+                    [
+                        new()
+                        {
+                            InvoiceItemId = developmentUserInvoiceItemId,
+                            Minutes = 61,
+                            Remark = "Nieuwe feature1",
+                        },
+                    ],
+                },
+                Tuesday = new()
+                {
+                    Entries =
+                    [
+                        new()
+                        {
+                            InvoiceItemId = developmentUserInvoiceItemId,
+                            Minutes = 31,
+                            Remark = "1",
+                        },
+                    ],
+                },
+                Wednesday = new() { Entries = [] },
+                Thursday = new() { Entries = [] },
+                Friday = new() { Entries = [] },
+                Saturday = new() { Entries = [] },
+                Sunday = new() { Entries = [] },
+            }
         );
-        userEntryCategories.ShouldNotBeNull();
 
-        var ids = new List<int>();
-        foreach (var value in values)
-        {
-            userEntryCategories.Categories.ShouldContain(c => c.Name == value.name);
-            ids.Add(userEntryCategories.Categories.Single(c => c.Name == value.name).Id);
-        }
-
-        return ids.ToArray();
-    }
-
-    private static async Task UpdateWeekEntries(
-        HttpClient client,
-        int year,
-        int weekNumber,
-        PutUpdateWeekUserEntriesRequest request
-    )
-    {
-        var httpResponse = await client.PutAsJsonAsync(
-            requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}",
-            value: request,
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
+        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        savedWeek.ShouldBeEquivalentTo(
+            new GetWeekUserEntriesResponse(
+                Monday: new(
+                    Entries:
+                    [
+                        new(
+                            InvoiceItemId: administrationUserInvoiceItemId,
+                            Minutes: 45,
+                            Remark: "Project Flyby"
+                        ),
+                        new(
+                            InvoiceItemId: developmentUserInvoiceItemId,
+                            Minutes: 61,
+                            Remark: "Nieuwe feature1"
+                        ),
+                    ]
+                ),
+                Tuesday: new(
+                    Entries:
+                    [
+                        new(InvoiceItemId: developmentUserInvoiceItemId, Minutes: 31, Remark: "1"),
+                    ]
+                ),
+                Wednesday: new(Entries: []),
+                Thursday: new(Entries: []),
+                Friday: new(Entries: []),
+                Saturday: new(Entries: []),
+                Sunday: new(Entries: [])
+            )
         );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
-        httpResponse.Headers.Location?.OriginalString.ShouldBe(
-            $"/api/user/entries/year/{year}/week/{weekNumber}"
-        );
-    }
-
-    private static async Task<GetWeekUserEntriesResponse> GetWeekEntries(
-        HttpClient client,
-        int year,
-        int weekNumber
-    )
-    {
-        var httpResponse = await client.GetAsync(
-            requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}"
-        );
-        httpResponse.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
-
-        var model = await httpResponse.Content.ReadFromJsonAsync<GetWeekUserEntriesResponse>(
-            options: KeepiWebApplicationFactory.GetDefaultJsonSerializerOptions()
-        );
-        model.ShouldNotBeNull();
-
-        return model;
     }
 }

@@ -12,10 +12,11 @@ public interface IExportUserEntriesUseCase
 
 public enum ExportUserEntriesUseCaseError
 {
+    Unknown = 0,
     StartGreaterThanStop,
 }
 
-internal class ExportUserEntriesUseCase(IGetExportUserEntries getExportUserEntries)
+internal sealed class ExportUserEntriesUseCase(IGetExportUserEntries getExportUserEntries)
     : IExportUserEntriesUseCase
 {
     public IValueOrErrorResult<

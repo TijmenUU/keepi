@@ -1,5 +1,6 @@
 using System.Diagnostics;
-using Keepi.Core.UserEntryCategories;
+using Keepi.Core.UserProjects;
+using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Entries;
 
@@ -14,9 +15,11 @@ public interface IUpdateWeekUserEntriesUseCase
     );
 }
 
-internal class UpdateWeekUserEntriesUseCase(
-    IGetUserUserEntryCategories getUserUserEntryCategories,
-    IOverwriteUserEntriesForDates overwriteUserEntriesForDates
+internal sealed class UpdateWeekUserEntriesUseCase(
+    IGetUserProjects getUserProjects,
+    IDeleteUserEntriesForDateRange deleteUserEntriesForDateRange,
+    ISaveUserEntries saveUserEntries,
+    ILogger<UpdateWeekUserEntriesUseCase> logger
 ) : IUpdateWeekUserEntriesUseCase
 {
     public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
@@ -38,15 +41,20 @@ internal class UpdateWeekUserEntriesUseCase(
             input.Sunday,
         };
 
-        var userEntryCategories = await getUserUserEntryCategories.Execute(
+        var getUserProjectsResult = await getUserProjects.Execute(
             userId: userId,
-            userEntryCategoryIds: days.SelectMany(d => d.Entries.Select(e => e.EntryCategoryId))
-                .Distinct()
-                .ToArray(),
             cancellationToken: cancellationToken
         );
+        if (!getUserProjectsResult.TrySuccess(out var userProjects, out var errorResult))
+        {
+            logger.LogError(
+                "Unexpected error {Error} whilst fetching user projects for update week user entries use case",
+                errorResult
+            );
+            return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
+        }
 
-        List<UserEntryEntity> userEntryEntities = [];
+        List<SaveUserEntriesInputEntry> entries = [];
         var dayDates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
 
         Debug.Assert(dayDates.Length == days.Length);
@@ -57,21 +65,17 @@ internal class UpdateWeekUserEntriesUseCase(
 
             foreach (var entry in day.Entries)
             {
-                var userEntrCategory = userEntryCategories.SingleOrDefault(uec =>
-                    uec.Id == entry.EntryCategoryId
+                var userProject = userProjects.Projects.SingleOrDefault(p =>
+                    p.InvoiceItems.Any(i => i.Id == entry.InvoiceItemId)
                 );
-                if (userEntrCategory == null)
+                if (userProject == null)
                 {
-                    return Result.Failure(
-                        UpdateWeekUserEntriesUseCaseError.UnknownUserEntryCategory
-                    );
+                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.UnknownUserInvoiceItem);
                 }
 
-                if (!userEntrCategory.IsEntryAllowedForDate(date))
+                if (!userProject.Enabled)
                 {
-                    return Result.Failure(
-                        UpdateWeekUserEntriesUseCaseError.InvalidUserEntryCategory
-                    );
+                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidUserInvoiceItem);
                 }
 
                 if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
@@ -84,30 +88,55 @@ internal class UpdateWeekUserEntriesUseCase(
                     return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
                 }
 
-                userEntryEntities.Add(
-                    new UserEntryEntity(
-                        id: 0,
-                        userId: userId,
-                        userEntryCategoryId: entry.EntryCategoryId,
-                        date: date,
-                        minutes: entry.Minutes,
-                        remark: entry.Remark
+                entries.Add(
+                    new(
+                        InvoiceItemId: entry.InvoiceItemId,
+                        Date: date,
+                        Minutes: entry.Minutes,
+                        Remark: entry.Remark
                     )
                 );
             }
         }
 
-        var result = await overwriteUserEntriesForDates.Execute(
-            userId: userId,
-            dates: dayDates,
-            userEntries: userEntryEntities.ToArray(),
+        var deletionResult = await deleteUserEntriesForDateRange.Execute(
+            input: new(
+                UserId: userId,
+                From: dayDates.First(),
+                ToInclusive: dayDates.Last(),
+                ProjectIds: userProjects.Projects.Where(p => p.Enabled).Select(p => p.Id).ToArray()
+            ),
             cancellationToken: cancellationToken
         );
 
-        if (result.Succeeded)
+        if (!deletionResult.TrySuccess(out var deletionError))
+        {
+            logger.LogError(
+                "Unexpected error {Error} whilst deleting existing user entries for week {WeekNumber} {Year} for user {UserId}",
+                errorResult,
+                weekNumber,
+                year,
+                userId
+            );
+            return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
+        }
+
+        var saveResult = await saveUserEntries.Execute(
+            input: new(UserId: userId, Entries: [.. entries]),
+            cancellationToken: cancellationToken
+        );
+        if (saveResult.Succeeded)
         {
             return Result.Success<UpdateWeekUserEntriesUseCaseError>();
         }
+
+        logger.LogError(
+            "Unexpected error {Error} whilst saving user entries for week {WeekNumber} {Year} for user {UserId}",
+            errorResult,
+            weekNumber,
+            year,
+            userId
+        );
         return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
     }
 }
@@ -115,8 +144,8 @@ internal class UpdateWeekUserEntriesUseCase(
 public enum UpdateWeekUserEntriesUseCaseError
 {
     Unknown,
-    UnknownUserEntryCategory,
-    InvalidUserEntryCategory,
+    UnknownUserInvoiceItem,
+    InvalidUserInvoiceItem,
     InvalidMinutes,
     InvalidRemark,
 }
@@ -136,7 +165,7 @@ public record UpdateWeekUserEntriesUseCaseInputDay(
 );
 
 public record UpdateWeekUserEntriesUseCaseInputDayEntry(
-    int EntryCategoryId,
+    int InvoiceItemId,
     int Minutes,
     string? Remark
 );

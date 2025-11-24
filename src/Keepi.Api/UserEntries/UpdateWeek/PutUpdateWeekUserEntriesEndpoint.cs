@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.UpdateWeek;
 
-public class PutUpdateWeekUserEntriesEndpoint(
+public sealed class PutUpdateWeekUserEntriesEndpoint(
     IResolveUserHelper resolveUserHelper,
     IUpdateWeekUserEntriesUseCase updateWeekUserEntriesUseCase,
     ILogger<PutUpdateWeekUserEntriesEndpoint> logger
@@ -30,7 +30,7 @@ public class PutUpdateWeekUserEntriesEndpoint(
         );
         if (user == null)
         {
-            logger.LogDebug("Refusing to update week entries for unregistered user");
+            logger.LogDebug("Refusing to update week entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
@@ -124,7 +124,7 @@ public class PutUpdateWeekUserEntriesEndpoint(
                     return false;
                 }
 
-                if (entry.EntryCategoryId == null)
+                if (entry.InvoiceItemId == null)
                 {
                     validated = null;
                     return false;
@@ -144,7 +144,7 @@ public class PutUpdateWeekUserEntriesEndpoint(
 
                 validatedEntries.Add(
                     new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                        EntryCategoryId: entry.EntryCategoryId.Value,
+                        InvoiceItemId: entry.InvoiceItemId.Value,
                         Minutes: entry.Minutes.Value,
                         Remark: entry.Remark
                     )

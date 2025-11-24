@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetExport;
 
-public class GetUserEntriesExportEndpoint(
+public sealed class GetUserEntriesExportEndpoint(
     IResolveUserHelper resolveUserHelper,
     IExportUserEntriesUseCase exportUserEntriesUseCase,
     ILogger<GetUserEntriesExportEndpoint> logger
@@ -31,7 +31,7 @@ public class GetUserEntriesExportEndpoint(
         );
         if (user == null)
         {
-            logger.LogDebug("Refusing to export entries for unregistered user");
+            logger.LogDebug("Refusing to export entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);
             return;
         }
@@ -49,7 +49,7 @@ public class GetUserEntriesExportEndpoint(
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var success, out var error))
+        if (result.TrySuccess(out var successResult, out var errorResult))
         {
             var temporaryFilePath = Path.GetTempFileName();
             {
@@ -60,9 +60,10 @@ public class GetUserEntriesExportEndpoint(
                     CultureInfo.GetCultureInfo("nl-NL")
                 );
                 await outputStream.WriteRecordsAsync(
-                    records: success.Select(e => new ExportRecord(
+                    records: successResult.Select(e => new ExportRecord(
                         Date: e.Date,
-                        CategoryName: e.UserEntryCategoryName,
+                        ProjectName: e.ProjectName,
+                        InvoiceItemName: e.InvoiceItemName,
                         Minutes: e.Minutes,
                         Remark: e.Remark
                     )),
@@ -80,7 +81,7 @@ public class GetUserEntriesExportEndpoint(
             return;
         }
 
-        if (error == ExportUserEntriesUseCaseError.StartGreaterThanStop)
+        if (errorResult == ExportUserEntriesUseCaseError.StartGreaterThanStop)
         {
             await Send.ErrorsAsync(cancellation: cancellationToken);
             return;
@@ -117,7 +118,8 @@ public class GetUserEntriesExportEndpoint(
 
     record ExportRecord(
         [property: Name("Datum")] DateOnly Date,
-        [property: Name("Categorie")] string CategoryName,
+        [property: Name("Project")] string ProjectName,
+        [property: Name("Post")] string InvoiceItemName,
         [property: Name("Minuten")] int Minutes,
         [property: Name("Opmerking")] string Remark
     );
