@@ -1,44 +1,21 @@
-import type { RegleFieldStatus } from '@regle/core'
-import { computed, ref, unref, type ComputedRef, type MaybeRef, type Ref } from 'vue'
+import { tryParseDutchDate } from '@/format'
+import { maxLength, required, withMessage } from '@regle/rules'
 
-export function useCustomFieldError<TValue>(options: {
-  forceShowError: MaybeRef<boolean>
-  regleFieldStatus: MaybeRef<RegleFieldStatus<TValue>>
-}): {
-  hadFocus: Ref<boolean>
-  onBlur: () => void
-  showError: ComputedRef<boolean>
-  errorToShow: ComputedRef<string>
-} {
-  const hadFocus = ref<boolean>(false)
-  const onBlur = () => (hadFocus.value = true)
+export const dateValidator = withMessage(isValidDate, 'Geen geldige datum')
+export const requiredValidator = withMessage(required, 'Dit veld is verplicht')
 
-  const showError = computed<boolean>(
-    () =>
-      (hadFocus.value || unref(options.forceShowError)) &&
-      (unref(options.regleFieldStatus)?.$error ?? false),
-  )
-
-  const errorToShow = computed<string>(
-    () => unref(options.regleFieldStatus)?.$errors.find((e) => !!e) ?? '',
-  )
-
-  return { hadFocus, onBlur, showError, errorToShow }
-}
-
-export function useCustomSubmit(options: { submitCallback: () => void }): {
-  forceShowError: Ref<boolean>
-  onSubmit: () => Promise<void>
-} {
-  const forceShowError = ref(false)
-
-  const onSubmit = async () => {
-    forceShowError.value = true
-
-    if (options.submitCallback != null) {
-      options.submitCallback()
-    }
+export function isValidDate(value: unknown): boolean {
+  if (value == null || typeof value !== 'string' || value === '') {
+    return true
   }
 
-  return { forceShowError, onSubmit }
+  return tryParseDutchDate(value) != null
+}
+
+export function isValidString(value: unknown): boolean {
+  return value !== null && typeof value === 'string'
+}
+
+export function hasMaxLength(length: number) {
+  return withMessage(maxLength, `Maximale aantal karakters is ${length}`)(length)
 }

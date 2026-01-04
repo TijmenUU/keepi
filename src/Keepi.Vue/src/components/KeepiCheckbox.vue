@@ -13,6 +13,5 @@ const emits = defineEmits<{
     type="checkbox"
     :checked="props.modelValue"
     @change="emits('update:modelValue', ($event.target as HTMLInputElement)?.checked ?? false)"
-    class="h-4 w-4 rounded"
-  />
+    class="h-4 w-4 rounded" />
 </template>

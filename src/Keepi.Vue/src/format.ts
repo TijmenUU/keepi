@@ -91,7 +91,7 @@ export function tryParseColonTimeNotation(userValue: string): number | null {
 
 export function tryParseDutchDate(userValue: string): Date | null {
   const trimmedValue = userValue.trim()
-  if (/^[1-3]?[0-9]-[1-2]?[0-9]-[0-9]{4}$/.test(trimmedValue)) {
+  if (/^[0-3]?[0-9]-[0-2]?[0-9]-[0-9]{4}$/.test(trimmedValue)) {
     // example: 31-12-2025 or 1-5-2025
     const values = trimmedValue.split('-')
     const day = parseInt(values[0])

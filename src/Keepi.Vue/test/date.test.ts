@@ -1,9 +1,15 @@
-import { areDatesEqual, formatDateAsTwoLetterDayName, getWeekDaysFor, getWeekNumber } from '@/date'
+import {
+  areDatesEqual,
+  formatDateAsTwoLetterDayName,
+  getDateOfIsoWeek,
+  getWeekDaysForDate,
+  getWeekNumber,
+} from '@/date'
 import { describe, expect, test } from 'vitest'
 
-describe('format', () => {
-  test('getWeekDaysFor', () => {
-    expect(getWeekDaysFor(new Date(2024, 0, 28))).toEqual({
+describe.concurrent('format', () => {
+  test('getWeekDaysForDate', () => {
+    expect(getWeekDaysForDate(new Date(2024, 0, 28))).toEqual({
       dates: [
         new Date(2024, 0, 22),
         new Date(2024, 0, 23),
@@ -17,7 +23,7 @@ describe('format', () => {
       year: 2024,
     })
 
-    expect(getWeekDaysFor(new Date(2024, 0, 25))).toEqual({
+    expect(getWeekDaysForDate(new Date(2024, 0, 25))).toEqual({
       dates: [
         new Date(2024, 0, 22),
         new Date(2024, 0, 23),
@@ -31,7 +37,7 @@ describe('format', () => {
       year: 2024,
     })
 
-    expect(getWeekDaysFor(new Date(2024, 0, 22))).toEqual({
+    expect(getWeekDaysForDate(new Date(2024, 0, 22))).toEqual({
       dates: [
         new Date(2024, 0, 22),
         new Date(2024, 0, 23),
@@ -45,7 +51,7 @@ describe('format', () => {
       year: 2024,
     })
 
-    expect(getWeekDaysFor(new Date(2022, 0, 1))).toEqual({
+    expect(getWeekDaysForDate(new Date(2022, 0, 1))).toEqual({
       dates: [
         new Date(2021, 11, 27),
         new Date(2021, 11, 28),
@@ -104,4 +110,16 @@ describe('format', () => {
       false,
     )
   })
+
+  test('getDateOfIsoWeek', () => {
+    expect(formatAsIsoDate(getDateOfIsoWeek(53, 1976))).toBe('1976-12-27')
+    expect(formatAsIsoDate(getDateOfIsoWeek(1, 1978))).toBe('1978-01-02')
+    expect(formatAsIsoDate(getDateOfIsoWeek(1, 1980))).toBe('1979-12-31')
+    expect(formatAsIsoDate(getDateOfIsoWeek(53, 2020))).toBe('2020-12-28')
+    expect(formatAsIsoDate(getDateOfIsoWeek(1, 2021))).toBe('2021-01-04')
+  })
 })
+
+function formatAsIsoDate(d: Date): string {
+  return `${d.getFullYear().toString().padStart(4, '0')}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+}

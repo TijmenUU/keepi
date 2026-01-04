@@ -9,7 +9,7 @@ import {
   tryParseTimeNotation,
 } from '@/format'
 
-describe('format', () => {
+describe.concurrent('format', () => {
   test('toShortIsoDate', () => {
     expect(toShortIsoDate(new Date(2020, 2, 28, 4))).toBe('2020-03-28')
     expect(toShortIsoDate(new Date(2020, 11, 31, 4))).toBe('2020-12-31')
@@ -102,8 +102,10 @@ describe('format', () => {
     expect(tryParseDutchDate('29-2-2025')).toBe(null)
 
     expectLocalDatesToBeEqual(tryParseDutchDate('1-1-2000'), new Date(2000, 0, 1))
+    expectLocalDatesToBeEqual(tryParseDutchDate('01-01-2000'), new Date(2000, 0, 1))
     expectLocalDatesToBeEqual(tryParseDutchDate('31-12-2025'), new Date(2025, 11, 31))
     expectLocalDatesToBeEqual(tryParseDutchDate('29-2-2024'), new Date(2024, 1, 29))
+    expectLocalDatesToBeEqual(tryParseDutchDate('29-02-2024'), new Date(2024, 1, 29))
   })
 })
 

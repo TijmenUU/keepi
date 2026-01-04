@@ -1,5 +1,6 @@
 import { toShortIsoDate } from '@/format'
-import { fromPromise, err, ok } from 'neverthrow'
+import { ApiError } from '@/types'
+import { fromPromise, err, ok, ResultAsync } from 'neverthrow'
 
 export default class ApiClient {
   public getUser() {
@@ -12,41 +13,65 @@ export default class ApiClient {
     })
   }
 
-  public ensureUserIsRegistered() {
+  public getAllUsers() {
     const options = this.getBaseRequestOptions({
-      method: 'POST',
+      method: 'GET',
     })
 
-    return this.makeRequest('/registeruser', options, [200, 201]).andThen((result) => {
-      return ApiClient.deserializeJson<IPostRegisterUserResponse>(result).andThen((result) => {
-        if (result.result === 'created' || result.result === 'userAlreadyExists') {
-          return ok()
-        } else {
-          console.error(`Unexpected result value ${result.result}`)
-          return err('unknown')
-        }
-      })
+    return this.makeRequest('/users', options).andThen((result) => {
+      return ApiClient.deserializeJson<IGetAllUsersResponse>(result)
     })
   }
 
-  public updateAllUserEntryCategories(value: IPutUpdateUserEntryCategoriesRequest) {
+  public createProject(value: ICreateProjectRequest) {
+    const options = this.getBaseRequestOptions({
+      method: 'POST',
+      json: JSON.stringify(value),
+    })
+
+    return this.makeRequest('/projects', options, [200]).andThen((result) => {
+      return ApiClient.deserializeJson<ICreateProjectResponse>(result)
+    })
+  }
+
+  public deleteProject(id: number) {
+    const options = this.getBaseRequestOptions({
+      method: 'DELETE',
+    })
+
+    return this.makeRequest(`/projects/${id}`, options, [204]).andThen(() => {
+      return ok()
+    })
+  }
+
+  public getAllProjects() {
+    const options = this.getBaseRequestOptions({
+      method: 'GET',
+    })
+
+    return this.makeRequest('/projects', options, [200]).andThen((result) => {
+      return ApiClient.deserializeJson<IGetAllProjectsResponse>(result)
+    })
+  }
+
+  public updateProject(id: number, value: IUpdateProjectRequest) {
     const options = this.getBaseRequestOptions({
       method: 'PUT',
       json: JSON.stringify(value),
     })
 
-    return this.makeRequest('/user/entrycategories', options, [204]).andThen(() => {
+    return this.makeRequest(`/projects/${id}`, options, [204]).andThen(() => {
       return ok()
     })
   }
 
-  public getAllUserEntryCategories() {
+  public getUserProjects() {
     const options = this.getBaseRequestOptions({
       method: 'GET',
     })
 
-    return this.makeRequest('/user/entrycategories', options, [200]).andThen((result) => {
-      return ApiClient.deserializeJson<IGetUserEntryCategoriesResponse>(result)
+    return this.makeRequest('/user/projects', options, [200]).andThen((result) => {
+      return ApiClient.deserializeJson<IGetUserProjectsResponse>(result)
     })
   }
 
@@ -79,7 +104,10 @@ export default class ApiClient {
     })
   }
 
-  public getUserEntriesExport(from: Date, to: Date) {
+  public getUserEntriesExport(
+    from: Date,
+    to: Date,
+  ): ResultAsync<{ blob: Blob; fileName: string }, ApiError> {
     const options = this.getBaseRequestOptions({
       method: 'POST',
       json: JSON.stringify({
@@ -89,13 +117,13 @@ export default class ApiClient {
     })
 
     return this.makeRequest(`/user/entries/export`, options, [200]).andThen((result) =>
-      fromPromise(
-        result.blob().then((blob) => ({
-          blob,
-          fileName: ApiClient.getFileNameFromHeaderOrFallback(result.headers, 'export.csv'),
-        })),
-        () => err('unknown'),
-      ),
+      fromPromise(result.blob(), (reason) => {
+        console.error('Failed to retrieve blob from response body', reason)
+        return new ApiError('unknown')
+      }).map((blob) => ({
+        blob,
+        fileName: ApiClient.getFileNameFromHeaderOrFallback(result.headers, 'export.csv'),
+      })),
     )
   }
 
@@ -119,12 +147,29 @@ export default class ApiClient {
     return fileNamePart.substring(fileNamePartKey.length)
   }
 
-  private makeRequest(subpath: string, options?: RequestInit, supportedResponseCodes?: number[]) {
+  public updateAllUserInvoiceItemCustomizations(
+    value: IUpdateAllUserInvoiceItemCustomizationsRequest,
+  ) {
+    const options = this.getBaseRequestOptions({
+      method: 'PUT',
+      json: JSON.stringify(value),
+    })
+
+    return this.makeRequest('/user/invoiceitemcustomizations', options, [204]).andThen(() => {
+      return ok()
+    })
+  }
+
+  private makeRequest(
+    subpath: string,
+    options?: RequestInit,
+    supportedResponseCodes?: number[],
+  ): ResultAsync<Response, ApiError> {
     const path = subpath.startsWith('/') ? `/api${subpath}` : `/api/${subpath}`
 
-    return fromPromise<Response, 'unknown'>(fetch(path, options), (error) => {
+    return fromPromise(fetch(path, options), (error) => {
       console.error(`Unexpected error whilst making fetch request to ${path}`, error)
-      return 'unknown'
+      return new ApiError('unknown')
     }).andThen((result) => {
       if (supportedResponseCodes != null && supportedResponseCodes.includes(result.status)) {
         return ok(result)
@@ -134,14 +179,14 @@ export default class ApiClient {
 
       console.error(`Unexpected response status code ${result.status} for path ${path}`)
       if (result.status === 400) {
-        return err('badrequest')
+        return err(new ApiError('badrequest'))
       } else if (result.status === 401) {
-        return err('unauthorized')
+        return err(new ApiError('unauthorized'))
       } else if (result.status === 403) {
-        return err('forbidden')
+        return err(new ApiError('forbidden'))
       }
 
-      return err('unknown')
+      return err(new ApiError('unknown'))
     })
   }
 
@@ -162,44 +207,55 @@ export default class ApiClient {
     return result
   }
 
-  private static deserializeJson<TBody>(response: Response) {
-    // TODO add some kind of schema validation?
-    return fromPromise<TBody, 'unknown'>(response.json(), (error) => {
+  private static deserializeJson<TBody>(response: Response): ResultAsync<TBody, ApiError> {
+    // TODO add some kind of schema validation? Maybe look at Zod.
+    return fromPromise(response.json(), (error) => {
       console.error(`Unexpected error whilst deserializing JSON`, error)
-      return 'unknown'
+      return new ApiError('unknown')
     })
   }
 }
 
 export interface IGetUserResponse {
+  id: number
   name: string
-  registered: boolean
+  emailAddress: string
 }
 
-export interface IPostRegisterUserResponse {
-  result: 'created' | 'userAlreadyExists'
-}
-
-export interface IGetUserEntryCategoriesResponse {
-  categories: {
+export interface IGetAllUsersResponse {
+  users: {
     id: number
     name: string
-    ordinal: number
-    enabled: boolean
-    activeFrom: string | null // yyyy-MM-dd
-    activeTo: string | null // yyyy-MM-dd
+    emailAddress: string
   }[]
 }
 
-export interface IPutUpdateUserEntryCategoriesRequest {
-  userEntryCategories: {
-    id?: number
+export interface ICreateProjectRequest {
+  name: string
+  enabled: boolean
+  userIds: number[]
+  invoiceItemNames: string[]
+}
+
+export interface ICreateProjectResponse {
+  id: number
+}
+
+export interface IGetAllProjectsResponse {
+  projects: {
+    id: number
     name: string
-    ordinal: number
     enabled: boolean
-    activeFrom?: string // yyyy-MM-dd
-    activeTo?: string // yyyy-MM-dd
+    users: { id: number; name: string }[]
+    invoiceItems: { id: number; name: string }[]
   }[]
+}
+
+export interface IUpdateProjectRequest {
+  name: string
+  enabled: boolean
+  userIds: number[]
+  invoiceItems: { id?: number; name: string }[]
 }
 
 export interface IPutUpdateWeekUserEntriesRequest {
@@ -214,7 +270,7 @@ export interface IPutUpdateWeekUserEntriesRequest {
 
 export interface IPutUpdateWeekUserEntriesRequestDay {
   entries: {
-    entryCategoryId: number
+    invoiceItemId: number
     minutes: number
     remark?: string
   }[]
@@ -232,8 +288,30 @@ export interface IGetWeekUserEntriesResponse {
 
 export interface IGetWeekUserEntriesResponseDay {
   entries: {
-    entryCategoryId: number
+    invoiceItemId: number
     minutes: number
     remark: string | null
+  }[]
+}
+
+export interface IUpdateAllUserInvoiceItemCustomizationsRequest {
+  invoiceItems: {
+    id: number
+    ordinal: number
+    color: string | null
+  }[]
+}
+
+export interface IGetUserProjectsResponse {
+  projects: {
+    id: number
+    name: string
+    enabled: boolean
+    invoiceItems: {
+      id: number
+      name: string
+      ordinal: number
+      color: string | null
+    }[]
   }[]
 }

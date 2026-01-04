@@ -23,7 +23,7 @@ const isToday = computed<boolean>(() => areDatesEqual(props.date, new Date()))
 <template>
   <div class="text-center" :class="{ 'text-blue-500': isToday }">
     {{ shortDayName }}
-    <span class="align-top text-xs font-normal text-gray-500">
+    <span class="align-top text-xs font-normal">
       {{ dayMonth }}
     </span>
   </div>

@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import ApiClient from '@/api-client'
-import KeepiButton from '@/components/KeepiButton.vue'
 import KeepiValidatedInput from '@/components/KeepiValidatedInput.vue'
-import { getWeekDaysFor } from '@/date'
+import Button from '@/components/ui/button/Button.vue'
+import Label from '@/components/ui/label/Label.vue'
+import { getWeekDaysForDate } from '@/date'
 import { toShortDutchDate, tryParseDutchDate } from '@/format'
+import { dateValidator, requiredValidator } from '@/regle'
+import { handleApiError } from '@/router'
 import { useRegle } from '@regle/core'
-import { required, withMessage } from '@regle/rules'
+import { withMessage } from '@regle/rules'
 import { ref } from 'vue'
 
 const apiClient = new ApiClient()
 const disableUserInteraction = ref(false)
-const hasSubmitted = ref(false)
 
-const currentWeek = getWeekDaysFor(new Date())
+const currentWeek = getWeekDaysForDate(new Date())
 const formValues = ref({
   from: toShortDutchDate(currentWeek.dates[0]),
   to: toShortDutchDate(currentWeek.dates[currentWeek.dates.length - 1]),
@@ -20,12 +22,12 @@ const formValues = ref({
 
 const { r$ } = useRegle(formValues, {
   from: {
-    date: withMessage(isValidDate, 'Geen geldige datum'),
-    required: withMessage(required, 'Datum vanaf is verplicht'),
+    date: dateValidator,
+    required: requiredValidator,
   },
   to: {
-    date: withMessage(isValidDate, 'Geen geldige datum'),
-    required: withMessage(required, 'Datum tot en met is verplicht'),
+    date: dateValidator,
+    required: requiredValidator,
     dateAfter: withMessage((value) => {
       if (value == null || typeof value !== 'string') {
         return true
@@ -48,17 +50,7 @@ const { r$ } = useRegle(formValues, {
   },
 })
 
-function isValidDate(value: unknown): boolean {
-  if (value == null || typeof value !== 'string') {
-    return true
-  }
-
-  return tryParseDutchDate(value) != null
-}
-
 const onSubmit = async () => {
-  hasSubmitted.value = true
-
   if (disableUserInteraction.value) {
     return
   }
@@ -71,7 +63,6 @@ const onSubmit = async () => {
       const from = tryParseDutchDate(data.from)
       const to = tryParseDutchDate(data.to)
       if (from == null || to == null) {
-        console.debug('Malformed submission data', data)
         throw new Error('Malformed submission data in submit handler')
       }
 
@@ -84,8 +75,9 @@ const onSubmit = async () => {
           link.click()
           URL.revokeObjectURL(downloadUrl)
         },
-        // TODO notify the user of this error?
-        () => {},
+        (error) => {
+          handleApiError(error)
+        },
       )
     }
   } finally {
@@ -95,32 +87,38 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <div class="container mx-auto flex max-w-screen-lg flex-col items-center gap-y-3 px-2 py-3">
-    <label>
-      Vanaf
-      <!--
+  <div class="inline-block">
+    <div class="flex space-x-2">
+      <Label>
+        Van
+        <!--
         TODO Make this input date compatible so the UX from the frontend
         is more enjoyable. See the other date input below as well.
       -->
-      <KeepiValidatedInput
-        :force-show-error="hasSubmitted"
-        :field="r$.$fields.from"
-        id="from"
-        v-model="formValues.from"
-        autofocus
-      />
-    </label>
+        <KeepiValidatedInput
+          :field="r$.$fields.from"
+          class="max-w-28"
+          id="from"
+          v-model="formValues.from"
+          placeholder="dd-mm-jjjj"
+          autofocus />
+      </Label>
 
-    <label>
-      Tot en met
-      <KeepiValidatedInput
-        :force-show-error="hasSubmitted"
-        :field="r$.$fields.to"
-        id="to"
-        v-model="formValues.to"
-      />
-    </label>
+      <Label>
+        tot en met
+        <KeepiValidatedInput
+          :field="r$.$fields.to"
+          class="max-w-28"
+          id="to"
+          v-model="formValues.to"
+          placeholder="dd-mm-jjjj" />
+      </Label>
+    </div>
 
-    <KeepiButton @click="onSubmit"> Exporteer </KeepiButton>
+    <div class="col-span-2 mt-4 sm:flex sm:justify-end">
+      <Button @click="onSubmit" class="w-full sm:w-auto" :disabled="r$.$invalid">
+        Exporteer
+      </Button>
+    </div>
   </div>
 </template>

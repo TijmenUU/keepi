@@ -1,41 +1,90 @@
 <script setup lang="ts">
-import NavigationMenu from '@/components/NavigationMenu.vue'
+import KeepiSidebar from '@/components/KeepiSidebar.vue'
+import KeepiSpinner from '@/components/KeepiSpinner.vue'
+import SidebarProvider from '@/components/ui/sidebar/SidebarProvider.vue'
+import SidebarTrigger from '@/components/ui/sidebar/SidebarTrigger.vue'
+import { useColorMode } from '@vueuse/core'
+import { Moon, Sun } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
+import 'vue-sonner/style.css'
 
 const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE
 const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT
+
+const mode = useColorMode({ disableTransition: false })
+const onToggleTheme = () => {
+  if (mode.value === 'light') {
+    mode.value = 'dark'
+  } else {
+    mode.value = 'light'
+  }
+}
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
-    <NavigationMenu />
+  <!-- The SidebarProvider also functions as the tooltip provider -->
+  <SidebarProvider>
+    <KeepiSidebar />
 
-    <RouterView v-slot="{ Component }">
-      <Transition name="fade" mode="out-in" appear>
-        <Suspense timeout="0">
-          <template v-if="Component">
-            <component :is="Component"></component>
-          </template>
+    <Toaster />
 
-          <template #fallback>
-            <div class="flex flex-grow flex-col items-center justify-center">
-              <div class="loader"></div>
+    <div class="flex min-h-screen w-full flex-col lg:max-w-5xl">
+      <div class="h-14 max-w-screen px-4 py-2">
+        <div class="flex flex-nowrap items-center justify-between space-x-2">
+          <div class="flex space-x-4">
+            <SidebarTrigger class="lg:hidden" />
+
+            <Button class="h-10 w-10" variant="outline" size="icon" @click="onToggleTheme">
+              <Transition name="fade" mode="out-in">
+                <Moon :size="48" v-if="mode === 'light'" />
+                <Sun :size="48" v-else />
+              </Transition>
+              <span class="sr-only">Toggle theme</span>
+            </Button>
+          </div>
+
+          <div class="block w-auto">
+            <div
+              id="header-bar"
+              class="mt-0 flex flex-row space-x-3 rounded-lg border-0 p-0 font-medium sm:space-x-8 rtl:space-x-reverse">
+              <!-- Content is put here using Teleport -->
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4">
+        <RouterView v-slot="{ Component }">
+          <template v-if="Component != null">
+            <!-- Using a transition here causes the error <TypeError: can't access property "nextSibling", node is null> -->
+            <Suspense timeout="0">
+              <component :is="Component"></component>
+
+              <template #fallback>
+                <div class="flex grow flex-col items-center justify-center">
+                  <KeepiSpinner />
+                </div>
+              </template>
+            </Suspense>
           </template>
-        </Suspense>
-      </Transition>
-    </RouterView>
+        </RouterView>
+      </div>
 
-    <div class="flex-grow"></div>
+      <div class="grow"></div>
 
-    <footer class="mb-2 text-center text-sm text-gray-500">
-      <p>
-        Opmerkingen of suggesties? Laat
-        <a class="text-gray-300" href="https://github.com/TijmenUU/keepi-vue/issues">hier</a>
-        je feedback achter.
-      </p>
-      <p class="text-xs">{{ buildDate }}+{{ buildCommit }}</p>
-    </footer>
-  </div>
+      <footer class="mb-2 max-w-screen text-center text-sm">
+        <p>
+          Opmerkingen of suggesties? Laat
+          <a class="cursor-pointer text-blue-500" href="https://github.com/TijmenUU/keepi/issues"
+            >hier</a
+          >
+          je feedback achter.
+        </p>
+        <p class="text-xs">{{ buildDate }}+{{ buildCommit }}</p>
+      </footer>
+    </div>
+  </SidebarProvider>
 </template>
 
 <style>
@@ -47,40 +96,5 @@ const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-.loader {
-  height: 15px;
-  aspect-ratio: 4;
-  --_g: no-repeat radial-gradient(farthest-side, #eee 90%, #0000);
-  background:
-    var(--_g) left,
-    var(--_g) right;
-  background-size: 25% 100%;
-  display: grid;
-}
-.loader:before,
-.loader:after {
-  content: '';
-  height: inherit;
-  aspect-ratio: 1;
-  grid-area: 1/1;
-  margin: auto;
-  border-radius: 50%;
-  transform-origin: -100% 50%;
-  background: #eee;
-  animation: l49 1s infinite linear;
-}
-.loader:after {
-  transform-origin: 200% 50%;
-  --s: -1;
-  animation-delay: -0.5s;
-}
-
-@keyframes l49 {
-  58%,
-  100% {
-    transform: rotate(calc(var(--s, 1) * 1turn));
-  }
 }
 </style>

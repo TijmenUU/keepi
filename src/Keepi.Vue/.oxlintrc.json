@@ -1,20 +1,13 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "unicorn"
-  ],
+  "plugins": ["typescript", "unicorn"],
   "categories": {
     "correctness": "off"
   },
   "env": {
     "builtin": true
   },
-  "ignorePatterns": [
-    "**/dist/**",
-    "**/dist-ssr/**",
-    "**/coverage/**"
-  ],
+  "ignorePatterns": ["**/dist/**", "**/dist-ssr/**", "**/coverage/**"],
   "rules": {
     "@typescript-eslint/ban-ts-comment": "error",
     "no-array-constructor": "error",
@@ -44,13 +37,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*.ts",
-        "**/*.tsx",
-        "**/*.mts",
-        "**/*.cts",
-        "**/*.vue"
-      ],
+      "files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts", "**/*.vue"],
       "rules": {
         "no-class-assign": "off",
         "no-const-assign": "off",
@@ -71,9 +58,7 @@
       }
     },
     {
-      "files": [
-        "src/**/__tests__/*"
-      ],
+      "files": ["src/**/__tests__/*"],
       "rules": {
         "vitest/expect-expect": "error",
         "vitest/no-identical-title": "error",
@@ -83,9 +68,7 @@
         "vitest/require-local-test-context-for-concurrent-snapshots": "error",
         "vitest/no-import-node-test": "error"
       },
-      "plugins": [
-        "vitest"
-      ]
+      "plugins": ["vitest"]
     }
   ]
 }
