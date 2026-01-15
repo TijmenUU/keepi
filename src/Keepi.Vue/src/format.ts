@@ -110,3 +110,25 @@ export function tryParseDutchDate(userValue: string): Date | null {
 
   return null
 }
+
+export function tryParseIsoDate(userValue: string): Date | null {
+  const trimmedValue = userValue.trim()
+  if (/^[0-9]{4}-[0-2]?[0-9]-[0-3]?[0-9]$/.test(trimmedValue)) {
+    // example: 2025-12-31 or 2025-5-1
+    const values = trimmedValue.split('-')
+    const year = parseInt(values[0])
+    const monthIndex = parseInt(values[1]) - 1
+    const day = parseInt(values[2])
+
+    const candidate = new Date(year, monthIndex, day)
+    if (
+      candidate.getDate() === day &&
+      candidate.getMonth() === monthIndex &&
+      candidate.getFullYear() === year
+    ) {
+      return candidate
+    }
+  }
+
+  return null
+}

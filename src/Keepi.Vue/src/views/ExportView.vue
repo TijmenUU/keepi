@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import ApiClient from '@/api-client'
-import KeepiValidatedInput from '@/components/KeepiValidatedInput.vue'
+import KeepiDatePicker from '@/components/KeepiDatePicker.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { getWeekDaysForDate } from '@/date'
-import { toShortDutchDate, tryParseDutchDate } from '@/format'
-import { dateValidator, requiredValidator } from '@/regle'
+import { toShortIsoDate, tryParseIsoDate } from '@/format'
+import { requiredValidator } from '@/regle'
 import { handleApiError } from '@/router'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
@@ -16,29 +16,27 @@ const disableUserInteraction = ref(false)
 
 const currentWeek = getWeekDaysForDate(new Date())
 const formValues = ref({
-  from: toShortDutchDate(currentWeek.dates[0]),
-  to: toShortDutchDate(currentWeek.dates[currentWeek.dates.length - 1]),
+  from: toShortIsoDate(currentWeek.dates[0]),
+  to: toShortIsoDate(currentWeek.dates[currentWeek.dates.length - 1]),
 })
 
 const { r$ } = useRegle(formValues, {
   from: {
-    date: dateValidator,
     required: requiredValidator,
   },
   to: {
-    date: dateValidator,
     required: requiredValidator,
     dateAfter: withMessage((value) => {
       if (value == null || typeof value !== 'string') {
         return true
       }
 
-      const from = tryParseDutchDate(formValues.value.from)
+      const from = tryParseIsoDate(formValues.value.from)
       if (from == null) {
         return true
       }
 
-      const to = tryParseDutchDate(value)
+      const to = tryParseIsoDate(value)
       // The date validation should prevent this, but if it happens this
       // validation should not care
       if (to == null) {
@@ -60,10 +58,11 @@ const onSubmit = async () => {
   try {
     const { valid, data } = await r$.$validate()
     if (valid) {
-      const from = tryParseDutchDate(data.from)
-      const to = tryParseDutchDate(data.to)
+      const from = tryParseIsoDate(data.from)
+      const to = tryParseIsoDate(data.to)
       if (from == null || to == null) {
-        throw new Error('Malformed submission data in submit handler')
+        console.error('Malformed submission data in submit handler', data)
+        return
       }
 
       await apiClient.getUserEntriesExport(from, to).match(
@@ -88,30 +87,15 @@ const onSubmit = async () => {
 
 <template>
   <div class="inline-block">
-    <div class="flex space-x-2">
+    <div class="flex flex-wrap gap-2">
       <Label>
         Van
-        <!--
-        TODO Make this input date compatible so the UX from the frontend
-        is more enjoyable. See the other date input below as well.
-      -->
-        <KeepiValidatedInput
-          :field="r$.$fields.from"
-          class="max-w-28"
-          id="from"
-          v-model="formValues.from"
-          placeholder="dd-mm-jjjj"
-          autofocus />
+        <KeepiDatePicker v-model="formValues.from" autofocus />
       </Label>
 
       <Label>
         tot en met
-        <KeepiValidatedInput
-          :field="r$.$fields.to"
-          class="max-w-28"
-          id="to"
-          v-model="formValues.to"
-          placeholder="dd-mm-jjjj" />
+        <KeepiDatePicker v-model="formValues.to" />
       </Label>
     </div>
 

@@ -5,6 +5,7 @@ import {
   toShortIsoDate,
   tryParseColonTimeNotation,
   tryParseDutchDate,
+  tryParseIsoDate,
   tryParseSuffixTimeNotation,
   tryParseTimeNotation,
 } from '@/format'
@@ -106,6 +107,27 @@ describe.concurrent('format', () => {
     expectLocalDatesToBeEqual(tryParseDutchDate('31-12-2025'), new Date(2025, 11, 31))
     expectLocalDatesToBeEqual(tryParseDutchDate('29-2-2024'), new Date(2024, 1, 29))
     expectLocalDatesToBeEqual(tryParseDutchDate('29-02-2024'), new Date(2024, 1, 29))
+  })
+
+  test('tryParseIsoDate', () => {
+    expect(tryParseIsoDate('')).toBe(null)
+    expect(tryParseIsoDate('1')).toBe(null)
+    expect(tryParseIsoDate('1-1')).toBe(null)
+    expect(tryParseIsoDate('1-1-abc')).toBe(null)
+    expect(tryParseIsoDate('1-abc-2000')).toBe(null)
+    expect(tryParseIsoDate('abc-1-2000')).toBe(null)
+    expect(tryParseIsoDate('1a-1-2000')).toBe(null)
+    expect(tryParseIsoDate('1-1a-2000')).toBe(null)
+    expect(tryParseIsoDate('1-1-2000a')).toBe(null)
+    expect(tryParseIsoDate('28-2-2025')).toBe(null)
+    expect(tryParseIsoDate('28-2-2025')).toBe(null)
+    expect(tryParseIsoDate('2025-2-29')).toBe(null)
+
+    expectLocalDatesToBeEqual(tryParseIsoDate('2000-1-1'), new Date(2000, 0, 1))
+    expectLocalDatesToBeEqual(tryParseIsoDate('2000-01-01'), new Date(2000, 0, 1))
+    expectLocalDatesToBeEqual(tryParseIsoDate('2025-12-31'), new Date(2025, 11, 31))
+    expectLocalDatesToBeEqual(tryParseIsoDate('2024-2-29'), new Date(2024, 1, 29))
+    expectLocalDatesToBeEqual(tryParseIsoDate('2024-02-29'), new Date(2024, 1, 29))
   })
 })
 

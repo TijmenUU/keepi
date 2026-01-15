@@ -1,7 +1,6 @@
 import { tryParseDutchDate } from '@/format'
 import { maxLength, required, withMessage } from '@regle/rules'
 
-export const dateValidator = withMessage(isValidDate, 'Geen geldige datum')
 export const requiredValidator = withMessage(required, 'Dit veld is verplicht')
 
 export function isValidDate(value: unknown): boolean {
