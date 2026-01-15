@@ -136,14 +136,29 @@ public partial class Program
 
         app.MapGet(
             "/signin",
-            () =>
-                Results.Challenge(
+            (HttpRequest request) =>
+            {
+                var returnUrl = request.Query["returnUrl"].ToString();
+                if (
+                    !Uri.TryCreate(
+                        uriString: returnUrl,
+                        uriKind: UriKind.Absolute,
+                        out var parsedResultUrl
+                    )
+                    || parsedResultUrl.AbsolutePath == "/signin"
+                )
+                {
+                    returnUrl = "/";
+                }
+
+                return Results.Challenge(
                     properties: new Microsoft.AspNetCore.Authentication.AuthenticationProperties
                     {
-                        RedirectUri = "/", // TODO redirect to the actual page the user came from?
+                        RedirectUri = returnUrl,
                     },
                     authenticationSchemes: [GitHubAuthenticationDefaults.AuthenticationScheme]
-                )
+                );
+            }
         );
         app.MapGet(
             "/signout",

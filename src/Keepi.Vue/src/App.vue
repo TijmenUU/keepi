@@ -39,7 +39,7 @@ onMounted(async () => {
         isAuthenticated.value = false
 
         if (router.currentRoute.value.meta.requiresAuth) {
-          location.href = '/signin'
+          location.href = `/signin?returnUrl=${encodeURIComponent(location.toString())}`
         }
       },
     )
