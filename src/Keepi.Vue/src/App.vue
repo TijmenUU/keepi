@@ -102,24 +102,24 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="p-4">
-        <RouterView v-slot="{ Component }">
-          <template v-if="Component != null">
-            <!-- Using a transition here causes the error <TypeError: can't access property "nextSibling", node is null> -->
-            <Suspense timeout="0">
-              <component :is="Component"></component>
+      <RouterView v-slot="{ Component }">
+        <template v-if="Component != null">
+          <!-- Using a transition here causes the error <TypeError: can't access property "nextSibling", node is null> -->
+          <Suspense timeout="0">
+            <component class="p-4" :is="Component"></component>
 
-              <template #fallback>
-                <div class="flex grow flex-col items-center justify-center">
-                  <KeepiSpinner />
-                </div>
-              </template>
-            </Suspense>
-          </template>
-        </RouterView>
-      </div>
+            <template #fallback>
+              <div class="flex grow flex-col items-center justify-center">
+                <KeepiSpinner />
+              </div>
+            </template>
+          </Suspense>
 
-      <div class="grow"></div>
+          <div class="grow"></div>
+        </template>
+
+        <div v-else class="grow"></div>
+      </RouterView>
 
       <footer class="mb-2 max-w-screen text-center text-sm">
         <p>
