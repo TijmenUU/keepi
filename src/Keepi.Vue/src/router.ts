@@ -7,12 +7,18 @@ import WeekView from '@/views/WeekView.vue'
 import type { ApiError } from '@/types'
 import { toast } from 'vue-sonner'
 import { getWeekNumber } from '@/date'
+import ErrorView from '@/views/ErrorView.vue'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth: boolean
+  }
+}
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     // TODO add not found page
-    // TODO move the error page here instead of serving some static HTML
     {
       path: '/',
       redirect: () => {
@@ -20,11 +26,20 @@ export const router = createRouter({
         const weekNumber = getWeekNumber(new Date())
         return { path: `/input/year/${today.getFullYear()}/week/${weekNumber}` }
       },
+      meta: { requiresAuth: true },
     },
-    { path: '/input/year/:year/week/:weekNumber', component: WeekView, props: true },
-    { path: '/export', component: ExportView },
-    { path: '/customizations', component: CustomizationsView },
-    { path: '/projects', component: ProjectsView },
+    {
+      path: '/input/year/:year/week/:weekNumber',
+      component: WeekView,
+      props: true,
+      meta: { requiresAuth: true },
+    },
+    { path: '/export', component: ExportView, meta: { requiresAuth: true } },
+    { path: '/customizations', component: CustomizationsView, meta: { requiresAuth: true } },
+    { path: '/projects', component: ProjectsView, meta: { requiresAuth: true } },
+
+    // Public paths
+    { path: '/error', component: ErrorView, meta: { requiresAuth: false } },
   ],
 })
 

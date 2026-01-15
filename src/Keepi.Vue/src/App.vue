@@ -8,6 +8,10 @@ import { Moon, Sun } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
+import { onMounted, ref } from 'vue'
+import ApiClient from '@/api-client'
+import { router } from '@/router'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE
 const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT
@@ -20,11 +24,55 @@ const onToggleTheme = () => {
     mode.value = 'light'
   }
 }
+
+const hasLoaded = ref(false)
+const isAuthenticated = ref(false)
+
+onMounted(async () => {
+  const apiClient = new ApiClient()
+  try {
+    await apiClient.getUser().match(
+      () => {
+        isAuthenticated.value = true
+      },
+      () => {
+        isAuthenticated.value = false
+
+        if (router.currentRoute.value.meta.requiresAuth) {
+          location.href = '/signin'
+        }
+      },
+    )
+  } finally {
+    hasLoaded.value = true
+  }
+})
 </script>
 
 <template>
+  <div class="flex h-screen w-screen flex-col items-center justify-center" v-if="!hasLoaded">
+    <KeepiSpinner />
+  </div>
+
+  <TooltipProvider v-else-if="!isAuthenticated">
+    <RouterView v-slot="{ Component, route }">
+      <template v-if="Component != null && !route.meta.requiresAuth">
+        <!-- Using a transition here causes the error <TypeError: can't access property "nextSibling", node is null> -->
+        <Suspense timeout="0">
+          <component :is="Component"></component>
+
+          <template #fallback>
+            <div class="flex grow flex-col items-center justify-center">
+              <KeepiSpinner />
+            </div>
+          </template>
+        </Suspense>
+      </template>
+    </RouterView>
+  </TooltipProvider>
+
   <!-- The SidebarProvider also functions as the tooltip provider -->
-  <SidebarProvider>
+  <SidebarProvider v-else>
     <KeepiSidebar />
 
     <Toaster />
