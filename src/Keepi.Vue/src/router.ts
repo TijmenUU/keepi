@@ -9,6 +9,7 @@ import { toast } from 'vue-sonner'
 import { getWeekNumber } from '@/date'
 import ErrorView from '@/views/ErrorView.vue'
 import SignedOutView from '@/views/SignedOutView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -19,7 +20,6 @@ declare module 'vue-router' {
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    // TODO add not found page
     {
       path: '/',
       redirect: () => {
@@ -42,6 +42,7 @@ export const router = createRouter({
     // Public paths
     { path: '/error', component: ErrorView, meta: { requiresAuth: false } },
     { path: '/signedout', component: SignedOutView, meta: { requiresAuth: false } },
+    { path: '/:catchAll(.*)', component: NotFoundView, meta: { requiresAuth: false } },
   ],
 })
 
