@@ -8,6 +8,7 @@ import type { ApiError } from '@/types'
 import { toast } from 'vue-sonner'
 import { getWeekNumber } from '@/date'
 import ErrorView from '@/views/ErrorView.vue'
+import SignedOutView from '@/views/SignedOutView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -40,6 +41,7 @@ export const router = createRouter({
 
     // Public paths
     { path: '/error', component: ErrorView, meta: { requiresAuth: false } },
+    { path: '/signedout', component: SignedOutView, meta: { requiresAuth: false } },
   ],
 })
 

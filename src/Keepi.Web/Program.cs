@@ -151,7 +151,7 @@ public partial class Program
                 Results.SignOut(
                     properties: new Microsoft.AspNetCore.Authentication.AuthenticationProperties
                     {
-                        RedirectUri = "https://www.google.nl", // TODO Use an actual sign out page?
+                        RedirectUri = "/signedout",
                     },
                     authenticationSchemes: [CookieAuthenticationDefaults.AuthenticationScheme]
                 )
