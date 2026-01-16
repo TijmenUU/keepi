@@ -13,6 +13,7 @@ public static class IServiceCollectionExtensions
     {
         services.AddScoped<ICreateProjectUseCase, CreateProjectUseCase>();
         services.AddScoped<IExportUserEntriesUseCase, ExportUserEntriesUseCase>();
+        services.AddScoped<IGetOrRegisterNewUserUseCase, GetOrRegisterNewUserUseCase>();
         services.AddScoped<IGetUserProjectsUseCase, GetUserProjectsUseCase>();
         services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
         services.AddScoped<IRegisterUserUseCase, RegisterUserUseCase>();
