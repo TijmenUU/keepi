@@ -1,13 +1,11 @@
 using FastEndpoints;
-using Keepi.Api.Authorization;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Users.Get;
 
-public sealed class GetUserEndpoint(
-    IResolveUserHelper resolveUserHelper,
-    ILogger<GetUserEndpoint> logger
-) : EndpointWithoutRequest<GetUserResponse>
+public sealed class GetUserEndpoint(IResolveUser resolveUser, ILogger<GetUserEndpoint> logger)
+    : EndpointWithoutRequest<GetUserResponse>
 {
     public override void Configure()
     {
@@ -16,11 +14,8 @@ public sealed class GetUserEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to return user for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

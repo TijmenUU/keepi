@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Projects.Create;
 
 internal sealed class CreateProjectEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     ICreateProjectUseCase createProjectUseCase,
     ILogger<CreateProjectEndpoint> logger
 ) : Endpoint<CreateProjectRequest, CreateProjectResponse>
@@ -22,11 +22,8 @@ internal sealed class CreateProjectEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to create a project by an unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

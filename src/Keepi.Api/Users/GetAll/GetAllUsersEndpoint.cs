@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Keepi.Api.Authorization;
+using Keepi.Core.Users;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Users.Get;
 
 public sealed class GetAllUsersEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IGetUsers getUsers,
     ILogger<GetAllUsersEndpoint> logger
 ) : EndpointWithoutRequest<GetAllUsersResponse>
@@ -18,11 +18,8 @@ public sealed class GetAllUsersEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to return all users for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

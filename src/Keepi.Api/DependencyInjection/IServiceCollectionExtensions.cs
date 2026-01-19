@@ -7,7 +7,7 @@ public static class IServiceCollectionExtensions
 {
     public static IServiceCollection AddApiHelpers(this IServiceCollection services)
     {
-        services.AddScoped<IResolveUserHelper, ResolveUserHelper>();
+        services.AddScoped<Core.Users.IResolveUser, ResolveUser>();
 
         return services;
     }

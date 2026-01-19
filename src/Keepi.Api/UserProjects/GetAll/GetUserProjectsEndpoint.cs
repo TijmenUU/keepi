@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.UserProjects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserProjects.GetAll;
 
 public sealed class GetUserProjectsEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IGetUserProjectsUseCase getUserProjectsUseCase,
     ILogger<GetUserProjectsEndpoint> logger
 ) : EndpointWithoutRequest<GetUserProjectsResponse>
@@ -18,11 +18,8 @@ public sealed class GetUserProjectsEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to return user projects for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

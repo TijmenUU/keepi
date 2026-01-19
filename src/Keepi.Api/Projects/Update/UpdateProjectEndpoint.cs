@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Projects.Update;
 
 internal sealed class UpdateProjectEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IUpdateProjectUseCase updateProjectUseCase,
     ILogger<UpdateProjectEndpoint> logger
 ) : Endpoint<UpdateProjectRequest>
@@ -23,11 +23,8 @@ internal sealed class UpdateProjectEndpoint(
     )
     {
         var projectId = Route<int>(paramName: "ProjectId");
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug(
                 "Refusing to update project with ID {ProjectId} by an unknown user",
@@ -109,7 +106,8 @@ internal sealed class UpdateProjectEndpoint(
             UserIds: request.UserIds?.Select(i => i ?? 0).ToArray() ?? [],
             InvoiceItems: request
                 .InvoiceItems?.Select(i => (Id: i?.Id, Name: i?.Name ?? string.Empty))
-                .ToArray() ?? []
+                .ToArray()
+                ?? []
         );
         return true;
     }

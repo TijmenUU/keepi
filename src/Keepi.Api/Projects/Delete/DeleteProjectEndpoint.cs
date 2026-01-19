@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Projects.Delete;
 
 internal sealed class DeleteProjectEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IDeleteProject deleteProject,
     ILogger<DeleteProjectEndpoint> logger
 ) : EndpointWithoutRequest
@@ -20,11 +20,8 @@ internal sealed class DeleteProjectEndpoint(
     {
         var projectId = Route<int>(paramName: "ProjectId");
 
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug(
                 "Refusing to delete project with {ProjectId} by an unknown user",

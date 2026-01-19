@@ -2,43 +2,43 @@ using System.Security.Claims;
 using Keepi.Api.Authorization;
 using Keepi.Core;
 using Keepi.Core.Users;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Unit.Tests.Authorization;
 
-public class ResolveUserHelperTests
+public class ResolveUserTests
 {
     [Fact]
     public async Task GetUserOrNull_returns_expected_user_for_existing_user()
     {
-        var context = new TestContext().WithExistingUser(
-            id: 42,
-            name: "Bob52",
-            emailAddress: "bob@example.com",
-            entriesPermission: UserPermission.ReadAndModify,
-            exportsPermission: UserPermission.ReadAndModify,
-            projectsPermission: UserPermission.ReadAndModify,
-            usersPermission: UserPermission.ReadAndModify
-        );
+        var context = new TestContext()
+            .WithExistingUser(
+                id: 42,
+                name: "Bob52",
+                emailAddress: "bob@example.com",
+                entriesPermission: UserPermission.ReadAndModify,
+                exportsPermission: UserPermission.ReadAndModify,
+                projectsPermission: UserPermission.ReadAndModify,
+                usersPermission: UserPermission.ReadAndModify
+            )
+            .WithHttpContextIdentity(
+                new ClaimsIdentity(
+                    claims:
+                    [
+                        new(type: ClaimTypes.Name, value: "Bob52"),
+                        new(type: ClaimTypes.Email, value: "bob@example.com"),
+                        new(type: ClaimTypes.NameIdentifier, value: "github-33"),
+                    ],
+                    authenticationType: "GitHub"
+                )
+            );
         var helper = context.BuildHelper();
 
-        var claimsPrincipal = new ClaimsPrincipal(
-            identity: new ClaimsIdentity(
-                claims:
-                [
-                    new(type: ClaimTypes.Name, value: "Bob52"),
-                    new(type: ClaimTypes.Email, value: "bob@example.com"),
-                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
-                ],
-                authenticationType: "GitHub"
-            )
-        );
-        var result = await helper.GetUserOrNull(
-            userClaimsPrincipal: claimsPrincipal,
-            cancellationToken: CancellationToken.None
-        );
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
 
-        result.ShouldBeEquivalentTo(
+        successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
                 Id: 42,
                 Name: "Bob52",
@@ -50,6 +50,7 @@ public class ResolveUserHelperTests
             )
         );
 
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -65,34 +66,33 @@ public class ResolveUserHelperTests
     [Fact]
     public async Task GetUserOrNull_returns_newly_registered_user_for_new_user()
     {
-        var context = new TestContext().WithNewlyRegisteredUser(
-            id: 42,
-            name: "Bob52",
-            emailAddress: "bob@example.com",
-            entriesPermission: UserPermission.ReadAndModify,
-            exportsPermission: UserPermission.ReadAndModify,
-            projectsPermission: UserPermission.ReadAndModify,
-            usersPermission: UserPermission.ReadAndModify
-        );
+        var context = new TestContext()
+            .WithNewlyRegisteredUser(
+                id: 42,
+                name: "Bob52",
+                emailAddress: "bob@example.com",
+                entriesPermission: UserPermission.ReadAndModify,
+                exportsPermission: UserPermission.ReadAndModify,
+                projectsPermission: UserPermission.ReadAndModify,
+                usersPermission: UserPermission.ReadAndModify
+            )
+            .WithHttpContextIdentity(
+                new ClaimsIdentity(
+                    claims:
+                    [
+                        new(type: ClaimTypes.Name, value: "Bob52"),
+                        new(type: ClaimTypes.Email, value: "bob@example.com"),
+                        new(type: ClaimTypes.NameIdentifier, value: "github-33"),
+                    ],
+                    authenticationType: "GitHub"
+                )
+            );
         var helper = context.BuildHelper();
 
-        var claimsPrincipal = new ClaimsPrincipal(
-            identity: new ClaimsIdentity(
-                claims:
-                [
-                    new(type: ClaimTypes.Name, value: "Bob52"),
-                    new(type: ClaimTypes.Email, value: "bob@example.com"),
-                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
-                ],
-                authenticationType: "GitHub"
-            )
-        );
-        var result = await helper.GetUserOrNull(
-            userClaimsPrincipal: claimsPrincipal,
-            cancellationToken: CancellationToken.None
-        );
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
 
-        result.ShouldBeEquivalentTo(
+        successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
                 Id: 42,
                 Name: "Bob52",
@@ -104,6 +104,7 @@ public class ResolveUserHelperTests
             )
         );
 
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -117,21 +118,10 @@ public class ResolveUserHelperTests
     }
 
     [Fact]
-    public async Task GetUserOrNull_returns_null_for_user_from_unsupported_identity_provider()
+    public async Task GetUserOrNull_returns_error_for_user_from_unsupported_identity_provider()
     {
-        var context = new TestContext().WithExistingUser(
-            id: 42,
-            name: "Bob52",
-            emailAddress: "bob@example.com",
-            entriesPermission: UserPermission.ReadAndModify,
-            exportsPermission: UserPermission.ReadAndModify,
-            projectsPermission: UserPermission.ReadAndModify,
-            usersPermission: UserPermission.ReadAndModify
-        );
-        var helper = context.BuildHelper();
-
-        var claimsPrincipal = new ClaimsPrincipal(
-            identity: new ClaimsIdentity(
+        var context = new TestContext().WithHttpContextIdentity(
+            new ClaimsIdentity(
                 claims:
                 [
                     new(type: ClaimTypes.Name, value: "Bob52"),
@@ -141,13 +131,29 @@ public class ResolveUserHelperTests
                 authenticationType: "Microsoft"
             )
         );
-        var result = await helper.GetUserOrNull(
-            userClaimsPrincipal: claimsPrincipal,
-            cancellationToken: CancellationToken.None
-        );
+        var helper = context.BuildHelper();
 
-        result.ShouldBeNull();
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
 
+        errorResult.ShouldBe(ResolveUserError.UnsupportedIdentityProvider);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task GetUserOrNull_returns_error_for_unauthenticated_user()
+    {
+        var context = new TestContext().WithoutHttpContextIdentity();
+        var helper = context.BuildHelper();
+
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+
+        errorResult.ShouldBe(ResolveUserError.UserNotAuthenticated);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.VerifyNoOtherCalls();
     }
 
@@ -161,23 +167,12 @@ public class ResolveUserHelperTests
     [InlineData("Bob52", "bob@example.com", null)]
     [InlineData("Bob52", "bob@example.com", "")]
     [InlineData("Bob52", "bob@example.com", " ")]
-    public async Task GetUserOrNull_returns_null_for_user_with_unsupported_values(
+    public async Task GetUserOrNull_returns_error_for_user_with_unsupported_values(
         string? name,
         string? email,
         string? subjectClaim
     )
     {
-        var context = new TestContext().WithExistingUser(
-            id: 42,
-            name: "Bob52",
-            emailAddress: "bob@example.com",
-            entriesPermission: UserPermission.ReadAndModify,
-            exportsPermission: UserPermission.ReadAndModify,
-            projectsPermission: UserPermission.ReadAndModify,
-            usersPermission: UserPermission.ReadAndModify
-        );
-        var helper = context.BuildHelper();
-
         var claims = new List<Claim>();
         if (name != null)
         {
@@ -192,16 +187,17 @@ public class ResolveUserHelperTests
             claims.Add(new(type: ClaimTypes.Email, value: email));
         }
 
-        var claimsPrincipal = new ClaimsPrincipal(
-            identity: new ClaimsIdentity(claims: claims, authenticationType: "GitHub")
+        var context = new TestContext().WithHttpContextIdentity(
+            new ClaimsIdentity(claims: claims, authenticationType: "GitHub")
         );
-        var result = await helper.GetUserOrNull(
-            userClaimsPrincipal: claimsPrincipal,
-            cancellationToken: CancellationToken.None
-        );
+        var helper = context.BuildHelper();
 
-        result.ShouldBeNull();
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
 
+        errorResult.ShouldBe(ResolveUserError.MalformedUserClaims);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.VerifyNoOtherCalls();
     }
 
@@ -247,34 +243,33 @@ public class ResolveUserHelperTests
         UserPermission usersPermission
     )
     {
-        var context = new TestContext().WithExistingUser(
-            id: 42,
-            name: "Bob52",
-            emailAddress: "bob@example.com",
-            entriesPermission: entriesPermission,
-            exportsPermission: exportsPermission,
-            projectsPermission: projectsPermission,
-            usersPermission: usersPermission
-        );
+        var context = new TestContext()
+            .WithExistingUser(
+                id: 42,
+                name: "Bob52",
+                emailAddress: "bob@example.com",
+                entriesPermission: entriesPermission,
+                exportsPermission: exportsPermission,
+                projectsPermission: projectsPermission,
+                usersPermission: usersPermission
+            )
+            .WithHttpContextIdentity(
+                new ClaimsIdentity(
+                    claims:
+                    [
+                        new(type: ClaimTypes.Name, value: "Bob52"),
+                        new(type: ClaimTypes.Email, value: "bob@example.com"),
+                        new(type: ClaimTypes.NameIdentifier, value: "github-33"),
+                    ],
+                    authenticationType: "GitHub"
+                )
+            );
         var helper = context.BuildHelper();
 
-        var claimsPrincipal = new ClaimsPrincipal(
-            identity: new ClaimsIdentity(
-                claims:
-                [
-                    new(type: ClaimTypes.Name, value: "Bob52"),
-                    new(type: ClaimTypes.Email, value: "bob@example.com"),
-                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
-                ],
-                authenticationType: "GitHub"
-            )
-        );
-        var result = await helper.GetUserOrNull(
-            userClaimsPrincipal: claimsPrincipal,
-            cancellationToken: CancellationToken.None
-        );
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
 
-        result.ShouldBeEquivalentTo(
+        successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
                 Id: 42,
                 Name: "Bob52",
@@ -282,10 +277,11 @@ public class ResolveUserHelperTests
                 EntriesPermission: entriesPermission,
                 ExportsPermission: exportsPermission,
                 ProjectsPermission: projectsPermission,
-                UsersPermission: projectsPermission
+                UsersPermission: usersPermission
             )
         );
 
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -300,9 +296,29 @@ public class ResolveUserHelperTests
 
     private class TestContext
     {
+        public Mock<IHttpContextAccessor> HttpContextAccessorMock { get; } =
+            new(MockBehavior.Strict);
         public Mock<IGetOrRegisterNewUserUseCase> GetOrRegisterNewUserUseCaseMock { get; } =
             new(MockBehavior.Strict);
-        public Mock<ILogger<ResolveUserHelper>> LoggerMock { get; } = new(MockBehavior.Strict);
+        public Mock<ILogger<ResolveUser>> LoggerMock { get; } = new(MockBehavior.Strict);
+
+        public TestContext WithHttpContextIdentity(ClaimsIdentity identity)
+        {
+            HttpContextAccessorMock
+                .Setup(x => x.HttpContext)
+                .Returns(
+                    new DefaultHttpContext() { User = new ClaimsPrincipal(identity: identity) }
+                );
+
+            return this;
+        }
+
+        public TestContext WithoutHttpContextIdentity()
+        {
+            HttpContextAccessorMock.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
+
+            return this;
+        }
 
         public TestContext WithExistingUser(
             int id,
@@ -393,11 +409,16 @@ public class ResolveUserHelperTests
             return this;
         }
 
-        public ResolveUserHelper BuildHelper() =>
-            new(getOrRegisterNewUserUseCase: GetOrRegisterNewUserUseCaseMock.Object);
+        public ResolveUser BuildHelper() =>
+            new(
+                httpContextAccessor: HttpContextAccessorMock.Object,
+                getOrRegisterNewUserUseCase: GetOrRegisterNewUserUseCaseMock.Object,
+                logger: LoggerMock.Object
+            );
 
         public void VerifyNoOtherCalls()
         {
+            HttpContextAccessorMock.VerifyNoOtherCalls();
             GetOrRegisterNewUserUseCaseMock.VerifyNoOtherCalls();
         }
     }

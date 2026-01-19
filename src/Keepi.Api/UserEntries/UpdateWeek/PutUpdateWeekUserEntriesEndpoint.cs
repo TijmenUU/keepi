@@ -1,15 +1,15 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Api.UserEntries.GetWeek;
 using Keepi.Core.Entries;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.UpdateWeek;
 
 public sealed class PutUpdateWeekUserEntriesEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IUpdateWeekUserEntriesUseCase updateWeekUserEntriesUseCase,
     ILogger<PutUpdateWeekUserEntriesEndpoint> logger
 ) : Endpoint<PutUpdateWeekUserEntriesRequest>
@@ -24,11 +24,8 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to update week entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

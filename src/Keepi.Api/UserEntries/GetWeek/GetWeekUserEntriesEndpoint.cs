@@ -1,12 +1,12 @@
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.Entries;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetWeek;
 
 public sealed class GetWeekUserEntriesEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IGetUserEntriesForWeekUseCase getUserEntriesForWeekUseCase,
     ILogger<GetWeekUserEntriesEndpoint> logger
 ) : EndpointWithoutRequest<GetWeekUserEntriesResponse>
@@ -18,11 +18,8 @@ public sealed class GetWeekUserEntriesEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to get week entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);

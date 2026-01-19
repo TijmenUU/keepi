@@ -3,14 +3,14 @@ using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using FastEndpoints;
-using Keepi.Api.Authorization;
 using Keepi.Core.Entries;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetExport;
 
 public sealed class GetUserEntriesExportEndpoint(
-    IResolveUserHelper resolveUserHelper,
+    IResolveUser resolveUser,
     IExportUserEntriesUseCase exportUserEntriesUseCase,
     ILogger<GetUserEntriesExportEndpoint> logger
 ) : Endpoint<GetUserEntriesExportEndpointRequest>
@@ -25,11 +25,8 @@ public sealed class GetUserEntriesExportEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var user = await resolveUserHelper.GetUserOrNull(
-            userClaimsPrincipal: User,
-            cancellationToken: cancellationToken
-        );
-        if (user == null)
+        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!resolveUserResult.TrySuccess(out var user, out _))
         {
             logger.LogDebug("Refusing to export entries for unknown user");
             await Send.ForbiddenAsync(cancellation: cancellationToken);
