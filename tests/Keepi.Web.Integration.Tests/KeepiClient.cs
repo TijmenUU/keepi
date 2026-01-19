@@ -56,97 +56,78 @@ public class KeepiClient
 
     public async Task<GetAllUsersResponse> GetAllUsers()
     {
-        var response = await httpClient.GetFromJsonAsync<GetAllUsersResponse>(
-            requestUri: "/api/users",
-            options: jsonSerializerOptions
+        return await MakeDebuggableRequestWithResponse<GetAllUsersResponse>(
+            path: "/api/users",
+            method: HttpMethod.Get
         );
-        response.ShouldNotBeNull();
-
-        return response;
     }
 
     public async Task<GetUserResponse> GetUser()
     {
-        var response = await httpClient.GetFromJsonAsync<GetUserResponse>(
-            requestUri: "/api/user",
-            options: jsonSerializerOptions
+        return await MakeDebuggableRequestWithResponse<GetUserResponse>(
+            path: "/api/user",
+            method: HttpMethod.Get
         );
-        response.ShouldNotBeNull();
-
-        return response;
     }
 
     public async Task<GetAllProjectsResponse> GetAllProjects()
     {
-        var response = await httpClient.GetFromJsonAsync<GetAllProjectsResponse>(
-            requestUri: "/api/projects",
-            options: jsonSerializerOptions
+        return await MakeDebuggableRequestWithResponse<GetAllProjectsResponse>(
+            path: "/api/projects",
+            method: HttpMethod.Get
         );
-        response.ShouldNotBeNull();
-
-        return response;
     }
 
     public async Task<GetAllProjectsResponseProject> GetProject(int projectId)
     {
-        return (await GetAllProjects()).Projects.Single(u => u.Id == projectId);
+        var response = await GetAllProjects();
+        response.Projects.ShouldContain(p => p.Id == projectId);
+
+        return response.Projects.Single(p => p.Id == projectId);
     }
 
     public async Task<CreateProjectResponse> CreateProject(CreateProjectRequest request)
     {
-        var response = await httpClient.PostAsJsonAsync(
-            requestUri: "/api/projects",
-            value: request,
-            options: jsonSerializerOptions
+        return await MakeDebuggableRequestWithResponse<CreateProjectResponse>(
+            path: "/api/projects",
+            jsonBody: request,
+            method: HttpMethod.Post
         );
-        response.EnsureSuccessStatusCode();
-
-        var responseModel = await response.Content.ReadFromJsonAsync<CreateProjectResponse>();
-        responseModel.ShouldNotBeNull();
-
-        return responseModel;
     }
 
     public async Task UpdateProject(int projectId, UpdateProjectRequest request)
     {
-        var response = await httpClient.PutAsJsonAsync(
-            requestUri: $"/api/projects/{projectId}",
-            value: request,
-            options: jsonSerializerOptions
+        var (response, _) = await MakeDebuggableRequest(
+            path: $"/api/projects/{projectId}",
+            jsonBody: request,
+            method: HttpMethod.Put
         );
         response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
     }
 
     public async Task DeleteProject(int projectId)
     {
-        var response = await httpClient.DeleteAsync(requestUri: $"/api/projects/{projectId}");
+        var (response, _) = await MakeDebuggableRequest(
+            path: $"/api/projects/{projectId}",
+            method: HttpMethod.Delete
+        );
         response.EnsureSuccessStatusCode();
     }
 
     public async Task<GetUserProjectsResponse> GetUserProjects()
     {
-        var response = await httpClient.GetFromJsonAsync<GetUserProjectsResponse>(
-            requestUri: "/api/user/projects",
-            options: jsonSerializerOptions
+        return await MakeDebuggableRequestWithResponse<GetUserProjectsResponse>(
+            "/api/user/projects",
+            method: HttpMethod.Get
         );
-        response.ShouldNotBeNull();
-
-        return response;
     }
 
     public async Task<GetWeekUserEntriesResponse> GetUserWeekEntries(int year, int weekNumber)
     {
-        var response = await httpClient.GetAsync(
-            requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}"
+        return await MakeDebuggableRequestWithResponse<GetWeekUserEntriesResponse>(
+            path: $"/api/user/entries/year/{year}/week/{weekNumber}",
+            method: HttpMethod.Get
         );
-        response.EnsureSuccessStatusCode();
-
-        var responseModel = await response.Content.ReadFromJsonAsync<GetWeekUserEntriesResponse>(
-            options: jsonSerializerOptions
-        );
-        responseModel.ShouldNotBeNull();
-
-        return responseModel;
     }
 
     public async Task UpdateUserWeekEntries(
@@ -155,11 +136,12 @@ public class KeepiClient
         PutUpdateWeekUserEntriesRequest request
     )
     {
-        var response = await httpClient.PutAsJsonAsync(
-            requestUri: $"/api/user/entries/year/{year}/week/{weekNumber}",
-            value: request,
-            options: jsonSerializerOptions
+        var (response, _) = await MakeDebuggableRequest(
+            path: $"/api/user/entries/year/{year}/week/{weekNumber}",
+            jsonBody: request,
+            method: HttpMethod.Put
         );
+
         response.StatusCode.ShouldBe(System.Net.HttpStatusCode.Created);
         response.Headers.Location?.OriginalString.ShouldBe(
             $"/api/user/entries/year/{year}/week/{weekNumber}"
@@ -170,23 +152,81 @@ public class KeepiClient
         UpdateAllUserInvoiceItemCustomizationsRequest request
     )
     {
-        var response = await httpClient.PutAsJsonAsync(
-            requestUri: "/api/user/invoiceitemcustomizations",
-            value: request,
-            options: jsonSerializerOptions
+        var (response, _) = await MakeDebuggableRequest(
+            path: "/api/user/invoiceitemcustomizations",
+            jsonBody: request,
+            method: HttpMethod.Put
         );
         response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
     }
 
     public async Task<Stream> GetUserEntriesExportStream(DateOnly start, DateOnly stop)
     {
-        var httpResponse = await httpClient.PostAsJsonAsync(
+        var response = await httpClient.PostAsJsonAsync(
             requestUri: "/api/user/entries/export",
             value: new GetUserEntriesExportEndpointRequest { Start = start, Stop = stop },
             options: jsonSerializerOptions
         );
-        httpResponse.EnsureSuccessStatusCode();
+        response.EnsureSuccessStatusCode();
 
-        return await httpResponse.Content.ReadAsStreamAsync();
+        return await response.Content.ReadAsStreamAsync();
+    }
+
+    private Task<TResponse> MakeDebuggableRequestWithResponse<TResponse>(
+        string path,
+        HttpMethod method
+    )
+        where TResponse : class =>
+        MakeDebuggableRequestWithResponse<TResponse>(path: path, jsonBody: null, method: method);
+
+    private async Task<TResponse> MakeDebuggableRequestWithResponse<TResponse>(
+        string path,
+        object? jsonBody,
+        HttpMethod method
+    )
+        where TResponse : class
+    {
+        var (response, body) = await MakeDebuggableRequest(
+            path: path,
+            jsonBody: jsonBody,
+            method: method
+        );
+
+        response.EnsureSuccessStatusCode();
+        body.ShouldNotBeNull();
+
+        var result = JsonSerializer.Deserialize<TResponse>(
+            json: body,
+            options: jsonSerializerOptions
+        );
+        result.ShouldNotBeNull();
+
+        return result;
+    }
+
+    private Task<(HttpResponseMessage response, string body)> MakeDebuggableRequest(
+        string path,
+        HttpMethod method
+    ) => MakeDebuggableRequest(path: path, jsonBody: null, method: method);
+
+    private async Task<(HttpResponseMessage response, string body)> MakeDebuggableRequest(
+        string path,
+        object? jsonBody,
+        HttpMethod method
+    )
+    {
+        var request = new HttpRequestMessage(method: method, requestUri: path);
+        if (jsonBody != null)
+        {
+            request.Content = new StringContent(
+                content: JsonSerializer.Serialize(value: jsonBody, options: jsonSerializerOptions),
+                mediaType: new(mediaType: "application/json")
+            );
+        }
+
+        var response = await httpClient.SendAsync(request: request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        return (response, body);
     }
 }
