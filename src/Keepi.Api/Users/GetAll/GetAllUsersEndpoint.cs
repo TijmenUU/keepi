@@ -1,13 +1,12 @@
 using FastEndpoints;
 using Keepi.Core.Users;
-using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Users.Get;
 
 public sealed class GetAllUsersEndpoint(
     IResolveUser resolveUser,
-    IGetUsers getUsers,
+    IGetAllUsersUseCase getAllUsersUseCase,
     ILogger<GetAllUsersEndpoint> logger
 ) : EndpointWithoutRequest<GetAllUsersResponse>
 {
@@ -26,7 +25,7 @@ public sealed class GetAllUsersEndpoint(
             return;
         }
 
-        var result = await getUsers.Execute(cancellationToken: cancellationToken);
+        var result = await getAllUsersUseCase.Execute(cancellationToken: cancellationToken);
 
         if (result.TrySuccess(out var successResult, out _))
         {

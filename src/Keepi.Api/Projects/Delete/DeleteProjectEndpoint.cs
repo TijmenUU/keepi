@@ -7,7 +7,7 @@ namespace Keepi.Api.Projects.Delete;
 
 internal sealed class DeleteProjectEndpoint(
     IResolveUser resolveUser,
-    IDeleteProject deleteProject,
+    IDeleteProjectUseCase deleteProjectUseCase,
     ILogger<DeleteProjectEndpoint> logger
 ) : EndpointWithoutRequest
 {
@@ -31,7 +31,7 @@ internal sealed class DeleteProjectEndpoint(
             return;
         }
 
-        var result = await deleteProject.Execute(
+        var result = await deleteProjectUseCase.Execute(
             projectId: projectId,
             cancellationToken: cancellationToken
         );

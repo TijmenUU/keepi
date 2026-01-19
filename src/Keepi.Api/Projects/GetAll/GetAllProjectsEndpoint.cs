@@ -7,7 +7,7 @@ namespace Keepi.Api.Projects.GetAll;
 
 public sealed class GetAllProjectsEndpoint(
     IResolveUser resolveUser,
-    IGetProjects getProjects,
+    IGetAllProjectsUseCase getAllProjectsUseCase,
     ILogger<GetAllProjectsEndpoint> logger
 ) : EndpointWithoutRequest<GetAllProjectsResponse>
 {
@@ -26,7 +26,7 @@ public sealed class GetAllProjectsEndpoint(
             return;
         }
 
-        var result = await getProjects.Execute(cancellationToken: cancellationToken);
+        var result = await getAllProjectsUseCase.Execute(cancellationToken: cancellationToken);
 
         if (result.TrySuccess(out var successResult, out var errorResult))
         {

@@ -12,7 +12,10 @@ public static class IServiceCollectionExtensions
     public static IServiceCollection AddUseCases(this IServiceCollection services)
     {
         services.AddScoped<ICreateProjectUseCase, CreateProjectUseCase>();
+        services.AddScoped<IDeleteProjectUseCase, DeleteProjectUseCase>();
         services.AddScoped<IExportUserEntriesUseCase, ExportUserEntriesUseCase>();
+        services.AddScoped<IGetAllProjectsUseCase, GetAllProjectsUseCase>();
+        services.AddScoped<IGetAllUsersUseCase, GetAllUsersUseCase>();
         services.AddScoped<IGetOrRegisterNewUserUseCase, GetOrRegisterNewUserUseCase>();
         services.AddScoped<IGetUserProjectsUseCase, GetUserProjectsUseCase>();
         services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
