@@ -34,7 +34,11 @@ namespace Keepi.Infrastructure.Data.Migrations
                     ExternalId = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     EmailAddress = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
-                    IdentityOrigin = table.Column<int>(type: "INTEGER", nullable: false)
+                    IdentityOrigin = table.Column<int>(type: "INTEGER", nullable: false),
+                    EntriesPermission = table.Column<int>(type: "INTEGER", nullable: false),
+                    ExportsPermission = table.Column<int>(type: "INTEGER", nullable: false),
+                    ProjectsPermission = table.Column<int>(type: "INTEGER", nullable: false),
+                    UsersPermission = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

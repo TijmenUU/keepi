@@ -226,7 +226,11 @@ public class ResolveUserHelperTests
                                 Id: id,
                                 Name: name,
                                 EmailAddress: emailAddress,
-                                IdentityOrigin: UserIdentityProvider.GitHub
+                                IdentityOrigin: UserIdentityProvider.GitHub,
+                                EntriesPermission: UserPermission.ReadAndModify,
+                                ExportsPermission: UserPermission.ReadAndModify,
+                                ProjectsPermission: UserPermission.ReadAndModify,
+                                UsersPermission: UserPermission.ReadAndModify
                             ),
                             NewlyRegistered: newlyRegistered
                         )

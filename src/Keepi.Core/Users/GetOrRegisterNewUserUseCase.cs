@@ -25,7 +25,7 @@ public enum GetOrRegisterNewUserUseCaseError
 
 internal sealed class GetOrRegisterNewUserUseCase(
     IGetUser getUser,
-    IUpdateUser updateUser,
+    IUpdateUserInfo updateUserInfo,
     ISaveNewUser saveNewUser,
     ILogger<GetOrRegisterNewUserUseCase> logger
 ) : IGetOrRegisterNewUserUseCase
@@ -56,7 +56,7 @@ internal sealed class GetOrRegisterNewUserUseCase(
                     externalId
                 );
 
-                var result = await updateUser.Execute(
+                var result = await updateUserInfo.Execute(
                     userId: getUserSuccess.Id,
                     emailAddress: emailAddress,
                     name: name,
@@ -82,7 +82,11 @@ internal sealed class GetOrRegisterNewUserUseCase(
                                 Id: getUserSuccess.Id,
                                 Name: name,
                                 EmailAddress: emailAddress,
-                                IdentityOrigin: identityProvider
+                                IdentityOrigin: identityProvider,
+                                EntriesPermission: getUserSuccess.EntriesPermission,
+                                ExportsPermission: getUserSuccess.ExportsPermission,
+                                ProjectsPermission: getUserSuccess.ProjectsPermission,
+                                UsersPermission: getUserSuccess.UsersPermission
                             ),
                             NewlyRegistered: false
                         )
@@ -179,6 +183,12 @@ internal sealed class GetOrRegisterNewUserUseCase(
             emailAddress: emailAddress,
             name: name,
             userIdentityProvider: provider,
+            // TODO Add logic to differentiate between types of users and their
+            // permissions
+            entriesPermission: UserPermission.ReadAndModify,
+            exportsPermission: UserPermission.ReadAndModify,
+            projectsPermission: UserPermission.ReadAndModify,
+            usersPermission: UserPermission.ReadAndModify,
             cancellationToken: cancellationToken
         );
 

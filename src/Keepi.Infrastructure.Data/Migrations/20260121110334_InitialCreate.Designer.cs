@@ -11,14 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Keepi.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20260113141517_InitialCreate")]
+    [Migration("20260121110334_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("Keepi.Infrastructure.Data.Entries.UserEntryEntity", b =>
                 {
@@ -138,6 +138,12 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("EntriesPermission")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExportsPermission")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ExternalId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -150,6 +156,12 @@ namespace Keepi.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("ProjectsPermission")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UsersPermission")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

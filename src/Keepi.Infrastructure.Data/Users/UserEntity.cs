@@ -23,6 +23,11 @@ internal sealed class UserEntity
     public string Name { get; set; }
     public UserIdentityProvider IdentityOrigin { get; set; }
 
+    public UserPermission EntriesPermission { get; set; }
+    public UserPermission ExportsPermission { get; set; }
+    public UserPermission ProjectsPermission { get; set; }
+    public UserPermission UsersPermission { get; set; }
+
     public List<ProjectEntity> Projects { get; set; }
     public List<UserEntryEntity> Entries { get; set; }
     public List<UserInvoiceItemCustomizationEntity> UserInvoiceItemCustomizations { get; set; }

@@ -9,7 +9,7 @@ namespace Keepi.Infrastructure.Data.Users;
 internal sealed class UserRepository(
     DatabaseContext databaseContext,
     ILogger<UserRepository> logger
-) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUser, IGetUsers
+) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUserInfo, IGetUsers
 {
     async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
         string externalId,
@@ -42,6 +42,10 @@ internal sealed class UserRepository(
         string emailAddress,
         string name,
         Core.Users.UserIdentityProvider userIdentityProvider,
+        Core.Users.UserPermission entriesPermission,
+        Core.Users.UserPermission exportsPermission,
+        Core.Users.UserPermission projectsPermission,
+        Core.Users.UserPermission usersPermission,
         CancellationToken cancellationToken
     )
     {
@@ -54,6 +58,10 @@ internal sealed class UserRepository(
                     EmailAddress = emailAddress,
                     Name = name,
                     IdentityOrigin = ToDatabaseEnum(userIdentityProvider),
+                    EntriesPermission = ToDatabaseEnum(entriesPermission),
+                    ExportsPermission = ToDatabaseEnum(exportsPermission),
+                    ProjectsPermission = ToDatabaseEnum(projectsPermission),
+                    UsersPermission = ToDatabaseEnum(usersPermission),
                 }
             );
             await databaseContext.SaveChangesAsync(cancellationToken);
@@ -74,7 +82,21 @@ internal sealed class UserRepository(
         }
     }
 
-    async Task<IMaybeErrorResult<UpdateUserError>> IUpdateUser.Execute(
+    private static UserPermission ToDatabaseEnum(Core.Users.UserPermission permission)
+    {
+        return permission switch
+        {
+            Core.Users.UserPermission.None => UserPermission.None,
+            Core.Users.UserPermission.Read => UserPermission.Read,
+            Core.Users.UserPermission.ReadAndModify => UserPermission.ReadAndModify,
+            _ => throw new ArgumentOutOfRangeException(
+                paramName: nameof(permission),
+                message: $"Value {permission} does not exist in the domain"
+            ),
+        };
+    }
+
+    async Task<IMaybeErrorResult<UpdateUserInfoError>> IUpdateUserInfo.Execute(
         int userId,
         string emailAddress,
         string name,
@@ -89,26 +111,26 @@ internal sealed class UserRepository(
             );
             if (entity == null)
             {
-                return Result.Failure(UpdateUserError.UnknownUserId);
+                return Result.Failure(UpdateUserInfoError.UnknownUserId);
             }
 
             entity.EmailAddress = emailAddress;
             entity.Name = name;
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
 
-            return Result.Success<UpdateUserError>();
+            return Result.Success<UpdateUserInfoError>();
         }
         // This is a bit of a rough catch as it is not known what caused the
         // exception. Sqlite does not provide the exact constraint nor column name
         // so for now this seems all that can be done.
         catch (UniqueConstraintException)
         {
-            return Result.Failure(UpdateUserError.DuplicateUser);
+            return Result.Failure(UpdateUserInfoError.DuplicateUser);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst updating user");
-            return Result.Failure(UpdateUserError.Unknown);
+            return Result.Failure(UpdateUserInfoError.Unknown);
         }
     }
 
@@ -139,7 +161,11 @@ internal sealed class UserRepository(
                     Id: user.Id,
                     EmailAddress: user.EmailAddress,
                     Name: user.Name,
-                    IdentityOrigin: ToResultEnum(user.IdentityOrigin)
+                    IdentityOrigin: ToResultEnum(user.IdentityOrigin),
+                    EntriesPermission: ToResultEnum(user.EntriesPermission),
+                    ExportsPermission: ToResultEnum(user.ExportsPermission),
+                    ProjectsPermission: ToResultEnum(user.ProjectsPermission),
+                    UsersPermission: ToResultEnum(user.UsersPermission)
                 )
             );
         }
@@ -150,6 +176,20 @@ internal sealed class UserRepository(
         }
     }
 
+    private static Core.Users.UserPermission ToResultEnum(UserPermission value)
+    {
+        return value switch
+        {
+            UserPermission.None => Core.Users.UserPermission.None,
+            UserPermission.Read => Core.Users.UserPermission.Read,
+            UserPermission.ReadAndModify => Core.Users.UserPermission.ReadAndModify,
+            _ => throw new ArgumentOutOfRangeException(
+                paramName: nameof(value),
+                message: $"Value {value} does not exist in the domain"
+            ),
+        };
+    }
+
     private static UserIdentityProvider ToDatabaseEnum(
         Core.Users.UserIdentityProvider userIdentityProvider
     )
@@ -157,7 +197,10 @@ internal sealed class UserRepository(
         return userIdentityProvider switch
         {
             Core.Users.UserIdentityProvider.GitHub => UserIdentityProvider.GitHub,
-            _ => throw new ArgumentOutOfRangeException(paramName: nameof(userIdentityProvider)),
+            _ => throw new ArgumentOutOfRangeException(
+                paramName: nameof(userIdentityProvider),
+                message: $"Value {userIdentityProvider} does not exist in the domain"
+            ),
         };
     }
 

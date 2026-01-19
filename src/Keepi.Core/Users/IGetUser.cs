@@ -19,5 +19,9 @@ public sealed record GetUserResult(
     int Id,
     string Name,
     string EmailAddress,
-    UserIdentityProvider IdentityOrigin
+    UserIdentityProvider IdentityOrigin,
+    UserPermission EntriesPermission,
+    UserPermission ExportsPermission,
+    UserPermission ProjectsPermission,
+    UserPermission UsersPermission
 );

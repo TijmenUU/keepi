@@ -13,7 +13,11 @@ public class GetOrRegisterNewUserUseCaseTests
                 Id: 42,
                 Name: "Bob",
                 EmailAddress: "bob@example.com",
-                IdentityOrigin: UserIdentityProvider.GitHub
+                IdentityOrigin: UserIdentityProvider.GitHub,
+                EntriesPermission: UserPermission.ReadAndModify,
+                ExportsPermission: UserPermission.ReadAndModify,
+                ProjectsPermission: UserPermission.ReadAndModify,
+                UsersPermission: UserPermission.ReadAndModify
             )
         );
         var helper = context.BuildUseCase();
@@ -33,7 +37,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 ),
                 NewlyRegistered: false
             )
@@ -55,7 +63,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             )
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
@@ -77,7 +89,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 ),
                 NewlyRegistered: false
             )
@@ -95,6 +111,10 @@ public class GetOrRegisterNewUserUseCaseTests
                 "bob@example.com",
                 "Bob",
                 UserIdentityProvider.GitHub,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
                 It.IsAny<CancellationToken>()
             )
         );
@@ -110,7 +130,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             )
             .WithUserUpdateSuccess();
@@ -131,7 +155,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bobby",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 ),
                 NewlyRegistered: false
             )
@@ -140,7 +168,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserMock.Verify(x =>
+        context.UpdateUserInfoMock.Verify(x =>
             x.Execute(42, "bob@example.com", "Bobby", It.IsAny<CancellationToken>())
         );
         context.VerifyNoOtherCalls();
@@ -155,7 +183,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             )
             .WithUserUpdateSuccess();
@@ -176,7 +208,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bobby@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 ),
                 NewlyRegistered: false
             )
@@ -185,7 +221,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserMock.Verify(x =>
+        context.UpdateUserInfoMock.Verify(x =>
             x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
         );
         context.VerifyNoOtherCalls();
@@ -200,7 +236,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             )
             .WithUserUpdateFailure();
@@ -221,7 +261,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 ),
                 NewlyRegistered: false
             )
@@ -230,7 +274,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserMock.Verify(x =>
+        context.UpdateUserInfoMock.Verify(x =>
             x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
         );
         context.LoggerMock.VerifyWarningLog(
@@ -275,7 +319,11 @@ public class GetOrRegisterNewUserUseCaseTests
                     Id: 42,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             )
             .WithSaveNewUserResult(Result.Failure(error));
@@ -302,6 +350,10 @@ public class GetOrRegisterNewUserUseCaseTests
                 "bob@example.com",
                 "Bob",
                 UserIdentityProvider.GitHub,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
                 It.IsAny<CancellationToken>()
             )
         );
@@ -347,6 +399,10 @@ public class GetOrRegisterNewUserUseCaseTests
                 "bob@example.com",
                 "Bob",
                 UserIdentityProvider.GitHub,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
                 It.IsAny<CancellationToken>()
             )
         );
@@ -356,7 +412,7 @@ public class GetOrRegisterNewUserUseCaseTests
     private class TestContext
     {
         public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IUpdateUser> UpdateUserMock { get; } = new(MockBehavior.Strict);
+        public Mock<IUpdateUserInfo> UpdateUserInfoMock { get; } = new(MockBehavior.Strict);
         public Mock<ISaveNewUser> SaveNewUserMock { get; } = new(MockBehavior.Strict);
         public Mock<ILogger<GetOrRegisterNewUserUseCase>> LoggerMock { get; } =
             new(MockBehavior.Loose);
@@ -430,14 +486,14 @@ public class GetOrRegisterNewUserUseCaseTests
         }
 
         public TestContext WithUserUpdateSuccess() =>
-            WithUserUpdateResult(Result.Success<UpdateUserError>());
+            WithUserUpdateResult(Result.Success<UpdateUserInfoError>());
 
         public TestContext WithUserUpdateFailure() =>
-            WithUserUpdateResult(Result.Failure(UpdateUserError.DuplicateUser));
+            WithUserUpdateResult(Result.Failure(UpdateUserInfoError.DuplicateUser));
 
-        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserError> result)
+        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserInfoError> result)
         {
-            UpdateUserMock
+            UpdateUserInfoMock
                 .Setup(x =>
                     x.Execute(
                         It.IsAny<int>(),
@@ -460,6 +516,10 @@ public class GetOrRegisterNewUserUseCaseTests
                         It.IsAny<string>(),
                         It.IsAny<string>(),
                         It.IsAny<UserIdentityProvider>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
                         It.IsAny<CancellationToken>()
                     )
                 )
@@ -471,7 +531,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public GetOrRegisterNewUserUseCase BuildUseCase() =>
             new(
                 getUser: GetUserMock.Object,
-                updateUser: UpdateUserMock.Object,
+                updateUserInfo: UpdateUserInfoMock.Object,
                 saveNewUser: SaveNewUserMock.Object,
                 logger: LoggerMock.Object
             );
@@ -479,7 +539,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public void VerifyNoOtherCalls()
         {
             GetUserMock.VerifyNoOtherCalls();
-            UpdateUserMock.VerifyNoOtherCalls();
+            UpdateUserInfoMock.VerifyNoOtherCalls();
             SaveNewUserMock.VerifyNoOtherCalls();
         }
     }

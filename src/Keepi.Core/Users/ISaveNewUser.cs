@@ -7,6 +7,10 @@ public interface ISaveNewUser
         string emailAddress,
         string name,
         UserIdentityProvider userIdentityProvider,
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission,
         CancellationToken cancellationToken
     );
 }
