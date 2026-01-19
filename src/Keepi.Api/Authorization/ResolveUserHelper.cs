@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Keepi.Core.Users;
 
@@ -65,7 +66,7 @@ internal sealed class ResolveUserHelper(IGetOrRegisterNewUserUseCase getOrRegist
         CancellationToken cancellationToken
     )
     {
-        if (!userClaimsPrincipal.TryGetUserInfo(out var userInfo))
+        if (!TryGetUserInfo(userClaimsPrincipal, out var userInfo))
         {
             return null;
         }
@@ -85,4 +86,44 @@ internal sealed class ResolveUserHelper(IGetOrRegisterNewUserUseCase getOrRegist
 
         return successResult.User;
     }
+
+    private static bool TryGetUserInfo(
+        ClaimsPrincipal claimsPrincipal,
+        [NotNullWhen(returnValue: true)] out UserInfo? userInfo
+    )
+    {
+        var externalIdClaim = claimsPrincipal.Claims.FirstOrDefault(c =>
+            c.Type == ClaimTypes.NameIdentifier
+        );
+        string? userName = claimsPrincipal.Identity?.Name;
+        string? emailAddress = claimsPrincipal
+            .Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)
+            ?.Value;
+
+        if (
+            string.IsNullOrWhiteSpace(externalIdClaim?.Value)
+            || claimsPrincipal.Identity?.AuthenticationType != "GitHub"
+            || string.IsNullOrWhiteSpace(userName)
+            || string.IsNullOrWhiteSpace(emailAddress)
+        )
+        {
+            userInfo = null;
+            return false;
+        }
+
+        userInfo = new UserInfo(
+            ExternalId: externalIdClaim.Value,
+            Name: userName,
+            EmailAddress: emailAddress,
+            Origin: UserIdentityProvider.GitHub
+        );
+        return true;
+    }
+
+    private sealed record UserInfo(
+        string ExternalId,
+        string Name,
+        string EmailAddress,
+        UserIdentityProvider Origin
+    );
 }
