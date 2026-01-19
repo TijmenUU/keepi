@@ -25,6 +25,7 @@ public enum GetOrRegisterNewUserUseCaseError
 
 internal sealed class GetOrRegisterNewUserUseCase(
     IGetUser getUser,
+    IUpdateUser updateUser,
     IRegisterUserUseCase registerUserUseCase,
     ILogger<GetOrRegisterNewUserUseCase> logger
 ) : IGetOrRegisterNewUserUseCase
@@ -47,6 +48,48 @@ internal sealed class GetOrRegisterNewUserUseCase(
 
         if (getUserResult.TrySuccess(out var getUserSuccess, out var getUserError))
         {
+            if (getUserSuccess.EmailAddress != emailAddress || getUserSuccess.Name != name)
+            {
+                logger.LogDebug(
+                    "The {Provider} user {SubjectClaim} provided a different name and/or email address known to Keepi",
+                    identityProvider,
+                    externalId
+                );
+
+                var result = await updateUser.Execute(
+                    userId: getUserSuccess.Id,
+                    emailAddress: emailAddress,
+                    name: name,
+                    cancellationToken: cancellationToken
+                );
+                if (!result.TrySuccess(out var errorResult))
+                {
+                    logger.LogWarning(
+                        "Failed to update {Provider} user {SubjectClaim} due to {Error} error",
+                        identityProvider,
+                        externalId,
+                        errorResult
+                    );
+                }
+                else
+                {
+                    return Result.Success<
+                        GetOrRegisterNewUserUseCaseOutput,
+                        GetOrRegisterNewUserUseCaseError
+                    >(
+                        new GetOrRegisterNewUserUseCaseOutput(
+                            User: new GetUserResult(
+                                Id: getUserSuccess.Id,
+                                Name: name,
+                                EmailAddress: emailAddress,
+                                IdentityOrigin: identityProvider
+                            ),
+                            NewlyRegistered: false
+                        )
+                    );
+                }
+            }
+
             return Result.Success<
                 GetOrRegisterNewUserUseCaseOutput,
                 GetOrRegisterNewUserUseCaseError

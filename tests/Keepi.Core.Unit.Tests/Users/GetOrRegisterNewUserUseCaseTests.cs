@@ -102,6 +102,144 @@ public class GetOrRegisterNewUserUseCaseTests
     }
 
     [Fact]
+    public async Task Execute_updates_user_if_the_name_changed()
+    {
+        var context = new TestContext()
+            .WithFirstGetUserResult(
+                new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                )
+            )
+            .WithUserUpdateSuccess();
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bob@example.com",
+            name: "Bobby",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new GetUserResult(
+                    Id: 42,
+                    Name: "Bobby",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                ),
+                NewlyRegistered: false
+            )
+        );
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UpdateUserMock.Verify(x =>
+            x.Execute(42, "bob@example.com", "Bobby", It.IsAny<CancellationToken>())
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_updates_user_if_the_email_address_changed()
+    {
+        var context = new TestContext()
+            .WithFirstGetUserResult(
+                new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                )
+            )
+            .WithUserUpdateSuccess();
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bobby@example.com",
+            name: "Bob",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bobby@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                ),
+                NewlyRegistered: false
+            )
+        );
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UpdateUserMock.Verify(x =>
+            x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_logs_user_update_failure_and_returns_non_updated_values()
+    {
+        var context = new TestContext()
+            .WithFirstGetUserResult(
+                new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                )
+            )
+            .WithUserUpdateFailure();
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bobby@example.com",
+            name: "Bob",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                ),
+                NewlyRegistered: false
+            )
+        );
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UpdateUserMock.Verify(x =>
+            x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
+        );
+        context.LoggerMock.VerifyWarningLog(
+            expectedMessage: "Failed to update GitHub user github-33 due to DuplicateUser error"
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task Execute_returns_error_for_unknown_user_retrieval_failure()
     {
         var context = new TestContext().WithFirstGetUserError(GetUserError.Unknown);
@@ -220,6 +358,7 @@ public class GetOrRegisterNewUserUseCaseTests
     private class TestContext
     {
         public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
+        public Mock<IUpdateUser> UpdateUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IRegisterUserUseCase> RegisterUserUseCaseMock { get; } =
             new(MockBehavior.Strict);
         public Mock<ILogger<GetOrRegisterNewUserUseCase>> LoggerMock { get; } =
@@ -293,6 +432,28 @@ public class GetOrRegisterNewUserUseCaseTests
             return this;
         }
 
+        public TestContext WithUserUpdateSuccess() =>
+            WithUserUpdateResult(Result.Success<UpdateUserError>());
+
+        public TestContext WithUserUpdateFailure() =>
+            WithUserUpdateResult(Result.Failure(UpdateUserError.DuplicateUser));
+
+        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserError> result)
+        {
+            UpdateUserMock
+                .Setup(x =>
+                    x.Execute(
+                        It.IsAny<int>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<CancellationToken>()
+                    )
+                )
+                .ReturnsAsync(result);
+
+            return this;
+        }
+
         public TestContext WithRegisterUserResult(RegisterUserUseCaseResult result)
         {
             RegisterUserUseCaseMock
@@ -313,6 +474,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public GetOrRegisterNewUserUseCase BuildUseCase() =>
             new(
                 getUser: GetUserMock.Object,
+                updateUser: UpdateUserMock.Object,
                 registerUserUseCase: RegisterUserUseCaseMock.Object,
                 logger: LoggerMock.Object
             );
@@ -320,6 +482,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public void VerifyNoOtherCalls()
         {
             GetUserMock.VerifyNoOtherCalls();
+            UpdateUserMock.VerifyNoOtherCalls();
             RegisterUserUseCaseMock.VerifyNoOtherCalls();
         }
     }

@@ -9,7 +9,7 @@ namespace Keepi.Infrastructure.Data.Users;
 internal sealed class UserRepository(
     DatabaseContext databaseContext,
     ILogger<UserRepository> logger
-) : IGetUserExists, IGetUser, ISaveNewUser, IGetUsers
+) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUser, IGetUsers
 {
     async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
         string externalId,
@@ -71,6 +71,44 @@ internal sealed class UserRepository(
         {
             logger.LogError(ex, "Unexpected error whilst storing new user");
             return Result.Failure(SaveNewUserError.Unknown);
+        }
+    }
+
+    async Task<IMaybeErrorResult<UpdateUserError>> IUpdateUser.Execute(
+        int userId,
+        string emailAddress,
+        string name,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var entity = await databaseContext.Users.SingleOrDefaultAsync(
+                u => u.Id == userId,
+                cancellationToken: cancellationToken
+            );
+            if (entity == null)
+            {
+                return Result.Failure(UpdateUserError.UnknownUserId);
+            }
+
+            entity.EmailAddress = emailAddress;
+            entity.Name = name;
+            await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
+
+            return Result.Success<UpdateUserError>();
+        }
+        // This is a bit of a rough catch as it is not known what caused the
+        // exception. Sqlite does not provide the exact constraint nor column name
+        // so for now this seems all that can be done.
+        catch (UniqueConstraintException)
+        {
+            return Result.Failure(UpdateUserError.DuplicateUser);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error whilst updating user");
+            return Result.Failure(UpdateUserError.Unknown);
         }
     }
 
