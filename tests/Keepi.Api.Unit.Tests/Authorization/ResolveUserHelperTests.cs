@@ -14,7 +14,11 @@ public class ResolveUserHelperTests
         var context = new TestContext().WithExistingUser(
             id: 42,
             name: "Bob52",
-            emailAddress: "bob@example.com"
+            emailAddress: "bob@example.com",
+            entriesPermission: UserPermission.ReadAndModify,
+            exportsPermission: UserPermission.ReadAndModify,
+            projectsPermission: UserPermission.ReadAndModify,
+            usersPermission: UserPermission.ReadAndModify
         );
         var helper = context.BuildHelper();
 
@@ -35,7 +39,15 @@ public class ResolveUserHelperTests
         );
 
         result.ShouldBeEquivalentTo(
-            new ResolvedUser(Id: 42, Name: "Bob52", EmailAddress: "bob@example.com")
+            new ResolvedUser(
+                Id: 42,
+                Name: "Bob52",
+                EmailAddress: "bob@example.com",
+                EntriesPermission: UserPermission.ReadAndModify,
+                ExportsPermission: UserPermission.ReadAndModify,
+                ProjectsPermission: UserPermission.ReadAndModify,
+                UsersPermission: UserPermission.ReadAndModify
+            )
         );
 
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
@@ -56,7 +68,11 @@ public class ResolveUserHelperTests
         var context = new TestContext().WithNewlyRegisteredUser(
             id: 42,
             name: "Bob52",
-            emailAddress: "bob@example.com"
+            emailAddress: "bob@example.com",
+            entriesPermission: UserPermission.ReadAndModify,
+            exportsPermission: UserPermission.ReadAndModify,
+            projectsPermission: UserPermission.ReadAndModify,
+            usersPermission: UserPermission.ReadAndModify
         );
         var helper = context.BuildHelper();
 
@@ -77,7 +93,15 @@ public class ResolveUserHelperTests
         );
 
         result.ShouldBeEquivalentTo(
-            new ResolvedUser(Id: 42, Name: "Bob52", EmailAddress: "bob@example.com")
+            new ResolvedUser(
+                Id: 42,
+                Name: "Bob52",
+                EmailAddress: "bob@example.com",
+                EntriesPermission: UserPermission.ReadAndModify,
+                ExportsPermission: UserPermission.ReadAndModify,
+                ProjectsPermission: UserPermission.ReadAndModify,
+                UsersPermission: UserPermission.ReadAndModify
+            )
         );
 
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
@@ -98,7 +122,11 @@ public class ResolveUserHelperTests
         var context = new TestContext().WithExistingUser(
             id: 42,
             name: "Bob52",
-            emailAddress: "bob@example.com"
+            emailAddress: "bob@example.com",
+            entriesPermission: UserPermission.ReadAndModify,
+            exportsPermission: UserPermission.ReadAndModify,
+            projectsPermission: UserPermission.ReadAndModify,
+            usersPermission: UserPermission.ReadAndModify
         );
         var helper = context.BuildHelper();
 
@@ -142,7 +170,11 @@ public class ResolveUserHelperTests
         var context = new TestContext().WithExistingUser(
             id: 42,
             name: "Bob52",
-            emailAddress: "bob@example.com"
+            emailAddress: "bob@example.com",
+            entriesPermission: UserPermission.ReadAndModify,
+            exportsPermission: UserPermission.ReadAndModify,
+            projectsPermission: UserPermission.ReadAndModify,
+            usersPermission: UserPermission.ReadAndModify
         );
         var helper = context.BuildHelper();
 
@@ -173,28 +205,145 @@ public class ResolveUserHelperTests
         context.VerifyNoOtherCalls();
     }
 
+    [Theory]
+    // Base case
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.None)]
+    // Entries permission
+    [InlineData(UserPermission.Read, UserPermission.None, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Exports permission
+    [InlineData(UserPermission.None, UserPermission.Read, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Projects permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.Read, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None
+    )]
+    // Users permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.Read)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify
+    )]
+    public async Task GetUserOrNull_returns_correctly_mapped_user_permissions(
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission
+    )
+    {
+        var context = new TestContext().WithExistingUser(
+            id: 42,
+            name: "Bob52",
+            emailAddress: "bob@example.com",
+            entriesPermission: entriesPermission,
+            exportsPermission: exportsPermission,
+            projectsPermission: projectsPermission,
+            usersPermission: usersPermission
+        );
+        var helper = context.BuildHelper();
+
+        var claimsPrincipal = new ClaimsPrincipal(
+            identity: new ClaimsIdentity(
+                claims:
+                [
+                    new(type: ClaimTypes.Name, value: "Bob52"),
+                    new(type: ClaimTypes.Email, value: "bob@example.com"),
+                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
+                ],
+                authenticationType: "GitHub"
+            )
+        );
+        var result = await helper.GetUserOrNull(
+            userClaimsPrincipal: claimsPrincipal,
+            cancellationToken: CancellationToken.None
+        );
+
+        result.ShouldBeEquivalentTo(
+            new ResolvedUser(
+                Id: 42,
+                Name: "Bob52",
+                EmailAddress: "bob@example.com",
+                EntriesPermission: entriesPermission,
+                ExportsPermission: exportsPermission,
+                ProjectsPermission: projectsPermission,
+                UsersPermission: projectsPermission
+            )
+        );
+
+        context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
+            x.Execute(
+                "github-33",
+                "bob@example.com",
+                "Bob52",
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.VerifyNoOtherCalls();
+    }
+
     private class TestContext
     {
         public Mock<IGetOrRegisterNewUserUseCase> GetOrRegisterNewUserUseCaseMock { get; } =
             new(MockBehavior.Strict);
         public Mock<ILogger<ResolveUserHelper>> LoggerMock { get; } = new(MockBehavior.Strict);
 
-        public TestContext WithExistingUser(int id, string name, string emailAddress)
+        public TestContext WithExistingUser(
+            int id,
+            string name,
+            string emailAddress,
+            UserPermission entriesPermission,
+            UserPermission exportsPermission,
+            UserPermission projectsPermission,
+            UserPermission usersPermission
+        )
         {
             return WithGetOrRegisterNewUserUseCaseResult(
                 id: id,
                 name: name,
                 emailAddress: emailAddress,
+                entriesPermission: entriesPermission,
+                exportsPermission: exportsPermission,
+                projectsPermission: projectsPermission,
+                usersPermission: usersPermission,
                 newlyRegistered: false
             );
         }
 
-        public TestContext WithNewlyRegisteredUser(int id, string name, string emailAddress)
+        public TestContext WithNewlyRegisteredUser(
+            int id,
+            string name,
+            string emailAddress,
+            UserPermission entriesPermission,
+            UserPermission exportsPermission,
+            UserPermission projectsPermission,
+            UserPermission usersPermission
+        )
         {
             return WithGetOrRegisterNewUserUseCaseResult(
                 id: id,
                 name: name,
                 emailAddress: emailAddress,
+                entriesPermission: entriesPermission,
+                exportsPermission: exportsPermission,
+                projectsPermission: projectsPermission,
+                usersPermission: usersPermission,
                 newlyRegistered: true
             );
         }
@@ -203,6 +352,10 @@ public class ResolveUserHelperTests
             int id,
             string name,
             string emailAddress,
+            UserPermission entriesPermission,
+            UserPermission exportsPermission,
+            UserPermission projectsPermission,
+            UserPermission usersPermission,
             bool newlyRegistered
         )
         {
@@ -227,10 +380,10 @@ public class ResolveUserHelperTests
                                 Name: name,
                                 EmailAddress: emailAddress,
                                 IdentityOrigin: UserIdentityProvider.GitHub,
-                                EntriesPermission: UserPermission.ReadAndModify,
-                                ExportsPermission: UserPermission.ReadAndModify,
-                                ProjectsPermission: UserPermission.ReadAndModify,
-                                UsersPermission: UserPermission.ReadAndModify
+                                EntriesPermission: entriesPermission,
+                                ExportsPermission: exportsPermission,
+                                ProjectsPermission: projectsPermission,
+                                UsersPermission: usersPermission
                             ),
                             NewlyRegistered: newlyRegistered
                         )

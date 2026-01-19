@@ -12,7 +12,15 @@ public interface IResolveUserHelper
     );
 }
 
-public sealed record ResolvedUser(int Id, string Name, string EmailAddress);
+public sealed record ResolvedUser(
+    int Id,
+    string Name,
+    string EmailAddress,
+    UserPermission EntriesPermission,
+    UserPermission ExportsPermission,
+    UserPermission ProjectsPermission,
+    UserPermission UsersPermission
+);
 
 internal sealed class ResolveUserHelper(IGetOrRegisterNewUserUseCase getOrRegisterNewUserUseCase)
     : IResolveUserHelper
@@ -57,7 +65,11 @@ internal sealed class ResolveUserHelper(IGetOrRegisterNewUserUseCase getOrRegist
         return new ResolvedUser(
             Id: cachedUser.Id,
             Name: cachedUser.Name,
-            EmailAddress: cachedUser.EmailAddress
+            EmailAddress: cachedUser.EmailAddress,
+            EntriesPermission: cachedUser.EntriesPermission,
+            ExportsPermission: cachedUser.ExportsPermission,
+            ProjectsPermission: cachedUser.ProjectsPermission,
+            UsersPermission: cachedUser.UsersPermission
         );
     }
 
