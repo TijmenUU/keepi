@@ -9,6 +9,11 @@
     <PackageReference Include="FastEndpoints" Version="7.2.0" />
   </ItemGroup>
   <ItemGroup>
+    <!-- For Moq mocking -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    <InternalsVisibleTo Include="Keepi.Api.Unit.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Keepi.Core\Keepi.Core.csproj" />
   </ItemGroup>
 </Project>
