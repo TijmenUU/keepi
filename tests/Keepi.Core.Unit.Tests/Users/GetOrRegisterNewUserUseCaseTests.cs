@@ -58,7 +58,7 @@ public class GetOrRegisterNewUserUseCaseTests
                     IdentityOrigin: UserIdentityProvider.GitHub
                 )
             )
-            .WithRegisterUserResult(RegisterUserUseCaseResult.UserCreated);
+            .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
         var helper = context.BuildUseCase();
 
@@ -89,7 +89,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.RegisterUserUseCaseMock.Verify(x =>
+        context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
                 "bob@example.com",
@@ -264,11 +264,9 @@ public class GetOrRegisterNewUserUseCaseTests
     }
 
     [Theory]
-    [InlineData(RegisterUserUseCaseResult.Unknown)]
-    [InlineData(RegisterUserUseCaseResult.UserAlreadyExists)]
-    public async Task Execute_returns_error_for_user_registration_failure(
-        RegisterUserUseCaseResult registrationResult
-    )
+    [InlineData(SaveNewUserError.Unknown)]
+    [InlineData(SaveNewUserError.DuplicateUser)]
+    public async Task Execute_returns_error_for_user_registration_failure(SaveNewUserError error)
     {
         var context = new TestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
@@ -280,7 +278,7 @@ public class GetOrRegisterNewUserUseCaseTests
                     IdentityOrigin: UserIdentityProvider.GitHub
                 )
             )
-            .WithRegisterUserResult(registrationResult);
+            .WithSaveNewUserResult(Result.Failure(error));
 
         var helper = context.BuildUseCase();
 
@@ -298,7 +296,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.RegisterUserUseCaseMock.Verify(x =>
+        context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
                 "bob@example.com",
@@ -322,7 +320,7 @@ public class GetOrRegisterNewUserUseCaseTests
                 firstError: GetUserError.DoesNotExist,
                 secondError: secondGetUserErrror
             )
-            .WithRegisterUserResult(RegisterUserUseCaseResult.UserCreated);
+            .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
         var helper = context.BuildUseCase();
 
@@ -343,7 +341,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.RegisterUserUseCaseMock.Verify(x =>
+        context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
                 "bob@example.com",
@@ -359,8 +357,7 @@ public class GetOrRegisterNewUserUseCaseTests
     {
         public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IUpdateUser> UpdateUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IRegisterUserUseCase> RegisterUserUseCaseMock { get; } =
-            new(MockBehavior.Strict);
+        public Mock<ISaveNewUser> SaveNewUserMock { get; } = new(MockBehavior.Strict);
         public Mock<ILogger<GetOrRegisterNewUserUseCase>> LoggerMock { get; } =
             new(MockBehavior.Loose);
 
@@ -454,9 +451,9 @@ public class GetOrRegisterNewUserUseCaseTests
             return this;
         }
 
-        public TestContext WithRegisterUserResult(RegisterUserUseCaseResult result)
+        public TestContext WithSaveNewUserResult(IMaybeErrorResult<SaveNewUserError> result)
         {
-            RegisterUserUseCaseMock
+            SaveNewUserMock
                 .Setup(x =>
                     x.Execute(
                         It.IsAny<string>(),
@@ -475,7 +472,7 @@ public class GetOrRegisterNewUserUseCaseTests
             new(
                 getUser: GetUserMock.Object,
                 updateUser: UpdateUserMock.Object,
-                registerUserUseCase: RegisterUserUseCaseMock.Object,
+                saveNewUser: SaveNewUserMock.Object,
                 logger: LoggerMock.Object
             );
 
@@ -483,7 +480,7 @@ public class GetOrRegisterNewUserUseCaseTests
         {
             GetUserMock.VerifyNoOtherCalls();
             UpdateUserMock.VerifyNoOtherCalls();
-            RegisterUserUseCaseMock.VerifyNoOtherCalls();
+            SaveNewUserMock.VerifyNoOtherCalls();
         }
     }
 }

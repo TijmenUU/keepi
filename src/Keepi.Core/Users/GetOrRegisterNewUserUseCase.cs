@@ -26,7 +26,7 @@ public enum GetOrRegisterNewUserUseCaseError
 internal sealed class GetOrRegisterNewUserUseCase(
     IGetUser getUser,
     IUpdateUser updateUser,
-    IRegisterUserUseCase registerUserUseCase,
+    ISaveNewUser saveNewUser,
     ILogger<GetOrRegisterNewUserUseCase> logger
 ) : IGetOrRegisterNewUserUseCase
 {
@@ -115,7 +115,7 @@ internal sealed class GetOrRegisterNewUserUseCase(
             identityProvider,
             externalId
         );
-        var registrationResult = await registerUserUseCase.Execute(
+        var registrationResult = await TryRegisterNewUser(
             externalId: externalId,
             emailAddress: emailAddress,
             name: name,
@@ -123,15 +123,8 @@ internal sealed class GetOrRegisterNewUserUseCase(
             cancellationToken: cancellationToken
         );
 
-        if (registrationResult != RegisterUserUseCaseResult.UserCreated)
+        if (!registrationResult.TrySuccess(out var _))
         {
-            logger.LogError(
-                "Failed to register first time {Provider} user {SubjectClaim} due to {Error}",
-                identityProvider,
-                externalId,
-                registrationResult
-            );
-
             return Result.Failure<
                 GetOrRegisterNewUserUseCaseOutput,
                 GetOrRegisterNewUserUseCaseError
@@ -172,4 +165,45 @@ internal sealed class GetOrRegisterNewUserUseCase(
             GetOrRegisterNewUserUseCaseError.Unknown
         );
     }
+
+    private async Task<IMaybeErrorResult<RegisterUserResult>> TryRegisterNewUser(
+        string externalId,
+        string emailAddress,
+        string name,
+        UserIdentityProvider provider,
+        CancellationToken cancellationToken
+    )
+    {
+        var saveResult = await saveNewUser.Execute(
+            externalId: externalId,
+            emailAddress: emailAddress,
+            name: name,
+            userIdentityProvider: provider,
+            cancellationToken: cancellationToken
+        );
+
+        if (saveResult.TrySuccess(out var saveErrorResult))
+        {
+            return Result.Success<RegisterUserResult>();
+        }
+
+        if (saveErrorResult == SaveNewUserError.DuplicateUser)
+        {
+            return Result.Failure(RegisterUserResult.UserAlreadyExists);
+        }
+
+        logger.LogError(
+            "Unexpected error {Error} whilst saving new {Provider} user {ExternalId}",
+            saveErrorResult,
+            provider,
+            externalId
+        );
+        return Result.Failure(RegisterUserResult.Unknown);
+    }
+
+    private enum RegisterUserResult
+    {
+        Unknown,
+        UserAlreadyExists,
+    };
 }
