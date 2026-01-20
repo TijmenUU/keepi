@@ -1,9 +1,10 @@
+using Keepi.Core.Users;
+
 namespace Keepi.Core.UserProjects;
 
 public interface IGetUserProjectsUseCase
 {
     Task<IValueOrErrorResult<GetUserProjectsUseCaseOutput, GetUserProjectsUseCaseError>> Execute(
-        int userId,
         CancellationToken cancellationToken
     );
 }
@@ -11,6 +12,7 @@ public interface IGetUserProjectsUseCase
 public enum GetUserProjectsUseCaseError
 {
     Unknown = 0,
+    UnauthenticatedUser,
 }
 
 public sealed record GetUserProjectsUseCaseOutput(GetUserProjectsUseCaseOutputProject[] Projects);
@@ -33,14 +35,30 @@ public sealed record GetUserProjectsUseCaseOutputProjectInvoiceItemCustomization
     Color? Color
 );
 
-internal class GetUserProjectsUseCase(IGetUserProjects getUserProjects) : IGetUserProjectsUseCase
+internal class GetUserProjectsUseCase(IResolveUser resolveUser, IGetUserProjects getUserProjects)
+    : IGetUserProjectsUseCase
 {
     public async Task<
         IValueOrErrorResult<GetUserProjectsUseCaseOutput, GetUserProjectsUseCaseError>
-    > Execute(int userId, CancellationToken cancellationToken)
+    > Execute(CancellationToken cancellationToken)
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure<
+                    GetUserProjectsUseCaseOutput,
+                    GetUserProjectsUseCaseError
+                >(GetUserProjectsUseCaseError.UnauthenticatedUser),
+                _ => Result.Failure<GetUserProjectsUseCaseOutput, GetUserProjectsUseCaseError>(
+                    GetUserProjectsUseCaseError.Unknown
+                ),
+            };
+        }
+
         var result = await getUserProjects.Execute(
-            userId: userId,
+            userId: userSuccessResult.Id,
             cancellationToken: cancellationToken
         );
 

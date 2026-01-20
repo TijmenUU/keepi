@@ -1,6 +1,7 @@
 using System.Text;
 using Keepi.Core.Entries;
 using Keepi.Core.UserProjects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Unit.Tests.Entries;
@@ -11,6 +12,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     public async Task Execute_stores_expected_entities()
     {
         var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
                     Projects:
@@ -49,7 +51,6 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -98,6 +99,7 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         result.Succeeded.ShouldBeTrue();
 
+        context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.GetUserProjectsMock.Verify(x => x.Execute(42, It.IsAny<CancellationToken>()));
         context.DeleteUserEntriesForDateRangeMock.Verify(x =>
             x.Execute(
@@ -144,6 +146,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     public async Task Execute_only_deleted_enabled_projects()
     {
         var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
                     Projects:
@@ -182,7 +185,6 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -221,32 +223,33 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_non_existing_invoice_item()
     {
-        var context = new TestContext().WithUserProjectsSuccessResult(
-            new(
-                Projects:
-                [
-                    new(
-                        Id: 1,
-                        Name: "Algemeen",
-                        Enabled: true,
-                        InvoiceItems: [new(Id: 10, Name: "Dev")]
-                    ),
-                ],
-                Customizations:
-                [
-                    new(
-                        InvoiceItemId: 10,
-                        Ordinal: 981,
-                        Color: new(Red: 255, Green: 255, Blue: 255)
-                    ),
-                ]
-            )
-        );
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            );
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -279,32 +282,33 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_disabled_project()
     {
-        var context = new TestContext().WithUserProjectsSuccessResult(
-            new(
-                Projects:
-                [
-                    new(
-                        Id: 1,
-                        Name: "Algemeen",
-                        Enabled: false,
-                        InvoiceItems: [new(Id: 10, Name: "Dev")]
-                    ),
-                ],
-                Customizations:
-                [
-                    new(
-                        InvoiceItemId: 10,
-                        Ordinal: 981,
-                        Color: new(Red: 255, Green: 255, Blue: 255)
-                    ),
-                ]
-            )
-        );
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: false,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            );
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -337,32 +341,33 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_invalid_minutes()
     {
-        var context = new TestContext().WithUserProjectsSuccessResult(
-            new(
-                Projects:
-                [
-                    new(
-                        Id: 1,
-                        Name: "Algemeen",
-                        Enabled: true,
-                        InvoiceItems: [new(Id: 10, Name: "Dev")]
-                    ),
-                ],
-                Customizations:
-                [
-                    new(
-                        InvoiceItemId: 10,
-                        Ordinal: 981,
-                        Color: new(Red: 255, Green: 255, Blue: 255)
-                    ),
-                ]
-            )
-        );
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            );
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -395,32 +400,33 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_invalid_remark()
     {
-        var context = new TestContext().WithUserProjectsSuccessResult(
-            new(
-                Projects:
-                [
-                    new(
-                        Id: 1,
-                        Name: "Algemeen",
-                        Enabled: true,
-                        InvoiceItems: [new(Id: 10, Name: "Dev")]
-                    ),
-                ],
-                Customizations:
-                [
-                    new(
-                        InvoiceItemId: 10,
-                        Ordinal: 981,
-                        Color: new(Red: 255, Green: 255, Blue: 255)
-                    ),
-                ]
-            )
-        );
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUserProjectsSuccessResult(
+                new(
+                    Projects:
+                    [
+                        new(
+                            Id: 1,
+                            Name: "Algemeen",
+                            Enabled: true,
+                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                        ),
+                    ],
+                    Customizations:
+                    [
+                        new(
+                            InvoiceItemId: 10,
+                            Ordinal: 981,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                    ]
+                )
+            );
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -455,12 +461,13 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_unknown_get_user_projects_error()
     {
-        var context = new TestContext().WithUserProjectsFailureResult(GetUserProjectsError.Unknown);
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUserProjectsFailureResult(GetUserProjectsError.Unknown);
 
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -492,6 +499,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     public async Task Execute_returns_delete_user_entries_error()
     {
         var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
                     Projects:
@@ -520,7 +528,6 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -552,6 +559,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     public async Task Execute_returns_save_user_entries_error()
     {
         var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
                     Projects:
@@ -579,7 +587,6 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildUseCase();
 
         var result = await useCase.Execute(
-            userId: 42,
             year: 2025,
             weekNumber: 25,
             input: new UpdateWeekUserEntriesUseCaseInput(
@@ -607,14 +614,73 @@ public class UpdateWeekUserEntriesUseCaseTests
         errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.Unknown);
     }
 
-    class TestContext
+    [Theory]
+    [InlineData(
+        ResolveUserError.UserNotAuthenticated,
+        UpdateWeekUserEntriesUseCaseError.UnauthenticatedUser
+    )]
+    [InlineData(ResolveUserError.MalformedUserClaims, UpdateWeekUserEntriesUseCaseError.Unknown)]
+    [InlineData(
+        ResolveUserError.UnsupportedIdentityProvider,
+        UpdateWeekUserEntriesUseCaseError.Unknown
+    )]
+    [InlineData(ResolveUserError.UserNotFound, UpdateWeekUserEntriesUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UserRegistrationFailed, UpdateWeekUserEntriesUseCaseError.Unknown)]
+    public async Task Execute_returns_error_for_user_resolve_error(
+        ResolveUserError resolveUserError,
+        UpdateWeekUserEntriesUseCaseError expectedError
+    )
     {
+        var context = new TestContext().WithResolveUserError(resolveUserError);
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                year: 2025,
+                weekNumber: 25,
+                input: new UpdateWeekUserEntriesUseCaseInput(
+                    Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
+                ),
+                cancellationToken: CancellationToken.None
+            );
+
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(expectedError);
+    }
+
+    private class TestContext
+    {
+        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IGetUserProjects> GetUserProjectsMock { get; } = new(MockBehavior.Strict);
         public Mock<IDeleteUserEntriesForDateRange> DeleteUserEntriesForDateRangeMock { get; } =
             new(MockBehavior.Strict);
         public Mock<ISaveUserEntries> SaveUserEntriesMock { get; } = new(MockBehavior.Strict);
 
         public Mock<ILogger<UpdateWeekUserEntriesUseCase>> LoggerMock = new(MockBehavior.Loose);
+
+        public TestContext WithResolvedUser(ResolvedUser user)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+
+            return this;
+        }
+
+        public TestContext WithResolveUserError(ResolveUserError error)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+
+            return this;
+        }
 
         public TestContext WithUserProjectsSuccessResult(GetUserProjectResult result)
         {
@@ -663,6 +729,7 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         public UpdateWeekUserEntriesUseCase BuildUseCase() =>
             new(
+                resolveUser: ResolveUserMock.Object,
                 getUserProjects: GetUserProjectsMock.Object,
                 deleteUserEntriesForDateRange: DeleteUserEntriesForDateRangeMock.Object,
                 saveUserEntries: SaveUserEntriesMock.Object,
@@ -671,6 +738,7 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         public void VerifyNoOtherCalls()
         {
+            ResolveUserMock.VerifyNoOtherCalls();
             GetUserProjectsMock.VerifyNoOtherCalls();
             DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
             SaveUserEntriesMock.VerifyNoOtherCalls();

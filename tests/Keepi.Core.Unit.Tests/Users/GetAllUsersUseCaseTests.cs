@@ -7,20 +7,22 @@ public class GetAllUsersUseCaseTests
     [Fact]
     public async Task Execute_returns_projects()
     {
-        var context = new TestContext().WithUsersResult(
-            new GetUsersResultUser(
-                Id: 1,
-                Name: "Bob",
-                EmailAddress: "bob@example.com",
-                IdentityOrigin: UserIdentityProvider.GitHub
-            ),
-            new GetUsersResultUser(
-                Id: 2,
-                Name: "Miro",
-                EmailAddress: "miro@example.com",
-                IdentityOrigin: UserIdentityProvider.GitHub
-            )
-        );
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUsersResult(
+                new GetUsersResultUser(
+                    Id: 1,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                ),
+                new GetUsersResultUser(
+                    Id: 2,
+                    Name: "Miro",
+                    EmailAddress: "miro@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub
+                )
+            );
 
         var useCase = context.BuildUseCase();
 
@@ -47,6 +49,7 @@ public class GetAllUsersUseCaseTests
             )
         );
 
+        context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.GetUsersMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.VerifyNoOtherCalls();
     }
@@ -58,7 +61,9 @@ public class GetAllUsersUseCaseTests
         GetAllUsersUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithUsersResult(repositoryError);
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUsersResult(repositoryError);
 
         var useCase = context.BuildUseCase();
 
@@ -67,13 +72,54 @@ public class GetAllUsersUseCaseTests
 
         errorResult.ShouldBe(expectedError);
 
+        context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.GetUsersMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.VerifyNoOtherCalls();
     }
 
+    [Theory]
+    [InlineData(ResolveUserError.UserNotAuthenticated, GetAllUsersUseCaseError.UnauthenticatedUser)]
+    [InlineData(ResolveUserError.MalformedUserClaims, GetAllUsersUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UnsupportedIdentityProvider, GetAllUsersUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UserNotFound, GetAllUsersUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UserRegistrationFailed, GetAllUsersUseCaseError.Unknown)]
+    public async Task Execute_returns_error_for_user_resolve_error(
+        ResolveUserError resolveUserError,
+        GetAllUsersUseCaseError expectedError
+    )
+    {
+        var context = new TestContext().WithResolveUserError(resolveUserError);
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(cancellationToken: CancellationToken.None);
+
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(expectedError);
+    }
+
     private class TestContext
     {
+        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IGetUsers> GetUsersMock { get; } = new(MockBehavior.Strict);
+
+        public TestContext WithResolvedUser(ResolvedUser user)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+
+            return this;
+        }
+
+        public TestContext WithResolveUserError(ResolveUserError error)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+
+            return this;
+        }
 
         public TestContext WithUsersResult(params GetUsersResultUser[] users)
         {
@@ -95,10 +141,12 @@ public class GetAllUsersUseCaseTests
             return this;
         }
 
-        public GetAllUsersUseCase BuildUseCase() => new(getUsers: GetUsersMock.Object);
+        public GetAllUsersUseCase BuildUseCase() =>
+            new(resolveUser: ResolveUserMock.Object, getUsers: GetUsersMock.Object);
 
         public void VerifyNoOtherCalls()
         {
+            ResolveUserMock.VerifyNoOtherCalls();
             GetUsersMock.VerifyNoOtherCalls();
         }
     }

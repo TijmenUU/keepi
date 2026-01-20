@@ -19,6 +19,7 @@ public static class IServiceCollectionExtensions
         services.AddScoped<IGetOrRegisterNewUserUseCase, GetOrRegisterNewUserUseCase>();
         services.AddScoped<IGetUserProjectsUseCase, GetUserProjectsUseCase>();
         services.AddScoped<IGetUserEntriesForWeekUseCase, GetUserEntriesForWeekUseCase>();
+        services.AddScoped<IGetUserUseCase, GetUserUseCase>();
         services.AddScoped<IUpdateProjectUseCase, UpdateProjectUseCase>();
         services.AddScoped<
             IUpdateUserInvoiceCustomizationsUseCase,

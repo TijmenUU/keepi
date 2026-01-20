@@ -1,16 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Core.Projects;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Projects.Create;
 
-internal sealed class CreateProjectEndpoint(
-    IResolveUser resolveUser,
-    ICreateProjectUseCase createProjectUseCase,
-    ILogger<CreateProjectEndpoint> logger
-) : Endpoint<CreateProjectRequest, CreateProjectResponse>
+internal sealed class CreateProjectEndpoint(ICreateProjectUseCase createProjectUseCase)
+    : Endpoint<CreateProjectRequest, CreateProjectResponse>
 {
     public override void Configure()
     {
@@ -22,14 +17,6 @@ internal sealed class CreateProjectEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug("Refusing to create a project by an unknown user");
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
-
         if (TryGetValidatedModel(request, out var validatedRequest))
         {
             var result = await createProjectUseCase.Execute(

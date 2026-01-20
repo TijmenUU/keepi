@@ -1,4 +1,4 @@
-namespace Keepi.Api.Users.Get;
+namespace Keepi.Api.Users.GetAll;
 
 public sealed record GetAllUsersResponse(GetAllUsersResponseUser[] Users);
 

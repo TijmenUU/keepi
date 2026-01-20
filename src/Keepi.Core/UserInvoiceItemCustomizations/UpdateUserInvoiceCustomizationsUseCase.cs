@@ -1,3 +1,5 @@
+using Keepi.Core.Users;
+
 namespace Keepi.Core.UserInvoiceItemCustomizations;
 
 public interface IUpdateUserInvoiceCustomizationsUseCase
@@ -11,12 +13,12 @@ public interface IUpdateUserInvoiceCustomizationsUseCase
 public enum UpdateUserInvoiceCustomizationsUseCaseError
 {
     Unknown = 0,
+    UnauthenticatedUser,
     DuplicateInvoiceItemId,
     UnknownInvoiceItemId,
 }
 
 public record UpdateUserInvoiceCustomizationsUseCaseInput(
-    int UserId,
     UpdateUserInvoiceCustomizationsUseCaseInputInvoiceItem[] InvoiceItems
 );
 
@@ -27,6 +29,7 @@ public record UpdateUserInvoiceCustomizationsUseCaseInputInvoiceItem(
 );
 
 internal sealed class UpdateUserInvoiceCustomizationsUseCase(
+    IResolveUser resolveUser,
     IOverwriteUserInvoiceItemCustomizations overwriteUserInvoiceItemCustomizations
 ) : IUpdateUserInvoiceCustomizationsUseCase
 {
@@ -35,6 +38,18 @@ internal sealed class UpdateUserInvoiceCustomizationsUseCase(
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure(
+                    UpdateUserInvoiceCustomizationsUseCaseError.UnauthenticatedUser
+                ),
+                _ => Result.Failure(UpdateUserInvoiceCustomizationsUseCaseError.Unknown),
+            };
+        }
+
         if (
             input.InvoiceItems.DistinctBy(i => i.InvoiceItemId).Count() != input.InvoiceItems.Length
         )
@@ -46,7 +61,7 @@ internal sealed class UpdateUserInvoiceCustomizationsUseCase(
 
         var result = await overwriteUserInvoiceItemCustomizations.Execute(
             input: new(
-                UserId: input.UserId,
+                UserId: userSuccessResult.Id,
                 InvoiceItems: input
                     .InvoiceItems.Select(
                         i => new OverwriteUserInvoiceItemCustomizationsInputInvoiceItem(

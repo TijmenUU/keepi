@@ -1,14 +1,10 @@
 using FastEndpoints;
 using Keepi.Core.Entries;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetWeek;
 
 public sealed class GetWeekUserEntriesEndpoint(
-    IResolveUser resolveUser,
-    IGetUserEntriesForWeekUseCase getUserEntriesForWeekUseCase,
-    ILogger<GetWeekUserEntriesEndpoint> logger
+    IGetUserEntriesForWeekUseCase getUserEntriesForWeekUseCase
 ) : EndpointWithoutRequest<GetWeekUserEntriesResponse>
 {
     public override void Configure()
@@ -18,16 +14,7 @@ public sealed class GetWeekUserEntriesEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug("Refusing to get week entries for unknown user");
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
-
         var result = await getUserEntriesForWeekUseCase.Execute(
-            userId: user.Id,
             year: Route<int>(paramName: "Year"),
             weekNumber: Route<int>(paramName: "WeekNumber"),
             cancellationToken: cancellationToken

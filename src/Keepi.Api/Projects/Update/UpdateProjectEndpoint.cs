@@ -1,16 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Core.Projects;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Projects.Update;
 
-internal sealed class UpdateProjectEndpoint(
-    IResolveUser resolveUser,
-    IUpdateProjectUseCase updateProjectUseCase,
-    ILogger<UpdateProjectEndpoint> logger
-) : Endpoint<UpdateProjectRequest>
+internal sealed class UpdateProjectEndpoint(IUpdateProjectUseCase updateProjectUseCase)
+    : Endpoint<UpdateProjectRequest>
 {
     public override void Configure()
     {
@@ -23,16 +18,6 @@ internal sealed class UpdateProjectEndpoint(
     )
     {
         var projectId = Route<int>(paramName: "ProjectId");
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug(
-                "Refusing to update project with ID {ProjectId} by an unknown user",
-                projectId
-            );
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
 
         if (TryGetValidatedModel(request, out var validatedRequest))
         {

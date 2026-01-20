@@ -4,16 +4,11 @@ using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using FastEndpoints;
 using Keepi.Core.Entries;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.GetExport;
 
-public sealed class GetUserEntriesExportEndpoint(
-    IResolveUser resolveUser,
-    IExportUserEntriesUseCase exportUserEntriesUseCase,
-    ILogger<GetUserEntriesExportEndpoint> logger
-) : Endpoint<GetUserEntriesExportEndpointRequest>
+public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase exportUserEntriesUseCase)
+    : Endpoint<GetUserEntriesExportEndpointRequest>
 {
     public override void Configure()
     {
@@ -25,22 +20,13 @@ public sealed class GetUserEntriesExportEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug("Refusing to export entries for unknown user");
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
-
         if (!TryGetValidatedModel(request: request, out var validatedRequest))
         {
             await Send.ErrorsAsync(cancellation: cancellationToken);
             return;
         }
 
-        var result = exportUserEntriesUseCase.Execute(
-            userId: user.Id,
+        var result = await exportUserEntriesUseCase.Execute(
             start: validatedRequest.Start,
             stop: validatedRequest.Stop,
             cancellationToken: cancellationToken
@@ -81,6 +67,11 @@ public sealed class GetUserEntriesExportEndpoint(
         if (errorResult == ExportUserEntriesUseCaseError.StartGreaterThanStop)
         {
             await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
+        if (errorResult == ExportUserEntriesUseCaseError.UnauthenticatedUser)
+        {
+            await Send.UnauthorizedAsync(cancellation: cancellationToken);
             return;
         }
 

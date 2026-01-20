@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Keepi.Core.UserProjects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Entries;
@@ -7,7 +8,6 @@ namespace Keepi.Core.Entries;
 public interface IUpdateWeekUserEntriesUseCase
 {
     Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-        int userId,
         int year,
         int weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
@@ -15,7 +15,18 @@ public interface IUpdateWeekUserEntriesUseCase
     );
 }
 
+public enum UpdateWeekUserEntriesUseCaseError
+{
+    Unknown,
+    UnauthenticatedUser,
+    UnknownUserInvoiceItem,
+    InvalidUserInvoiceItem,
+    InvalidMinutes,
+    InvalidRemark,
+}
+
 internal sealed class UpdateWeekUserEntriesUseCase(
+    IResolveUser resolveUser,
     IGetUserProjects getUserProjects,
     IDeleteUserEntriesForDateRange deleteUserEntriesForDateRange,
     ISaveUserEntries saveUserEntries,
@@ -23,13 +34,24 @@ internal sealed class UpdateWeekUserEntriesUseCase(
 ) : IUpdateWeekUserEntriesUseCase
 {
     public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-        int userId,
         int year,
         int weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure(
+                    UpdateWeekUserEntriesUseCaseError.UnauthenticatedUser
+                ),
+                _ => Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown),
+            };
+        }
+
         var days = new[]
         {
             input.Monday,
@@ -42,7 +64,7 @@ internal sealed class UpdateWeekUserEntriesUseCase(
         };
 
         var getUserProjectsResult = await getUserProjects.Execute(
-            userId: userId,
+            userId: userSuccessResult.Id,
             cancellationToken: cancellationToken
         );
         if (!getUserProjectsResult.TrySuccess(out var userProjects, out var errorResult))
@@ -101,7 +123,7 @@ internal sealed class UpdateWeekUserEntriesUseCase(
 
         var deletionResult = await deleteUserEntriesForDateRange.Execute(
             input: new(
-                UserId: userId,
+                UserId: userSuccessResult.Id,
                 From: dayDates.First(),
                 ToInclusive: dayDates.Last(),
                 ProjectIds: userProjects.Projects.Where(p => p.Enabled).Select(p => p.Id).ToArray()
@@ -116,13 +138,13 @@ internal sealed class UpdateWeekUserEntriesUseCase(
                 errorResult,
                 weekNumber,
                 year,
-                userId
+                userSuccessResult.Id
             );
             return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
         }
 
         var saveResult = await saveUserEntries.Execute(
-            input: new(UserId: userId, Entries: [.. entries]),
+            input: new(UserId: userSuccessResult.Id, Entries: [.. entries]),
             cancellationToken: cancellationToken
         );
         if (saveResult.Succeeded)
@@ -135,19 +157,10 @@ internal sealed class UpdateWeekUserEntriesUseCase(
             errorResult,
             weekNumber,
             year,
-            userId
+            userSuccessResult.Id
         );
         return Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown);
     }
-}
-
-public enum UpdateWeekUserEntriesUseCaseError
-{
-    Unknown,
-    UnknownUserInvoiceItem,
-    InvalidUserInvoiceItem,
-    InvalidMinutes,
-    InvalidRemark,
 }
 
 public record UpdateWeekUserEntriesUseCaseInput(

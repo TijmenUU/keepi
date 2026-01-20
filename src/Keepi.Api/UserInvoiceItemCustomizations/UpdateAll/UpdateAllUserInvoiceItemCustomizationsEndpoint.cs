@@ -1,14 +1,10 @@
 using FastEndpoints;
 using Keepi.Core.UserInvoiceItemCustomizations;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserInvoiceItemCustomizations.UpdateAll;
 
 public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
-    IResolveUser resolveUser,
-    IUpdateUserInvoiceCustomizationsUseCase updateUserInvoiceCustomizationsUseCase,
-    ILogger<UpdateAllUserInvoiceItemCustomizationsEndpoint> logger
+    IUpdateUserInvoiceCustomizationsUseCase updateUserInvoiceCustomizationsUseCase
 ) : Endpoint<UpdateAllUserInvoiceItemCustomizationsRequest>
 {
     public override void Configure()
@@ -21,14 +17,6 @@ public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug("Refusing to update user invoice item customizations for unknown user");
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
-
         if (!TryGetValidatedModel(request: request, out var validatedRequest))
         {
             await Send.ErrorsAsync(cancellation: cancellationToken);
@@ -36,7 +24,7 @@ public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
         }
 
         var result = await updateUserInvoiceCustomizationsUseCase.Execute(
-            new(UserId: user.Id, InvoiceItems: validatedRequest),
+            new(InvoiceItems: validatedRequest),
             cancellationToken: cancellationToken
         );
 

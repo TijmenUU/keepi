@@ -12,6 +12,7 @@ public interface IGetUserEntriesForDates
 public enum GetUserEntriesForDatesError
 {
     Unknown,
+    UnauthenticatedUser,
 }
 
 public sealed record GetUserEntriesForDatesResult(GetUserEntriesForDatesResultEntry[] Entries);

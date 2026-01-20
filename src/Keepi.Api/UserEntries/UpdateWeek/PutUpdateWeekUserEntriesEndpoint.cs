@@ -3,15 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Api.UserEntries.GetWeek;
 using Keepi.Core.Entries;
-using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.UserEntries.UpdateWeek;
 
 public sealed class PutUpdateWeekUserEntriesEndpoint(
-    IResolveUser resolveUser,
-    IUpdateWeekUserEntriesUseCase updateWeekUserEntriesUseCase,
-    ILogger<PutUpdateWeekUserEntriesEndpoint> logger
+    IUpdateWeekUserEntriesUseCase updateWeekUserEntriesUseCase
 ) : Endpoint<PutUpdateWeekUserEntriesRequest>
 {
     public override void Configure()
@@ -24,14 +20,6 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var resolveUserResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!resolveUserResult.TrySuccess(out var user, out _))
-        {
-            logger.LogDebug("Refusing to update week entries for unknown user");
-            await Send.ForbiddenAsync(cancellation: cancellationToken);
-            return;
-        }
-
         if (!TryGetValidatedModel(request: request, out var validatedRequest))
         {
             await Send.ErrorsAsync(cancellation: cancellationToken);
@@ -42,7 +30,6 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
         var weekNumber = Route<int>(paramName: "WeekNumber");
 
         var result = await updateWeekUserEntriesUseCase.Execute(
-            userId: user.Id,
             year: year,
             weekNumber: weekNumber,
             input: validatedRequest,

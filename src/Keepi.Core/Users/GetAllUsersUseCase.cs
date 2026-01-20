@@ -10,14 +10,31 @@ public interface IGetAllUsersUseCase
 public enum GetAllUsersUseCaseError
 {
     Unknown,
+    UnauthenticatedUser,
 }
 
-internal sealed class GetAllUsersUseCase(IGetUsers getUsers) : IGetAllUsersUseCase
+internal sealed class GetAllUsersUseCase(IResolveUser resolveUser, IGetUsers getUsers)
+    : IGetAllUsersUseCase
 {
     public async Task<IValueOrErrorResult<GetUsersResult, GetAllUsersUseCaseError>> Execute(
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure<
+                    GetUsersResult,
+                    GetAllUsersUseCaseError
+                >(GetAllUsersUseCaseError.UnauthenticatedUser),
+                _ => Result.Failure<GetUsersResult, GetAllUsersUseCaseError>(
+                    GetAllUsersUseCaseError.Unknown
+                ),
+            };
+        }
+
         var result = await getUsers.Execute(cancellationToken: cancellationToken);
         if (result.TrySuccess(out var successResult, out var errorResult))
         {

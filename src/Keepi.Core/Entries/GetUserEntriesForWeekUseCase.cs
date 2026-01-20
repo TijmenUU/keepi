@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Entries;
@@ -7,21 +8,44 @@ public interface IGetUserEntriesForWeekUseCase
 {
     Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int userId, int year, int weekNumber, CancellationToken cancellationToken);
+    > Execute(int year, int weekNumber, CancellationToken cancellationToken);
+}
+
+public enum GetUserEntriesForWeekUseCaseError
+{
+    Unknown,
+    UnauthenticatedUser,
 }
 
 internal sealed class GetUserEntriesForWeekUseCase(
+    IResolveUser resolveUser,
     IGetUserEntriesForDates getUserEntriesForDates,
     ILogger<GetUserEntriesForWeekUseCase> logger
 ) : IGetUserEntriesForWeekUseCase
 {
     public async Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int userId, int year, int weekNumber, CancellationToken cancellationToken)
+    > Execute(int year, int weekNumber, CancellationToken cancellationToken)
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure<
+                    GetUserEntriesForWeekUseCaseOutput,
+                    GetUserEntriesForWeekUseCaseError
+                >(GetUserEntriesForWeekUseCaseError.UnauthenticatedUser),
+                _ => Result.Failure<
+                    GetUserEntriesForWeekUseCaseOutput,
+                    GetUserEntriesForWeekUseCaseError
+                >(GetUserEntriesForWeekUseCaseError.Unknown),
+            };
+        }
+
         var dates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
         var getUserEntriesForDatesResult = await getUserEntriesForDates.Execute(
-            userId: userId,
+            userId: userSuccessResult.Id,
             dates: dates,
             cancellationToken: cancellationToken
         );
@@ -32,7 +56,7 @@ internal sealed class GetUserEntriesForWeekUseCase(
                 errorResult,
                 weekNumber,
                 year,
-                userId
+                userSuccessResult.Id
             );
             return Result.Failure<
                 GetUserEntriesForWeekUseCaseOutput,
@@ -74,11 +98,6 @@ internal sealed class GetUserEntriesForWeekUseCase(
                 .ToArray()
         );
     }
-}
-
-public enum GetUserEntriesForWeekUseCaseError
-{
-    Unknown,
 }
 
 public record GetUserEntriesForWeekUseCaseOutput(

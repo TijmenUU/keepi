@@ -9,6 +9,7 @@ using Keepi.Api.UserEntries.UpdateWeek;
 using Keepi.Api.UserInvoiceItemCustomizations.UpdateAll;
 using Keepi.Api.UserProjects.GetAll;
 using Keepi.Api.Users.Get;
+using Keepi.Api.Users.GetAll;
 
 namespace Keepi.Web.Integration.Tests;
 
