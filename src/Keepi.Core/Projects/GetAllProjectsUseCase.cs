@@ -1,3 +1,5 @@
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Projects;
 
 public interface IGetAllProjectsUseCase
@@ -10,14 +12,31 @@ public interface IGetAllProjectsUseCase
 public enum GetAllProjectsUseCaseError
 {
     Unknown = 0,
+    UnauthenticatedUser,
 }
 
-internal sealed class GetAllProjectsUseCase(IGetProjects getProjects) : IGetAllProjectsUseCase
+internal sealed class GetAllProjectsUseCase(IResolveUser resolveUser, IGetProjects getProjects)
+    : IGetAllProjectsUseCase
 {
     public async Task<IValueOrErrorResult<GetProjectsResult, GetAllProjectsUseCaseError>> Execute(
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure<
+                    GetProjectsResult,
+                    GetAllProjectsUseCaseError
+                >(GetAllProjectsUseCaseError.UnauthenticatedUser),
+                _ => Result.Failure<GetProjectsResult, GetAllProjectsUseCaseError>(
+                    GetAllProjectsUseCaseError.Unknown
+                ),
+            };
+        }
+
         var result = await getProjects.Execute(cancellationToken: cancellationToken);
         if (result.TrySuccess(out var successResult, out var errorResult))
         {

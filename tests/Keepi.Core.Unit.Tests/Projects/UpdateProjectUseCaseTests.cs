@@ -1,4 +1,5 @@
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Unit.Tests.Projects;
@@ -8,7 +9,9 @@ public class UpdateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_created_project_ID()
     {
-        var context = new TestContext().WithUpdateProjectSuccessResult();
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUpdateProjectSuccessResult();
 
         var result = await context
             .BuildUseCase()
@@ -23,6 +26,7 @@ public class UpdateProjectUseCaseTests
 
         result.TrySuccess(out _).ShouldBeTrue();
 
+        context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.UpdateProjectMock.Verify(x =>
             x.Execute(
                 1,
@@ -39,6 +43,7 @@ public class UpdateProjectUseCaseTests
                 It.IsAny<CancellationToken>()
             )
         );
+        context.VerifyNoOtherCalls();
     }
 
     [Theory]
@@ -47,7 +52,9 @@ public class UpdateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_project_name(string projectName)
     {
-        var context = new TestContext();
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder.CreateAdministratorBob()
+        );
 
         var result = await context
             .BuildUseCase()
@@ -67,7 +74,9 @@ public class UpdateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_user_ids()
     {
-        var context = new TestContext();
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder.CreateAdministratorBob()
+        );
 
         var result = await context
             .BuildUseCase()
@@ -90,7 +99,9 @@ public class UpdateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_invoice_item_name(string invoiceItemName)
     {
-        var context = new TestContext();
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder.CreateAdministratorBob()
+        );
 
         var result = await context
             .BuildUseCase()
@@ -110,7 +121,9 @@ public class UpdateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_invoice_item_names()
     {
-        var context = new TestContext();
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder.CreateAdministratorBob()
+        );
 
         var result = await context
             .BuildUseCase()
@@ -140,7 +153,40 @@ public class UpdateProjectUseCaseTests
         UpdateProjectUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithUpdateProjectFailureResult(updateError);
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUpdateProjectFailureResult(updateError);
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                id: 1,
+                name: "Algemeen",
+                enabled: true,
+                userIds: [42, 43],
+                invoiceItems: [(10, "Dev"), (null, "Planning")],
+                cancellationToken: CancellationToken.None
+            );
+
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(expectedError);
+    }
+
+    [Theory]
+    [InlineData(
+        ResolveUserError.UserNotAuthenticated,
+        UpdateProjectUseCaseError.UnauthenticatedUser
+    )]
+    [InlineData(ResolveUserError.MalformedUserClaims, UpdateProjectUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UnsupportedIdentityProvider, UpdateProjectUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UserNotFound, UpdateProjectUseCaseError.Unknown)]
+    [InlineData(ResolveUserError.UserRegistrationFailed, UpdateProjectUseCaseError.Unknown)]
+    public async Task Execute_returns_error_for_user_resolve_error(
+        ResolveUserError resolveUserError,
+        UpdateProjectUseCaseError expectedError
+    )
+    {
+        var context = new TestContext().WithResolveUserError(resolveUserError);
 
         var result = await context
             .BuildUseCase()
@@ -159,8 +205,27 @@ public class UpdateProjectUseCaseTests
 
     private class TestContext
     {
+        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IUpdateProject> UpdateProjectMock { get; } = new(MockBehavior.Strict);
         public Mock<ILogger<UpdateProjectUseCase>> LoggerMock { get; } = new(MockBehavior.Loose);
+
+        public TestContext WithResolvedUser(ResolvedUser user)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+
+            return this;
+        }
+
+        public TestContext WithResolveUserError(ResolveUserError error)
+        {
+            ResolveUserMock
+                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+
+            return this;
+        }
 
         public TestContext WithUpdateProjectSuccessResult()
         {
@@ -199,6 +264,16 @@ public class UpdateProjectUseCaseTests
         }
 
         public UpdateProjectUseCase BuildUseCase() =>
-            new(updateProject: UpdateProjectMock.Object, logger: LoggerMock.Object);
+            new(
+                resolveUser: ResolveUserMock.Object,
+                updateProject: UpdateProjectMock.Object,
+                logger: LoggerMock.Object
+            );
+
+        public void VerifyNoOtherCalls()
+        {
+            ResolveUserMock.VerifyNoOtherCalls();
+            UpdateProjectMock.VerifyNoOtherCalls();
+        }
     }
 }

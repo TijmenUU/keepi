@@ -1,4 +1,5 @@
 using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Projects;
@@ -17,6 +18,7 @@ public interface ICreateProjectUseCase
 public enum CreateProjectUseCaseError
 {
     Unknown = 0,
+    UnauthenticatedUser,
     InvalidProjectName,
     DuplicateProjectName,
     InvalidActiveDateRange,
@@ -27,6 +29,7 @@ public enum CreateProjectUseCaseError
 }
 
 internal sealed class CreateProjectUseCase(
+    IResolveUser resolveUser,
     ISaveNewProject saveNewProject,
     ILogger<CreateProjectUseCase> logger
 ) : ICreateProjectUseCase
@@ -39,69 +42,79 @@ internal sealed class CreateProjectUseCase(
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out _, out var userErrorResult))
         {
-            if (!ProjectEntity.IsValidName(name))
+            return userErrorResult switch
             {
-                return Result.Failure<int, CreateProjectUseCaseError>(
-                    CreateProjectUseCaseError.InvalidProjectName
-                );
-            }
+                ResolveUserError.UserNotAuthenticated => Result.Failure<
+                    int,
+                    CreateProjectUseCaseError
+                >(CreateProjectUseCaseError.UnauthenticatedUser),
+                _ => Result.Failure<int, CreateProjectUseCaseError>(
+                    CreateProjectUseCaseError.Unknown
+                ),
+            };
+        }
 
-            if (!ProjectEntity.HasUniqueUserIds(userIds))
-            {
-                return Result.Failure<int, CreateProjectUseCaseError>(
-                    CreateProjectUseCaseError.DuplicateUserIds
-                );
-            }
-
-            if (invoiceItemNames.Any(i => !InvoiceItemEntity.IsValidName(i)))
-            {
-                return Result.Failure<int, CreateProjectUseCaseError>(
-                    CreateProjectUseCaseError.InvalidInvoiceItemName
-                );
-            }
-
-            if (!ProjectEntity.HasUniqueInvoiceItemNames(invoiceItemNames))
-            {
-                return Result.Failure<int, CreateProjectUseCaseError>(
-                    CreateProjectUseCaseError.DuplicateInvoiceItemNames
-                );
-            }
-
-            var result = await saveNewProject.Execute(
-                name: name,
-                enabled: enabled,
-                userIds: userIds,
-                invoiceItemNames: invoiceItemNames,
-                cancellationToken: cancellationToken
+        if (!ProjectEntity.IsValidName(name))
+        {
+            return Result.Failure<int, CreateProjectUseCaseError>(
+                CreateProjectUseCaseError.InvalidProjectName
             );
+        }
 
-            if (result.TrySuccess(out var successResult, out var errorResult))
-            {
-                return Result.Success<int, CreateProjectUseCaseError>(successResult);
-            }
+        if (!ProjectEntity.HasUniqueUserIds(userIds))
+        {
+            return Result.Failure<int, CreateProjectUseCaseError>(
+                CreateProjectUseCaseError.DuplicateUserIds
+            );
+        }
 
-            switch (errorResult)
-            {
-                case SaveNewProjectError.DuplicateProjectName:
-                    return Result.Failure<int, CreateProjectUseCaseError>(
-                        CreateProjectUseCaseError.DuplicateProjectName
-                    );
+        if (invoiceItemNames.Any(i => !InvoiceItemEntity.IsValidName(i)))
+        {
+            return Result.Failure<int, CreateProjectUseCaseError>(
+                CreateProjectUseCaseError.InvalidInvoiceItemName
+            );
+        }
 
-                case SaveNewProjectError.UnknownUserId:
-                    return Result.Failure<int, CreateProjectUseCaseError>(
-                        CreateProjectUseCaseError.UnknownUserId
-                    );
+        if (!ProjectEntity.HasUniqueInvoiceItemNames(invoiceItemNames))
+        {
+            return Result.Failure<int, CreateProjectUseCaseError>(
+                CreateProjectUseCaseError.DuplicateInvoiceItemNames
+            );
+        }
 
-                default:
-                    logger.LogError(
-                        "Unexpected error {Error} in create project use case",
-                        errorResult
-                    );
-                    return Result.Failure<int, CreateProjectUseCaseError>(
-                        CreateProjectUseCaseError.Unknown
-                    );
-            }
+        var result = await saveNewProject.Execute(
+            name: name,
+            enabled: enabled,
+            userIds: userIds,
+            invoiceItemNames: invoiceItemNames,
+            cancellationToken: cancellationToken
+        );
+
+        if (result.TrySuccess(out var successResult, out var errorResult))
+        {
+            return Result.Success<int, CreateProjectUseCaseError>(successResult);
+        }
+
+        switch (errorResult)
+        {
+            case SaveNewProjectError.DuplicateProjectName:
+                return Result.Failure<int, CreateProjectUseCaseError>(
+                    CreateProjectUseCaseError.DuplicateProjectName
+                );
+
+            case SaveNewProjectError.UnknownUserId:
+                return Result.Failure<int, CreateProjectUseCaseError>(
+                    CreateProjectUseCaseError.UnknownUserId
+                );
+
+            default:
+                logger.LogError("Unexpected error {Error} in create project use case", errorResult);
+                return Result.Failure<int, CreateProjectUseCaseError>(
+                    CreateProjectUseCaseError.Unknown
+                );
         }
     }
 }

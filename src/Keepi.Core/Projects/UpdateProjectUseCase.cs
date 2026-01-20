@@ -1,4 +1,5 @@
 using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Keepi.Core.Projects;
@@ -18,6 +19,7 @@ public interface IUpdateProjectUseCase
 public enum UpdateProjectUseCaseError
 {
     Unknown = 0,
+    UnauthenticatedUser,
     UnknownProjectId,
     InvalidProjectName,
     DuplicateProjectName,
@@ -30,6 +32,7 @@ public enum UpdateProjectUseCaseError
 }
 
 internal sealed class UpdateProjectUseCase(
+    IResolveUser resolveUser,
     IUpdateProject updateProject,
     ILogger<UpdateProjectUseCase> logger
 ) : IUpdateProjectUseCase
@@ -43,6 +46,18 @@ internal sealed class UpdateProjectUseCase(
         CancellationToken cancellationToken
     )
     {
+        var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
+        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        {
+            return userErrorResult switch
+            {
+                ResolveUserError.UserNotAuthenticated => Result.Failure(
+                    UpdateProjectUseCaseError.UnauthenticatedUser
+                ),
+                _ => Result.Failure(UpdateProjectUseCaseError.Unknown),
+            };
+        }
+
         if (!ProjectEntity.IsValidName(name))
         {
             return Result.Failure(UpdateProjectUseCaseError.InvalidProjectName);

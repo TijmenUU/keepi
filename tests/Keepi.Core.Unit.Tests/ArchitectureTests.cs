@@ -1,3 +1,5 @@
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Unit.Tests;
 
 public class ArchitectureTests
@@ -31,5 +33,35 @@ public class ArchitectureTests
         deviatingResults.ShouldBeEmpty(
             customMessage: "Enum types should have unknown as their default (0) value. Any serialization issues or accidental (default)s should yield unknown errors instead of a random known error."
         );
+    }
+
+    [Fact]
+    public void Use_cases_must_use_resolve_user_for_authorization()
+    {
+        var toIgnore = new Type[]
+        {
+            // This use case is allowed to be called by all authenticated users,
+            // hence no authorization is necessary.
+            typeof(GetOrRegisterNewUserUseCase),
+        };
+
+        var useCaseTypes = typeof(GetAllUsersUseCase)
+            .Assembly.GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.Name.EndsWith("UseCase"))
+            .Except(toIgnore)
+            .ToArray();
+
+        foreach (var useCase in useCaseTypes)
+        {
+            var constructors = useCase.GetConstructors();
+            constructors.ShouldHaveSingleItem();
+
+            constructors[0]
+                .GetParameters()
+                .ShouldContain(
+                    p => p.ParameterType == typeof(IResolveUser),
+                    customMessage: $"The use case {useCase.Name} is lacking authorization"
+                );
+        }
     }
 }
