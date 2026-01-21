@@ -112,7 +112,7 @@ public class KeepiClient
             path: $"/api/projects/{projectId}",
             method: HttpMethod.Delete
         );
-        response.EnsureSuccessStatusCode();
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
     }
 
     public async Task<GetUserProjectsResponse> GetUserProjects()
@@ -168,7 +168,7 @@ public class KeepiClient
             value: new GetUserEntriesExportEndpointRequest { Start = start, Stop = stop },
             options: jsonSerializerOptions
         );
-        response.EnsureSuccessStatusCode();
+        ThrowIfUnsuccesful(response);
 
         return await response.Content.ReadAsStreamAsync();
     }
@@ -187,13 +187,8 @@ public class KeepiClient
     )
         where TResponse : class
     {
-        var (response, body) = await MakeDebuggableRequest(
-            path: path,
-            jsonBody: jsonBody,
-            method: method
-        );
+        var (_, body) = await MakeDebuggableRequest(path: path, jsonBody: jsonBody, method: method);
 
-        response.EnsureSuccessStatusCode();
         body.ShouldNotBeNull();
 
         var result = JsonSerializer.Deserialize<TResponse>(
@@ -228,6 +223,44 @@ public class KeepiClient
         var response = await httpClient.SendAsync(request: request);
         var body = await response.Content.ReadAsStringAsync();
 
+        ThrowIfUnsuccesful(response);
+
         return (response, body);
     }
+
+    private static void ThrowIfUnsuccesful(HttpResponseMessage response)
+    {
+        KeepiClientException? exception = (int)response.StatusCode switch
+        {
+            400 => new KeepiClientBadRequestException(),
+            401 => new KeepiClientUnauthorizedException(),
+            403 => new KeepiClientForbiddenException(),
+            404 => new KeepiClientNotFoundException(),
+            500 => new KeepiClientInternalServerErrorException(),
+            200 or 201 or 204 => null,
+            _ => new KeepiClientUnknownException(statusCode: (int)response.StatusCode),
+        };
+
+        if (exception != null)
+        {
+            throw exception;
+        }
+    }
 }
+
+public abstract class KeepiClientException : Exception;
+
+public sealed class KeepiClientUnknownException(int statusCode) : KeepiClientException
+{
+    public int StatusCode { get; } = statusCode;
+}
+
+public sealed class KeepiClientNotFoundException : KeepiClientException;
+
+public sealed class KeepiClientBadRequestException : KeepiClientException;
+
+public sealed class KeepiClientUnauthorizedException : KeepiClientException;
+
+public sealed class KeepiClientForbiddenException : KeepiClientException;
+
+public sealed class KeepiClientInternalServerErrorException : KeepiClientException;
