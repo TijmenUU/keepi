@@ -15,13 +15,21 @@ public class GetAllUsersUseCaseTests
                     Id: 1,
                     Name: "Bob",
                     EmailAddress: "bob@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.None,
+                    ExportsPermission: UserPermission.None,
+                    ProjectsPermission: UserPermission.None,
+                    UsersPermission: UserPermission.None
                 ),
                 new GetUsersResultUser(
                     Id: 2,
                     Name: "Miro",
                     EmailAddress: "miro@example.com",
-                    IdentityOrigin: UserIdentityProvider.GitHub
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
                 )
             );
 
@@ -38,13 +46,21 @@ public class GetAllUsersUseCaseTests
                         Id: 1,
                         Name: "Bob",
                         EmailAddress: "bob@example.com",
-                        IdentityOrigin: UserIdentityProvider.GitHub
+                        IdentityOrigin: UserIdentityProvider.GitHub,
+                        EntriesPermission: UserPermission.None,
+                        ExportsPermission: UserPermission.None,
+                        ProjectsPermission: UserPermission.None,
+                        UsersPermission: UserPermission.None
                     ),
                     new(
                         Id: 2,
                         Name: "Miro",
                         EmailAddress: "miro@example.com",
-                        IdentityOrigin: UserIdentityProvider.GitHub
+                        IdentityOrigin: UserIdentityProvider.GitHub,
+                        EntriesPermission: UserPermission.ReadAndModify,
+                        ExportsPermission: UserPermission.ReadAndModify,
+                        ProjectsPermission: UserPermission.ReadAndModify,
+                        UsersPermission: UserPermission.ReadAndModify
                     ),
                 ]
             )
@@ -53,6 +69,87 @@ public class GetAllUsersUseCaseTests
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.GetUsersMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    // Base case
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.None)]
+    // Entries permission
+    [InlineData(UserPermission.Read, UserPermission.None, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Exports permission
+    [InlineData(UserPermission.None, UserPermission.Read, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Projects permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.Read, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None
+    )]
+    // Users permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.Read)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify
+    )]
+    public async Task Execute_maps_permissions_correctly(
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission
+    )
+    {
+        var context = new TestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUsersResult(
+                new GetUsersResultUser(
+                    Id: 1,
+                    Name: "Bobby",
+                    EmailAddress: "bobby@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: entriesPermission,
+                    ExportsPermission: exportsPermission,
+                    ProjectsPermission: projectsPermission,
+                    UsersPermission: usersPermission
+                )
+            );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(cancellationToken: CancellationToken.None);
+
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+        successResult.ShouldBeEquivalentTo(
+            new GetUsersResult(
+                Users:
+                [
+                    new(
+                        Id: 1,
+                        Name: "Bobby",
+                        EmailAddress: "bobby@example.com",
+                        IdentityOrigin: UserIdentityProvider.GitHub,
+                        EntriesPermission: entriesPermission,
+                        ExportsPermission: exportsPermission,
+                        ProjectsPermission: projectsPermission,
+                        UsersPermission: usersPermission
+                    ),
+                ]
+            )
+        );
     }
 
     [Theory]

@@ -18,7 +18,85 @@ public class GetUserUseCaseTests
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
-            new GetUserUseCaseOutput(Id: 42, Name: "Bob", EmailAddress: "bob@example.com")
+            new GetUserUseCaseOutput(
+                Id: 42,
+                Name: "Bob",
+                EmailAddress: "bob@example.com",
+                EntriesPermission: UserPermission.ReadAndModify,
+                ExportsPermission: UserPermission.ReadAndModify,
+                ProjectsPermission: UserPermission.ReadAndModify,
+                UsersPermission: UserPermission.ReadAndModify
+            )
+        );
+    }
+
+    [Theory]
+    // Base case
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.None)]
+    // Entries permission
+    [InlineData(UserPermission.Read, UserPermission.None, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Exports permission
+    [InlineData(UserPermission.None, UserPermission.Read, UserPermission.None, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None,
+        UserPermission.None
+    )]
+    // Projects permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.Read, UserPermission.None)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify,
+        UserPermission.None
+    )]
+    // Users permission
+    [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.Read)]
+    [InlineData(
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.None,
+        UserPermission.ReadAndModify
+    )]
+    public async Task Execute_maps_permissions_correctly(
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission
+    )
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithEntriesPermission(entriesPermission)
+                .WithExportsPermission(exportsPermission)
+                .WithProjectsPermission(projectsPermission)
+                .WithUsersPermission(usersPermission)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(cancellationToken: CancellationToken.None);
+
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+        successResult.ShouldBeEquivalentTo(
+            new GetUserUseCaseOutput(
+                Id: 42,
+                Name: "Bob",
+                EmailAddress: "bob@example.com",
+                EntriesPermission: entriesPermission,
+                ExportsPermission: exportsPermission,
+                ProjectsPermission: projectsPermission,
+                UsersPermission: usersPermission
+            )
         );
     }
 

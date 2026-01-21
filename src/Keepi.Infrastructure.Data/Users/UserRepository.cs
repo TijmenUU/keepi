@@ -210,17 +210,26 @@ internal sealed class UserRepository(
     {
         try
         {
-            return Result.Success<GetUsersResult, GetUsersError>(new(Users: (
-                        await databaseContext
-                            .Users.Select(u => new
-                            {
-                                u.Id,
-                                u.Name,
-                                u.EmailAddress,
-                                u.IdentityOrigin,
-                            })
-                            .ToArrayAsync(cancellationToken: cancellationToken)
-                    ).Select(u => new GetUsersResultUser(Id: u.Id, Name: u.Name, EmailAddress: u.EmailAddress, IdentityOrigin: ToResultEnum(u.IdentityOrigin))).ToArray()));
+            return Result.Success<GetUsersResult, GetUsersError>(
+                new(
+                    Users: (
+                        await databaseContext.Users.ToArrayAsync(
+                            cancellationToken: cancellationToken
+                        )
+                    )
+                        .Select(u => new GetUsersResultUser(
+                            Id: u.Id,
+                            Name: u.Name,
+                            EmailAddress: u.EmailAddress,
+                            IdentityOrigin: ToResultEnum(u.IdentityOrigin),
+                            EntriesPermission: ToResultEnum(u.EntriesPermission),
+                            ExportsPermission: ToResultEnum(u.ExportsPermission),
+                            ProjectsPermission: ToResultEnum(u.ProjectsPermission),
+                            UsersPermission: ToResultEnum(u.UsersPermission)
+                        ))
+                        .ToArray()
+                )
+            );
         }
         catch (Exception ex)
         {

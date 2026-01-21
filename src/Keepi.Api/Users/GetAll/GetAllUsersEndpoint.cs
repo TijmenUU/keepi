@@ -23,7 +23,11 @@ public sealed class GetAllUsersEndpoint(IGetAllUsersUseCase getAllUsersUseCase)
                         .Users.Select(u => new GetAllUsersResponseUser(
                             Id: u.Id,
                             Name: u.Name,
-                            EmailAddress: u.EmailAddress
+                            EmailAddress: u.EmailAddress,
+                            EntriesPermission: MapToRequestEnum(u.EntriesPermission),
+                            ExportsPermission: MapToRequestEnum(u.ExportsPermission),
+                            ProjectsPermission: MapToRequestEnum(u.ProjectsPermission),
+                            UsersPermission: MapToRequestEnum(u.UsersPermission)
                         ))
                         .ToArray()
                 ),
@@ -45,4 +49,15 @@ public sealed class GetAllUsersEndpoint(IGetAllUsersUseCase getAllUsersUseCase)
             }
         );
     }
+
+    private static GetAllUsersResponseUserPermission MapToRequestEnum(UserPermission value) =>
+        value switch
+        {
+            UserPermission.None => GetAllUsersResponseUserPermission.None,
+            UserPermission.Read => GetAllUsersResponseUserPermission.Read,
+            UserPermission.ReadAndModify => GetAllUsersResponseUserPermission.ReadAndModify,
+            _ => throw new ArgumentOutOfRangeException(
+                $"Cannot map value {value} to {nameof(GetAllUsersResponseUserPermission)}"
+            ),
+        };
 }

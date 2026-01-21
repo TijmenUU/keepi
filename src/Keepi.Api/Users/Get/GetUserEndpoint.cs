@@ -20,7 +20,11 @@ public sealed class GetUserEndpoint(IGetUserUseCase getUserUseCase)
                 response: new GetUserResponse(
                     Id: successResult.Id,
                     Name: successResult.Name,
-                    EmailAddress: successResult.EmailAddress
+                    EmailAddress: successResult.EmailAddress,
+                    EntriesPermission: MapToRequestEnum(successResult.EntriesPermission),
+                    ExportsPermission: MapToRequestEnum(successResult.ExportsPermission),
+                    ProjectsPermission: MapToRequestEnum(successResult.ProjectsPermission),
+                    UsersPermission: MapToRequestEnum(successResult.UsersPermission)
                 ),
                 cancellation: cancellationToken
             );
@@ -37,4 +41,15 @@ public sealed class GetUserEndpoint(IGetUserUseCase getUserUseCase)
             }
         );
     }
+
+    private static GetUserResponsePermission MapToRequestEnum(UserPermission value) =>
+        value switch
+        {
+            UserPermission.None => GetUserResponsePermission.None,
+            UserPermission.Read => GetUserResponsePermission.Read,
+            UserPermission.ReadAndModify => GetUserResponsePermission.ReadAndModify,
+            _ => throw new ArgumentOutOfRangeException(
+                $"Cannot map value {value} to {nameof(GetUserResponsePermission)}"
+            ),
+        };
 }

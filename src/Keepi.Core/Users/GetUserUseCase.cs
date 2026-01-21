@@ -13,7 +13,15 @@ public enum GetUserUseCaseError
     UnauthenticatedUser,
 }
 
-public sealed record GetUserUseCaseOutput(int Id, string Name, string EmailAddress);
+public sealed record GetUserUseCaseOutput(
+    int Id,
+    string Name,
+    string EmailAddress,
+    UserPermission EntriesPermission,
+    UserPermission ExportsPermission,
+    UserPermission ProjectsPermission,
+    UserPermission UsersPermission
+);
 
 internal sealed class GetUserUseCase(IResolveUser resolveUser) : IGetUserUseCase
 {
@@ -40,7 +48,11 @@ internal sealed class GetUserUseCase(IResolveUser resolveUser) : IGetUserUseCase
             new(
                 Id: successResult.Id,
                 Name: successResult.Name,
-                EmailAddress: successResult.EmailAddress
+                EmailAddress: successResult.EmailAddress,
+                EntriesPermission: successResult.EntriesPermission,
+                ExportsPermission: successResult.ExportsPermission,
+                ProjectsPermission: successResult.ProjectsPermission,
+                UsersPermission: successResult.UsersPermission
             )
         );
     }
