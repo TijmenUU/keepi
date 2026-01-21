@@ -25,6 +25,7 @@ public static class IServiceCollectionExtensions
             IUpdateUserInvoiceCustomizationsUseCase,
             UpdateUserInvoiceCustomizationsUseCase
         >();
+        services.AddScoped<IUpdateUserPermissionsUseCase, UpdateUserPermissionsUseCase>();
         services.AddScoped<IUpdateWeekUserEntriesUseCase, UpdateWeekUserEntriesUseCase>();
 
         return services;

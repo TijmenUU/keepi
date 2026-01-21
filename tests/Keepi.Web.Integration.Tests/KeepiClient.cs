@@ -10,6 +10,7 @@ using Keepi.Api.UserInvoiceItemCustomizations.UpdateAll;
 using Keepi.Api.UserProjects.GetAll;
 using Keepi.Api.Users.Get;
 using Keepi.Api.Users.GetAll;
+using Keepi.Api.Users.UpdatePermissions;
 
 namespace Keepi.Web.Integration.Tests;
 
@@ -69,6 +70,16 @@ public class KeepiClient
             path: "/api/user",
             method: HttpMethod.Get
         );
+    }
+
+    public async Task UpdateUserPermissions(int userId, UpdateUserPermissionsRequest request)
+    {
+        var (response, _) = await MakeDebuggableRequest(
+            path: $"/api/users/{userId}/permissions",
+            jsonBody: request,
+            method: HttpMethod.Put
+        );
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NoContent);
     }
 
     public async Task<GetAllProjectsResponse> GetAllProjects()

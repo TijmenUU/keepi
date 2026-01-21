@@ -9,7 +9,7 @@ namespace Keepi.Infrastructure.Data.Users;
 internal sealed class UserRepository(
     DatabaseContext databaseContext,
     ILogger<UserRepository> logger
-) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUserInfo, IGetUsers
+) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUserInfo, IGetUsers, IUpdateUserPermissions
 {
     async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
         string externalId,
@@ -173,6 +173,41 @@ internal sealed class UserRepository(
         {
             logger.LogError(ex, "Unexpected error whilst trying to get user");
             return Result.Failure<GetUserResult, GetUserError>(GetUserError.Unknown);
+        }
+    }
+
+    async Task<IMaybeErrorResult<UpdateUserPermissionsError>> IUpdateUserPermissions.Execute(
+        int userId,
+        Core.Users.UserPermission entriesPermission,
+        Core.Users.UserPermission exportsPermission,
+        Core.Users.UserPermission projectsPermission,
+        Core.Users.UserPermission usersPermission,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var entity = await databaseContext.Users.SingleOrDefaultAsync(
+                u => u.Id == userId,
+                cancellationToken: cancellationToken
+            );
+            if (entity == null)
+            {
+                return Result.Failure(UpdateUserPermissionsError.UnknownUserId);
+            }
+
+            entity.EntriesPermission = ToDatabaseEnum(entriesPermission);
+            entity.ExportsPermission = ToDatabaseEnum(exportsPermission);
+            entity.ProjectsPermission = ToDatabaseEnum(projectsPermission);
+            entity.UsersPermission = ToDatabaseEnum(usersPermission);
+            await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
+
+            return Result.Success<UpdateUserPermissionsError>();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error whilst updating user");
+            return Result.Failure(UpdateUserPermissionsError.Unknown);
         }
     }
 
