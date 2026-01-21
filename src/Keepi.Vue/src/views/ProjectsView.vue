@@ -79,7 +79,7 @@ const onEditProject = (id: number) => {
     <KeepiAlertDialog v-model="deleteDialogOpen" @accept="confirmDeleteProject" />
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <Card v-for="project in projects" :key="project.id" :project="project">
+      <Card v-for="project in projects" :key="project.id">
         <CardHeader>
           <CardTitle>{{ project.name }}</CardTitle>
         </CardHeader>
