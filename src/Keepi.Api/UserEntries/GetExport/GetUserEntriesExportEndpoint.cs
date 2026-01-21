@@ -60,23 +60,25 @@ public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase expor
                 contentType: "text/csv",
                 cancellation: cancellationToken
             );
-
             return;
         }
 
-        if (errorResult == ExportUserEntriesUseCaseError.StartGreaterThanStop)
-        {
-            await Send.ErrorsAsync(cancellation: cancellationToken);
-            return;
-        }
-        if (errorResult == ExportUserEntriesUseCaseError.UnauthenticatedUser)
-        {
-            await Send.UnauthorizedAsync(cancellation: cancellationToken);
-            return;
-        }
-
-        await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
-        return;
+        await (
+            errorResult switch
+            {
+                ExportUserEntriesUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                    cancellation: cancellationToken
+                ),
+                ExportUserEntriesUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                    cancellation: cancellationToken
+                ),
+                ExportUserEntriesUseCaseError.Unknown => Send.ErrorsAsync(
+                    statusCode: 500,
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(cancellation: cancellationToken),
+            }
+        );
     }
 
     private static bool TryGetValidatedModel(

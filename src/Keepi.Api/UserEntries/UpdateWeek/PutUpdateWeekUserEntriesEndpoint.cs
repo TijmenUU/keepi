@@ -36,7 +36,7 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var error))
+        if (result.TrySuccess(out var errorResult))
         {
             await Send.CreatedAtAsync<GetWeekUserEntriesEndpoint>(
                 routeValues: new { Year = year, WeekNumber = weekNumber },
@@ -45,14 +45,22 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
             return;
         }
 
-        if (error == UpdateWeekUserEntriesUseCaseError.Unknown)
-        {
-            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
-            return;
-        }
-
-        await Send.ErrorsAsync(cancellation: cancellationToken);
-        return;
+        await (
+            errorResult switch
+            {
+                UpdateWeekUserEntriesUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                    cancellation: cancellationToken
+                ),
+                UpdateWeekUserEntriesUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                    cancellation: cancellationToken
+                ),
+                UpdateWeekUserEntriesUseCaseError.Unknown => Send.ErrorsAsync(
+                    statusCode: 500,
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(cancellation: cancellationToken),
+            }
+        );
     }
 
     private static bool TryGetValidatedModel(

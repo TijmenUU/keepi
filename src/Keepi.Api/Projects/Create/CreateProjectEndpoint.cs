@@ -36,14 +36,22 @@ internal sealed class CreateProjectEndpoint(ICreateProjectUseCase createProjectU
                 return;
             }
 
-            if (errorResult != CreateProjectUseCaseError.Unknown)
-            {
-                await Send.ErrorsAsync(cancellation: cancellationToken);
-                return;
-            }
-
-            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
-            return;
+            await (
+                errorResult switch
+                {
+                    CreateProjectUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                        cancellation: cancellationToken
+                    ),
+                    CreateProjectUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                        cancellation: cancellationToken
+                    ),
+                    CreateProjectUseCaseError.Unknown => Send.ErrorsAsync(
+                        statusCode: 500,
+                        cancellation: cancellationToken
+                    ),
+                    _ => Send.ErrorsAsync(cancellation: cancellationToken),
+                }
+            );
         }
         else
         {

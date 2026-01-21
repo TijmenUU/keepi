@@ -19,7 +19,7 @@ public sealed class GetWeekUserEntriesEndpoint(
             weekNumber: Route<int>(paramName: "WeekNumber"),
             cancellationToken: cancellationToken
         );
-        if (result.TrySuccess(out var successResult, out _))
+        if (result.TrySuccess(out var successResult, out var errorResult))
         {
             await Send.OkAsync(
                 response: new GetWeekUserEntriesResponse(
@@ -36,7 +36,18 @@ public sealed class GetWeekUserEntriesEndpoint(
             return;
         }
 
-        await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+        await (
+            errorResult switch
+            {
+                GetUserEntriesForWeekUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                    cancellation: cancellationToken
+                ),
+                GetUserEntriesForWeekUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken),
+            }
+        );
     }
 
     private static GetWeekUserEntriesResponseDay MapToResponseDay(

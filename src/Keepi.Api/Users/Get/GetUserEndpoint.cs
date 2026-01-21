@@ -14,7 +14,7 @@ public sealed class GetUserEndpoint(IGetUserUseCase getUserUseCase)
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
         var result = await getUserUseCase.Execute(cancellationToken: cancellationToken);
-        if (result.TrySuccess(out var successResult, out _))
+        if (result.TrySuccess(out var successResult, out var errorResult))
         {
             await Send.OkAsync(
                 response: new GetUserResponse(
@@ -26,5 +26,15 @@ public sealed class GetUserEndpoint(IGetUserUseCase getUserUseCase)
             );
             return;
         }
+
+        await (
+            errorResult switch
+            {
+                GetUserUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken),
+            }
+        );
     }
 }

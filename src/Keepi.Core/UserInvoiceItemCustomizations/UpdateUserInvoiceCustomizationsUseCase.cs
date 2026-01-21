@@ -14,9 +14,9 @@ public enum UpdateUserInvoiceCustomizationsUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
     DuplicateInvoiceItemId,
     UnknownInvoiceItemId,
-    UnauthorizedUser,
 }
 
 public record UpdateUserInvoiceCustomizationsUseCaseInput(

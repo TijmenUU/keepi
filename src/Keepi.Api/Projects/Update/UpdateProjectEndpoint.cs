@@ -36,22 +36,22 @@ internal sealed class UpdateProjectEndpoint(IUpdateProjectUseCase updateProjectU
                 return;
             }
 
-            switch (errorResult)
-            {
-                case UpdateProjectUseCaseError.Unknown:
-                    await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
-                    break;
-
-                case UpdateProjectUseCaseError.UnknownProjectId:
-                    await Send.NotFoundAsync(cancellation: cancellationToken);
-                    break;
-
-                default:
-                    await Send.ErrorsAsync(cancellation: cancellationToken);
-                    break;
-            }
-
-            return;
+            await (
+                errorResult switch
+                {
+                    UpdateProjectUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                        cancellation: cancellationToken
+                    ),
+                    UpdateProjectUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                        cancellation: cancellationToken
+                    ),
+                    UpdateProjectUseCaseError.Unknown => Send.ErrorsAsync(
+                        statusCode: 500,
+                        cancellation: cancellationToken
+                    ),
+                    _ => Send.ErrorsAsync(cancellation: cancellationToken),
+                }
+            );
         }
         else
         {

@@ -19,13 +19,28 @@ internal sealed class DeleteProjectEndpoint(IDeleteProjectUseCase deleteProjectU
             projectId: projectId,
             cancellationToken: cancellationToken
         );
-        if (result.TrySuccess(out _))
+        if (result.TrySuccess(out var errorResult))
         {
             await Send.NoContentAsync(cancellation: cancellationToken);
         }
         else
         {
-            await Send.ErrorsAsync(cancellation: cancellationToken);
+            await (
+                errorResult switch
+                {
+                    DeleteProjectUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                        cancellation: cancellationToken
+                    ),
+                    DeleteProjectUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                        cancellation: cancellationToken
+                    ),
+                    DeleteProjectUseCaseError.Unknown => Send.ErrorsAsync(
+                        statusCode: 500,
+                        cancellation: cancellationToken
+                    ),
+                    _ => Send.ErrorsAsync(cancellation: cancellationToken),
+                }
+            );
         }
     }
 }

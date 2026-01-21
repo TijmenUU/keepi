@@ -28,20 +28,27 @@ public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
             cancellationToken: cancellationToken
         );
 
-        if (result.TrySuccess(out var error))
+        if (result.TrySuccess(out var errorResult))
         {
             await Send.NoContentAsync(cancellation: cancellationToken);
             return;
         }
 
-        if (error == UpdateUserInvoiceCustomizationsUseCaseError.Unknown)
-        {
-            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
-            return;
-        }
-
-        await Send.ErrorsAsync(cancellation: cancellationToken);
-        return;
+        await (
+            errorResult switch
+            {
+                UpdateUserInvoiceCustomizationsUseCaseError.UnauthenticatedUser =>
+                    Send.UnauthorizedAsync(cancellation: cancellationToken),
+                UpdateUserInvoiceCustomizationsUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                    cancellation: cancellationToken
+                ),
+                UpdateUserInvoiceCustomizationsUseCaseError.Unknown => Send.ErrorsAsync(
+                    statusCode: 500,
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(cancellation: cancellationToken),
+            }
+        );
     }
 
     private static bool TryGetValidatedModel(

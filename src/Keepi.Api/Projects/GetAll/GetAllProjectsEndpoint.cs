@@ -52,7 +52,18 @@ public sealed class GetAllProjectsEndpoint(IGetAllProjectsUseCase getAllProjects
         }
         else
         {
-            await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+            await (
+                errorResult switch
+                {
+                    GetAllProjectsUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                        cancellation: cancellationToken
+                    ),
+                    GetAllProjectsUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                        cancellation: cancellationToken
+                    ),
+                    _ => Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken),
+                }
+            );
         }
     }
 }

@@ -15,7 +15,7 @@ public sealed class GetAllUsersEndpoint(IGetAllUsersUseCase getAllUsersUseCase)
     {
         var result = await getAllUsersUseCase.Execute(cancellationToken: cancellationToken);
 
-        if (result.TrySuccess(out var successResult, out _))
+        if (result.TrySuccess(out var successResult, out var errorResult))
         {
             await Send.OkAsync(
                 response: new GetAllUsersResponse(
@@ -32,6 +32,17 @@ public sealed class GetAllUsersEndpoint(IGetAllUsersUseCase getAllUsersUseCase)
             return;
         }
 
-        await Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken);
+        await (
+            errorResult switch
+            {
+                GetAllUsersUseCaseError.UnauthenticatedUser => Send.UnauthorizedAsync(
+                    cancellation: cancellationToken
+                ),
+                GetAllUsersUseCaseError.UnauthorizedUser => Send.ForbiddenAsync(
+                    cancellation: cancellationToken
+                ),
+                _ => Send.ErrorsAsync(statusCode: 500, cancellation: cancellationToken),
+            }
+        );
     }
 }
