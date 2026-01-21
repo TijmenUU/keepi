@@ -1,4 +1,5 @@
 using Keepi.Core.Entries;
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
@@ -155,6 +156,24 @@ public class GetUserEntriesForWeekUseCaseTests
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Fact]
+    public async Task Execute_returns_error_for_unauthorized_user()
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithEntriesPermission(UserPermission.None)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
+
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(GetUserEntriesForWeekUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

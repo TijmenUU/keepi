@@ -1,4 +1,5 @@
 using Keepi.Core.Projects;
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 
 namespace Keepi.Core.Unit.Tests.Projects;
@@ -76,6 +77,25 @@ public class DeleteProjectUseCaseTests
         );
         result.TrySuccess(out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Theory]
+    [InlineData(UserPermission.None)]
+    [InlineData(UserPermission.Read)]
+    public async Task Execute_returns_error_for_unauthorized_user(UserPermission projectsPermission)
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithProjectsPermission(projectsPermission)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(projectId: 50, cancellationToken: CancellationToken.None);
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(DeleteProjectUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

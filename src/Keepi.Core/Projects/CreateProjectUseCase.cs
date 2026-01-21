@@ -19,6 +19,7 @@ public enum CreateProjectUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
     InvalidProjectName,
     DuplicateProjectName,
     InvalidActiveDateRange,
@@ -43,7 +44,7 @@ internal sealed class CreateProjectUseCase(
     )
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
         {
             return userErrorResult switch
             {
@@ -55,6 +56,12 @@ internal sealed class CreateProjectUseCase(
                     CreateProjectUseCaseError.Unknown
                 ),
             };
+        }
+        if (!userSuccessResult.ProjectsPermission.CanModify())
+        {
+            return Result.Failure<int, CreateProjectUseCaseError>(
+                CreateProjectUseCaseError.UnauthorizedUser
+            );
         }
 
         if (!ProjectEntity.IsValidName(name))

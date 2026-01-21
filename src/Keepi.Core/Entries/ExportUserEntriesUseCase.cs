@@ -14,6 +14,7 @@ public enum ExportUserEntriesUseCaseError
     Unknown = 0,
     StartGreaterThanStop,
     UnauthenticatedUser,
+    UnauthorizedUser,
 }
 
 internal sealed class ExportUserEntriesUseCase(
@@ -39,6 +40,12 @@ internal sealed class ExportUserEntriesUseCase(
                     ExportUserEntriesUseCaseError
                 >(ExportUserEntriesUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.ExportsPermission.CanRead())
+        {
+            return Result.Failure<IAsyncEnumerable<ExportUserEntry>, ExportUserEntriesUseCaseError>(
+                ExportUserEntriesUseCaseError.UnauthorizedUser
+            );
         }
 
         if (start >= stop)

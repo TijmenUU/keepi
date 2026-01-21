@@ -15,6 +15,7 @@ public enum GetUserEntriesForWeekUseCaseError
 {
     Unknown,
     UnauthenticatedUser,
+    UnauthorizedUser,
 }
 
 internal sealed class GetUserEntriesForWeekUseCase(
@@ -41,6 +42,13 @@ internal sealed class GetUserEntriesForWeekUseCase(
                     GetUserEntriesForWeekUseCaseError
                 >(GetUserEntriesForWeekUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.EntriesPermission.CanRead())
+        {
+            return Result.Failure<
+                GetUserEntriesForWeekUseCaseOutput,
+                GetUserEntriesForWeekUseCaseError
+            >(GetUserEntriesForWeekUseCaseError.UnauthorizedUser);
         }
 
         var dates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);

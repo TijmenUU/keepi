@@ -1,4 +1,5 @@
 using Keepi.Core.Projects;
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
@@ -187,6 +188,31 @@ public class CreateProjectUseCaseTests
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Theory]
+    [InlineData(UserPermission.None)]
+    [InlineData(UserPermission.Read)]
+    public async Task Execute_returns_error_for_unauthorized_user(UserPermission projectsPermission)
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithProjectsPermission(projectsPermission)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                name: "Algemeen",
+                enabled: true,
+                userIds: [42, 43],
+                invoiceItemNames: ["Dev", "Planning"],
+                cancellationToken: CancellationToken.None
+            );
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(CreateProjectUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

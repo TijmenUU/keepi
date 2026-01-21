@@ -16,6 +16,7 @@ public enum UpdateUserInvoiceCustomizationsUseCaseError
     UnauthenticatedUser,
     DuplicateInvoiceItemId,
     UnknownInvoiceItemId,
+    UnauthorizedUser,
 }
 
 public record UpdateUserInvoiceCustomizationsUseCaseInput(
@@ -48,6 +49,10 @@ internal sealed class UpdateUserInvoiceCustomizationsUseCase(
                 ),
                 _ => Result.Failure(UpdateUserInvoiceCustomizationsUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.EntriesPermission.CanModify())
+        {
+            return Result.Failure(UpdateUserInvoiceCustomizationsUseCaseError.UnauthorizedUser);
         }
 
         if (

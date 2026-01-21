@@ -19,6 +19,7 @@ public enum UpdateWeekUserEntriesUseCaseError
 {
     Unknown,
     UnauthenticatedUser,
+    UnauthorizedUser,
     UnknownUserInvoiceItem,
     InvalidUserInvoiceItem,
     InvalidMinutes,
@@ -50,6 +51,10 @@ internal sealed class UpdateWeekUserEntriesUseCase(
                 ),
                 _ => Result.Failure(UpdateWeekUserEntriesUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.EntriesPermission.CanModify())
+        {
+            return Result.Failure(UpdateWeekUserEntriesUseCaseError.UnauthorizedUser);
         }
 
         var days = new[]

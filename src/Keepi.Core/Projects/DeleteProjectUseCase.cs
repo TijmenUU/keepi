@@ -14,6 +14,7 @@ public enum DeleteProjectUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
     UnknownProjectId,
 }
 
@@ -26,7 +27,7 @@ internal sealed class DeleteProjectUseCase(IResolveUser resolveUser, IDeleteProj
     )
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
         {
             return userErrorResult switch
             {
@@ -35,6 +36,10 @@ internal sealed class DeleteProjectUseCase(IResolveUser resolveUser, IDeleteProj
                 ),
                 _ => Result.Failure(DeleteProjectUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.ProjectsPermission.CanModify())
+        {
+            return Result.Failure(DeleteProjectUseCaseError.UnauthorizedUser);
         }
 
         var result = await deleteProject.Execute(

@@ -1,4 +1,5 @@
 using Keepi.Core.Entries;
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 
 namespace Keepi.Core.Unit.Tests.Entries;
@@ -151,6 +152,27 @@ public class ExportUserEntriesUseCaseTests
             );
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Fact]
+    public async Task Execute_returns_error_for_unauthorized_user()
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithExportsPermission(UserPermission.None)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                start: new DateOnly(2025, 6, 24),
+                stop: new DateOnly(2025, 6, 23),
+                CancellationToken.None
+            );
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(ExportUserEntriesUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

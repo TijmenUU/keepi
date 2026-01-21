@@ -1,3 +1,4 @@
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
 
@@ -163,6 +164,23 @@ public class GetUserProjectsUseCaseTests
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Fact]
+    public async Task Execute_returns_error_for_unauthorized_user()
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithEntriesPermission(UserPermission.None)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(GetUserProjectsUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

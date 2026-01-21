@@ -11,6 +11,7 @@ public enum GetAllUsersUseCaseError
 {
     Unknown,
     UnauthenticatedUser,
+    UnauthorizedUser,
 }
 
 internal sealed class GetAllUsersUseCase(IResolveUser resolveUser, IGetUsers getUsers)
@@ -21,7 +22,7 @@ internal sealed class GetAllUsersUseCase(IResolveUser resolveUser, IGetUsers get
     )
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
         {
             return userErrorResult switch
             {
@@ -33,6 +34,12 @@ internal sealed class GetAllUsersUseCase(IResolveUser resolveUser, IGetUsers get
                     GetAllUsersUseCaseError.Unknown
                 ),
             };
+        }
+        if (!userSuccessResult.UsersPermission.CanRead())
+        {
+            return Result.Failure<GetUsersResult, GetAllUsersUseCaseError>(
+                GetAllUsersUseCaseError.UnauthorizedUser
+            );
         }
 
         var result = await getUsers.Execute(cancellationToken: cancellationToken);

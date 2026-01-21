@@ -1,5 +1,6 @@
 using System.Text;
 using Keepi.Core.Entries;
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
@@ -652,6 +653,38 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         result.TrySuccess(out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Theory]
+    [InlineData(UserPermission.None)]
+    [InlineData(UserPermission.Read)]
+    public async Task Execute_returns_error_for_unauthorized_user(UserPermission entriesPermission)
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithEntriesPermission(entriesPermission)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                year: 2025,
+                weekNumber: 25,
+                input: new UpdateWeekUserEntriesUseCaseInput(
+                    Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
+                    Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
+                ),
+                cancellationToken: CancellationToken.None
+            );
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

@@ -1,3 +1,4 @@
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.Users;
 
@@ -191,6 +192,38 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
             );
         result.TrySuccess(out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
+    }
+
+    [Theory]
+    [InlineData(UserPermission.None)]
+    [InlineData(UserPermission.Read)]
+    public async Task Execute_returns_error_for_unauthorized_user(UserPermission entriesPermission)
+    {
+        var context = new TestContext().WithResolvedUser(
+            user: ResolvedUserBuilder
+                .AsAdministratorBob()
+                .WithEntriesPermission(entriesPermission)
+                .Build()
+        );
+
+        var result = await context
+            .BuildUseCase()
+            .Execute(
+                input: new UpdateUserInvoiceCustomizationsUseCaseInput(
+                    InvoiceItems:
+                    [
+                        new(
+                            InvoiceItemId: 1,
+                            Ordinal: 100,
+                            Color: new(Red: 255, Green: 255, Blue: 255)
+                        ),
+                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                    ]
+                ),
+                cancellationToken: CancellationToken.None
+            );
+        result.TrySuccess(out var errorResult).ShouldBeFalse();
+        errorResult.ShouldBe(UpdateUserInvoiceCustomizationsUseCaseError.UnauthorizedUser);
     }
 
     private class TestContext

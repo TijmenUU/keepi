@@ -13,6 +13,7 @@ public enum GetAllProjectsUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
 }
 
 internal sealed class GetAllProjectsUseCase(IResolveUser resolveUser, IGetProjects getProjects)
@@ -23,7 +24,7 @@ internal sealed class GetAllProjectsUseCase(IResolveUser resolveUser, IGetProjec
     )
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
         {
             return userErrorResult switch
             {
@@ -35,6 +36,12 @@ internal sealed class GetAllProjectsUseCase(IResolveUser resolveUser, IGetProjec
                     GetAllProjectsUseCaseError.Unknown
                 ),
             };
+        }
+        if (!userSuccessResult.ProjectsPermission.CanRead())
+        {
+            return Result.Failure<GetProjectsResult, GetAllProjectsUseCaseError>(
+                GetAllProjectsUseCaseError.UnauthorizedUser
+            );
         }
 
         var result = await getProjects.Execute(cancellationToken: cancellationToken);

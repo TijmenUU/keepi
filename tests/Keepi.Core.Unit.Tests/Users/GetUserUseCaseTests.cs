@@ -1,3 +1,4 @@
+using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 
 namespace Keepi.Core.Unit.Tests.Users;

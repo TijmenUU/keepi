@@ -20,6 +20,7 @@ public enum UpdateProjectUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
     UnknownProjectId,
     InvalidProjectName,
     DuplicateProjectName,
@@ -47,7 +48,7 @@ internal sealed class UpdateProjectUseCase(
     )
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
-        if (!userResult.TrySuccess(out _, out var userErrorResult))
+        if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
         {
             return userErrorResult switch
             {
@@ -56,6 +57,10 @@ internal sealed class UpdateProjectUseCase(
                 ),
                 _ => Result.Failure(UpdateProjectUseCaseError.Unknown),
             };
+        }
+        if (!userSuccessResult.ProjectsPermission.CanModify())
+        {
+            return Result.Failure(UpdateProjectUseCaseError.UnauthorizedUser);
         }
 
         if (!ProjectEntity.IsValidName(name))

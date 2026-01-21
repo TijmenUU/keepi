@@ -13,6 +13,7 @@ public enum GetUserProjectsUseCaseError
 {
     Unknown = 0,
     UnauthenticatedUser,
+    UnauthorizedUser,
 }
 
 public sealed record GetUserProjectsUseCaseOutput(GetUserProjectsUseCaseOutputProject[] Projects);
@@ -55,6 +56,12 @@ internal class GetUserProjectsUseCase(IResolveUser resolveUser, IGetUserProjects
                     GetUserProjectsUseCaseError.Unknown
                 ),
             };
+        }
+        if (!userSuccessResult.EntriesPermission.CanRead())
+        {
+            return Result.Failure<GetUserProjectsUseCaseOutput, GetUserProjectsUseCaseError>(
+                GetUserProjectsUseCaseError.UnauthorizedUser
+            );
         }
 
         var result = await getUserProjects.Execute(
