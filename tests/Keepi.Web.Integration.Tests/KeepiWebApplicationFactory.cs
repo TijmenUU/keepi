@@ -3,6 +3,7 @@ using Keepi.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 
 namespace Keepi.Web.Integration.Tests;
 
@@ -40,6 +41,26 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
             fullName: fullName,
             subjectClaim: subjectClaim
         );
+    }
+
+    public async Task<KeepiClient> CreateClientWithRandomZeroPermissionsUser()
+    {
+        var keepiClient = await KeepiClient.CreateWithRandomUser(httpClient: CreateClient());
+        var userInfo = await keepiClient.GetUser();
+
+        using var scope = Services.CreateScope();
+        var databaseContext = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
+
+        // TODO use the JSON API for this once it can do this
+        var userEntity = await databaseContext.Users.SingleAsync(u => u.Id == userInfo.Id);
+        userEntity.EntriesPermission = Infrastructure.Data.Users.UserPermission.None;
+        userEntity.ExportsPermission = Infrastructure.Data.Users.UserPermission.None;
+        userEntity.ProjectsPermission = Infrastructure.Data.Users.UserPermission.None;
+        userEntity.UsersPermission = Infrastructure.Data.Users.UserPermission.None;
+
+        await databaseContext.SaveChangesAsync();
+
+        return keepiClient;
     }
 }
 
