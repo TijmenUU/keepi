@@ -39,6 +39,11 @@ if (userContext.role === 'admin') {
       url: '/projects',
       icon: ListChecks,
     },
+    {
+      title: 'Gebruikers',
+      url: '/users',
+      icon: Users,
+    },
   )
 } else if (userContext.role === 'none') {
   items.splice(0) // clear the array

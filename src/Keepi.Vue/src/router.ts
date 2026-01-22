@@ -10,6 +10,7 @@ import { getWeekNumber } from '@/date'
 import ErrorView from '@/views/ErrorView.vue'
 import SignedOutView from '@/views/SignedOutView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import UsersView from '@/views/UsersView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -38,7 +39,7 @@ export const router = createRouter({
     { path: '/export', component: ExportView, meta: { requiresAuth: true } },
     { path: '/customizations', component: CustomizationsView, meta: { requiresAuth: true } },
     { path: '/projects', component: ProjectsView, meta: { requiresAuth: true } },
-
+    { path: '/users', component: UsersView, meta: { requiresAuth: true } },
     // Public paths
     { path: '/error', component: ErrorView, meta: { requiresAuth: false } },
     { path: '/signedout', component: SignedOutView, meta: { requiresAuth: false } },

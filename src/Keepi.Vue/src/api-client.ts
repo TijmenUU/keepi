@@ -23,6 +23,17 @@ export default class ApiClient {
     })
   }
 
+  public updateUserPermissions(id: number, value: IUpdateUserPermissionsRequest) {
+    const options = this.getBaseRequestOptions({
+      method: 'PUT',
+      json: JSON.stringify(value),
+    })
+
+    return this.makeRequest(`/users/${id}/permissions`, options, [204]).andThen(() => {
+      return ok()
+    })
+  }
+
   public createProject(value: ICreateProjectRequest) {
     const options = this.getBaseRequestOptions({
       method: 'POST',
@@ -239,6 +250,12 @@ export interface IGetAllUsersResponse {
     usersPermission: UserPermission
   }[]
 }
+
+export interface IUpdateUserPermissionsRequest {
+  entriesPermission: UserPermission
+  exportsPermission: UserPermission
+  projectsPermission: UserPermission
+  usersPermission: UserPermission
 }
 
 export interface ICreateProjectRequest {
