@@ -33,3 +33,5 @@ export type InvoiceItem = {
   projectId: number
   projectName: string
 }
+
+export type UserRole = 'admin' | 'user'

@@ -12,6 +12,8 @@ import { onMounted, ref } from 'vue'
 import ApiClient from '@/api-client'
 import { router } from '@/router'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { clearUserContext, setUserContext } from '@/user-context'
+import { getUserRole } from '@/user-roles'
 
 const buildDate: string = import.meta.env.VITE_APPLICATION_BUILD_DATE
 const buildCommit: string = import.meta.env.VITE_APPLICATION_BUILD_COMMIT
@@ -32,11 +34,13 @@ onMounted(async () => {
   const apiClient = new ApiClient()
   try {
     await apiClient.getUser().match(
-      () => {
+      (user) => {
         isAuthenticated.value = true
+        setUserContext(user.id, user.name, getUserRole(user))
       },
       () => {
         isAuthenticated.value = false
+        clearUserContext()
 
         if (router.currentRoute.value.meta.requiresAuth) {
           location.href = `/signin?returnUrl=${encodeURIComponent(location.toString())}`

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, Timer, ListChecks, Brush } from 'lucide-vue-next'
+import { Download, Timer, ListChecks, Brush, Users } from 'lucide-vue-next'
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +11,9 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import type { NavigationFailure } from 'vue-router'
+import { getUserContext } from '@/user-context'
 
+const userContext = getUserContext()
 const items = [
   {
     title: 'Invoer',
@@ -23,17 +25,24 @@ const items = [
     url: '/customizations',
     icon: Brush,
   },
-  {
-    title: 'Export',
-    url: '/export',
-    icon: Download,
-  },
-  {
-    title: 'Projecten',
-    url: '/projects',
-    icon: ListChecks,
-  },
 ]
+
+if (userContext.role === 'admin') {
+  items.push(
+    {
+      title: 'Export',
+      url: '/export',
+      icon: Download,
+    },
+    {
+      title: 'Projecten',
+      url: '/projects',
+      icon: ListChecks,
+    },
+  )
+} else if (userContext.role === 'none') {
+  items.splice(0) // clear the array
+}
 
 const { isMobile, setOpenMobile } = useSidebar()
 const onNavigation = async (

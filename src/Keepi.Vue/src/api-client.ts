@@ -216,10 +216,16 @@ export default class ApiClient {
   }
 }
 
+export type UserPermission = 'none' | 'read' | 'readAndModify'
+
 export interface IGetUserResponse {
   id: number
   name: string
   emailAddress: string
+  entriesPermission: UserPermission
+  exportsPermission: UserPermission
+  projectsPermission: UserPermission
+  usersPermission: UserPermission
 }
 
 export interface IGetAllUsersResponse {
@@ -227,7 +233,12 @@ export interface IGetAllUsersResponse {
     id: number
     name: string
     emailAddress: string
+    entriesPermission: UserPermission
+    exportsPermission: UserPermission
+    projectsPermission: UserPermission
+    usersPermission: UserPermission
   }[]
+}
 }
 
 export interface ICreateProjectRequest {
