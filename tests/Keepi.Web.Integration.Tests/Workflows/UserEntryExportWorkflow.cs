@@ -6,11 +6,12 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
     [Fact]
     public async Task Export_entries_test()
     {
-        var client = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
 
-        var user = await client.GetUser();
+        var user = await userClient.GetUser();
 
-        var firstProjectCreated = await client.CreateProject(
+        var firstProjectCreated = await adminClient.CreateProject(
             new Api.Projects.Create.CreateProjectRequest
             {
                 Name = "UserEntryExportWorkflow",
@@ -19,7 +20,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
                 InvoiceItemNames = ["Dev", "Administratie"],
             }
         );
-        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
+        var firstProject = await adminClient.GetProject(projectId: firstProjectCreated.Id);
         var developmentUserInvoiceItemId = firstProject
             .InvoiceItems.Single(i => i.Name == "Dev")
             .Id;
@@ -28,7 +29,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
             .Id;
 
         // Initial create
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -83,7 +84,7 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
         );
 
         using var exportStream = new StreamReader(
-            await client.GetUserEntriesExportStream(
+            await adminClient.GetUserEntriesExportStream(
                 start: new DateOnly(2025, 6, 16),
                 stop: new DateOnly(2025, 6, 22)
             )

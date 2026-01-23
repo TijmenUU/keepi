@@ -10,11 +10,12 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     [Fact]
     public async Task Create_read_update_delete_entries_test()
     {
-        var client = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
 
-        var user = await client.GetUser();
+        var user = await userClient.GetUser();
 
-        var firstProjectCreated = await client.CreateProject(
+        var firstProjectCreated = await adminClient.CreateProject(
             new Api.Projects.Create.CreateProjectRequest
             {
                 Name = Guid.NewGuid().ToString(),
@@ -23,7 +24,9 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 InvoiceItemNames = ["Dev", "Administratie"],
             }
         );
-        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
+        var firstProject = (await userClient.GetUserProjects()).Projects.Single(p =>
+            p.Id == firstProjectCreated.Id
+        );
         var developmentUserInvoiceItemId = firstProject
             .InvoiceItems.Single(i => i.Name == "Dev")
             .Id;
@@ -32,7 +35,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             .Id;
 
         // Initial create
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -86,7 +89,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        var savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        var savedWeek = await userClient.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
@@ -128,7 +131,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Update "existing" entries
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -182,7 +185,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        savedWeek = await userClient.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
@@ -224,7 +227,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Deleting a single entry
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -272,7 +275,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        savedWeek = await userClient.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
@@ -312,11 +315,12 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     [Fact]
     public async Task Disabled_project_entries_should_not_be_modified_by_week_entries_update()
     {
-        var client = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
 
-        var user = await client.GetUser();
+        var user = await userClient.GetUser();
 
-        var firstProjectCreated = await client.CreateProject(
+        var firstProjectCreated = await adminClient.CreateProject(
             new Api.Projects.Create.CreateProjectRequest
             {
                 Name = Guid.NewGuid().ToString(),
@@ -325,12 +329,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 InvoiceItemNames = ["Dev"],
             }
         );
-        var firstProject = await client.GetProject(projectId: firstProjectCreated.Id);
-        var developmentUserInvoiceItemId = firstProject
-            .InvoiceItems.Single(i => i.Name == "Dev")
-            .Id;
-
-        var secondProjectCreated = await client.CreateProject(
+        var secondProjectCreated = await adminClient.CreateProject(
             new Api.Projects.Create.CreateProjectRequest
             {
                 Name = Guid.NewGuid().ToString(),
@@ -339,13 +338,19 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
                 InvoiceItemNames = ["Administratie"],
             }
         );
-        var secondProject = await client.GetProject(projectId: secondProjectCreated.Id);
-        var administrationUserInvoiceItemId = secondProject
+
+        var userProjects = await userClient.GetUserProjects();
+        var developmentUserInvoiceItemId = userProjects
+            .Projects.Single(p => p.Id == firstProjectCreated.Id)
+            .InvoiceItems.Single(i => i.Name == "Dev")
+            .Id;
+        var administrationUserInvoiceItemId = userProjects
+            .Projects.Single(p => p.Id == secondProjectCreated.Id)
             .InvoiceItems.Single(i => i.Name == "Administratie")
             .Id;
 
         // Initial create
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -377,7 +382,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        var savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        var savedWeek = await userClient.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(
@@ -405,8 +410,9 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Disable the second project
-        await client.UpdateProject(
-            projectId: secondProject.Id,
+        var secondProject = await adminClient.GetProject(projectId: secondProjectCreated.Id);
+        await adminClient.UpdateProject(
+            projectId: secondProjectCreated.Id,
             new()
             {
                 Name = secondProject.Name,
@@ -423,7 +429,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
         );
 
         // Update "existing" entries
-        await client.UpdateUserWeekEntries(
+        await userClient.UpdateUserWeekEntries(
             year: 2025,
             weekNumber: 25,
             request: new()
@@ -460,7 +466,7 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
             }
         );
 
-        savedWeek = await client.GetUserWeekEntries(year: 2025, weekNumber: 25);
+        savedWeek = await userClient.GetUserWeekEntries(year: 2025, weekNumber: 25);
         savedWeek.ShouldBeEquivalentTo(
             new GetWeekUserEntriesResponse(
                 Monday: new(

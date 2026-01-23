@@ -54,7 +54,7 @@ public class GetOrRegisterNewUserUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_registers_user_if_it_does_not_yet_exist()
+    public async Task Execute_registers_user_as_first_admin_if_it_does_not_yet_exist()
     {
         var context = new TestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
@@ -70,6 +70,8 @@ public class GetOrRegisterNewUserUseCaseTests
                     UsersPermission: UserPermission.ReadAndModify
                 )
             )
+            .WithUserWithPermissionsExistSuccess(result: false)
+            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
         var helper = context.BuildUseCase();
@@ -95,7 +97,7 @@ public class GetOrRegisterNewUserUseCaseTests
                     ProjectsPermission: UserPermission.ReadAndModify,
                     UsersPermission: UserPermission.ReadAndModify
                 ),
-                NewlyRegistered: false
+                NewlyRegistered: true
             )
         );
 
@@ -105,6 +107,16 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -115,6 +127,168 @@ public class GetOrRegisterNewUserUseCaseTests
                 UserPermission.ReadAndModify,
                 UserPermission.ReadAndModify,
                 UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_registers_user_as_normal_user_if_and_admin_already_exists()
+    {
+        var context = new TestContext()
+            .WithFirstGetUserErrorAndSecondWithResult(
+                error: GetUserError.DoesNotExist,
+                result: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.None,
+                    ProjectsPermission: UserPermission.None,
+                    UsersPermission: UserPermission.None
+                )
+            )
+            .WithUserWithPermissionsExistSuccess(result: true)
+            .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
+
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bob@example.com",
+            name: "Bob",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.None,
+                    ProjectsPermission: UserPermission.None,
+                    UsersPermission: UserPermission.None
+                ),
+                NewlyRegistered: true
+            )
+        );
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.SaveNewUserMock.Verify(x =>
+            x.Execute(
+                "github-33",
+                "bob@example.com",
+                "Bob",
+                UserIdentityProvider.GitHub,
+                UserPermission.ReadAndModify,
+                UserPermission.None,
+                UserPermission.None,
+                UserPermission.None,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(GetFirstAdminUserEmailAddressError.Unknown)]
+    [InlineData(GetFirstAdminUserEmailAddressError.NotConfigured)]
+    public async Task Execute_registers_user_as_normal_user_if_first_admin_email_address_cannot_be_determined(
+        GetFirstAdminUserEmailAddressError error
+    )
+    {
+        var context = new TestContext()
+            .WithFirstGetUserErrorAndSecondWithResult(
+                error: GetUserError.DoesNotExist,
+                result: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.None,
+                    ProjectsPermission: UserPermission.None,
+                    UsersPermission: UserPermission.None
+                )
+            )
+            .WithUserWithPermissionsExistSuccess(result: false)
+            .WithGetFirstAdminUserEmailAddressFailure(error)
+            .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
+
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bob@example.com",
+            name: "Bob",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var successResult, out _).ShouldBeTrue();
+
+        successResult.ShouldBeEquivalentTo(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.None,
+                    ProjectsPermission: UserPermission.None,
+                    UsersPermission: UserPermission.None
+                ),
+                NewlyRegistered: true
+            )
+        );
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
+        context.SaveNewUserMock.Verify(x =>
+            x.Execute(
+                "github-33",
+                "bob@example.com",
+                "Bob",
+                UserIdentityProvider.GitHub,
+                UserPermission.ReadAndModify,
+                UserPermission.None,
+                UserPermission.None,
+                UserPermission.None,
                 It.IsAny<CancellationToken>()
             )
         );
@@ -326,6 +500,8 @@ public class GetOrRegisterNewUserUseCaseTests
                     UsersPermission: UserPermission.ReadAndModify
                 )
             )
+            .WithUserWithPermissionsExistSuccess(result: false)
+            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Failure(error));
 
         var helper = context.BuildUseCase();
@@ -344,6 +520,16 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -372,6 +558,8 @@ public class GetOrRegisterNewUserUseCaseTests
                 firstError: GetUserError.DoesNotExist,
                 secondError: secondGetUserErrror
             )
+            .WithUserWithPermissionsExistSuccess(result: false)
+            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
         var helper = context.BuildUseCase();
@@ -393,6 +581,16 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
                 "github-33",
@@ -409,10 +607,64 @@ public class GetOrRegisterNewUserUseCaseTests
         context.VerifyNoOtherCalls();
     }
 
+    [Fact]
+    public async Task Execute_returns_error_if_admin_user_exists_check_fails()
+    {
+        var context = new TestContext()
+            .WithFirstGetUserErrorAndSecondWithResult(
+                error: GetUserError.DoesNotExist,
+                result: new GetUserResult(
+                    Id: 42,
+                    Name: "Bob",
+                    EmailAddress: "bob@example.com",
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: UserPermission.ReadAndModify,
+                    ExportsPermission: UserPermission.ReadAndModify,
+                    ProjectsPermission: UserPermission.ReadAndModify,
+                    UsersPermission: UserPermission.ReadAndModify
+                )
+            )
+            .WithUserWithPermissionsExistFailure(UserWithPermissionsExistsError.Unknown);
+
+        var helper = context.BuildUseCase();
+
+        var result = await helper.Execute(
+            externalId: "github-33",
+            emailAddress: "bob@example.com",
+            name: "Bob",
+            identityProvider: UserIdentityProvider.GitHub,
+            cancellationToken: CancellationToken.None
+        );
+        result.TrySuccess(out var _, out var errorResult).ShouldBeFalse();
+
+        errorResult.ShouldBe(GetOrRegisterNewUserUseCaseError.RegistrationFailed);
+
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.GetUserMock.Verify(x =>
+            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+        );
+        context.UserWithPermissionsExistsMock.Verify(x =>
+            x.Execute(
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                UserPermission.ReadAndModify,
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.VerifyNoOtherCalls();
+    }
+
     private class TestContext
     {
         public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
         public Mock<IUpdateUserInfo> UpdateUserInfoMock { get; } = new(MockBehavior.Strict);
+        public Mock<IUserWithPermissionsExists> UserWithPermissionsExistsMock { get; } =
+            new(MockBehavior.Strict);
+        public Mock<IGetFirstAdminUserEmailAddress> GetFirstAdminUserEmailAddressMock { get; } =
+            new(MockBehavior.Strict);
         public Mock<ISaveNewUser> SaveNewUserMock { get; } = new(MockBehavior.Strict);
         public Mock<ILogger<GetOrRegisterNewUserUseCase>> LoggerMock { get; } =
             new(MockBehavior.Loose);
@@ -507,6 +759,58 @@ public class GetOrRegisterNewUserUseCaseTests
             return this;
         }
 
+        public TestContext WithUserWithPermissionsExistSuccess(bool result) =>
+            WithUserWithPermissionsExistResult(
+                Result.Success<bool, UserWithPermissionsExistsError>(result)
+            );
+
+        public TestContext WithUserWithPermissionsExistFailure(
+            UserWithPermissionsExistsError error
+        ) =>
+            WithUserWithPermissionsExistResult(
+                Result.Failure<bool, UserWithPermissionsExistsError>(error)
+            );
+
+        private TestContext WithUserWithPermissionsExistResult(
+            IValueOrErrorResult<bool, UserWithPermissionsExistsError> result
+        )
+        {
+            UserWithPermissionsExistsMock
+                .Setup(x =>
+                    x.Execute(
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<UserPermission>(),
+                        It.IsAny<CancellationToken>()
+                    )
+                )
+                .ReturnsAsync(result);
+
+            return this;
+        }
+
+        public TestContext WithGetFirstAdminUserEmailAddressSuccess(string result) =>
+            WithGetFirstAdminUserEmailAddressResult(
+                Result.Success<string, GetFirstAdminUserEmailAddressError>(result)
+            );
+
+        public TestContext WithGetFirstAdminUserEmailAddressFailure(
+            GetFirstAdminUserEmailAddressError error
+        ) =>
+            WithGetFirstAdminUserEmailAddressResult(
+                Result.Failure<string, GetFirstAdminUserEmailAddressError>(error)
+            );
+
+        private TestContext WithGetFirstAdminUserEmailAddressResult(
+            IValueOrErrorResult<string, GetFirstAdminUserEmailAddressError> result
+        )
+        {
+            GetFirstAdminUserEmailAddressMock.Setup(x => x.Execute()).Returns(result);
+
+            return this;
+        }
+
         public TestContext WithSaveNewUserResult(IMaybeErrorResult<SaveNewUserError> result)
         {
             SaveNewUserMock
@@ -532,6 +836,8 @@ public class GetOrRegisterNewUserUseCaseTests
             new(
                 getUser: GetUserMock.Object,
                 updateUserInfo: UpdateUserInfoMock.Object,
+                userWithPermissionsExists: UserWithPermissionsExistsMock.Object,
+                getFirstAdminUserEmailAddress: GetFirstAdminUserEmailAddressMock.Object,
                 saveNewUser: SaveNewUserMock.Object,
                 logger: LoggerMock.Object
             );
@@ -540,6 +846,8 @@ public class GetOrRegisterNewUserUseCaseTests
         {
             GetUserMock.VerifyNoOtherCalls();
             UpdateUserInfoMock.VerifyNoOtherCalls();
+            UserWithPermissionsExistsMock.VerifyNoOtherCalls();
+            GetFirstAdminUserEmailAddressMock.VerifyNoOtherCalls();
             SaveNewUserMock.VerifyNoOtherCalls();
         }
     }

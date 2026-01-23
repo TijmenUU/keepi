@@ -12,11 +12,12 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
     [Fact]
     public async Task Create_update_delete_test()
     {
-        var client = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
 
-        var user = await client.GetUser();
+        var user = await userClient.GetUser();
 
-        var createdProjectOne = await client.CreateProject(
+        var createdProjectOne = await adminClient.CreateProject(
             new()
             {
                 Name = "UserProjectCrudWorkflow1",
@@ -27,7 +28,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
         );
         createdProjectOne.Id.ShouldBeGreaterThan(0);
 
-        var createdProjectTwo = await client.CreateProject(
+        var createdProjectTwo = await adminClient.CreateProject(
             new()
             {
                 Name = "UserProjectCrudWorkflow2",
@@ -40,11 +41,11 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
 
         // Initial sanity check
 
-        var allProjects = await client.GetAllProjects();
+        var allProjects = await adminClient.GetAllProjects();
         allProjects.Projects.ShouldContain(p => p.Id == createdProjectOne.Id);
         allProjects.Projects.ShouldContain(p => p.Id == createdProjectTwo.Id);
 
-        var userProjects = await client.GetUserProjects();
+        var userProjects = await userClient.GetUserProjects();
         userProjects.Projects.Length.ShouldBe(2);
 
         userProjects.Projects[0].Id.ShouldBe(createdProjectOne.Id);
@@ -74,7 +75,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
 
         // Create
 
-        await client.UpdateUserInvoiceItemCustomizations(
+        await userClient.UpdateUserInvoiceItemCustomizations(
             request: new()
             {
                 InvoiceItems =
@@ -119,7 +120,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
             }
         );
 
-        userProjects = await client.GetUserProjects();
+        userProjects = await userClient.GetUserProjects();
         userProjects.ShouldBeEquivalentTo(
             new GetUserProjectsResponse(
                 Projects:
@@ -182,7 +183,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
 
         // Update 1: partial update of 1 project
 
-        await client.UpdateUserInvoiceItemCustomizations(
+        await userClient.UpdateUserInvoiceItemCustomizations(
             request: new()
             {
                 InvoiceItems =
@@ -209,7 +210,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
             }
         );
 
-        userProjects = await client.GetUserProjects();
+        userProjects = await userClient.GetUserProjects();
         userProjects.ShouldBeEquivalentTo(
             new GetUserProjectsResponse(
                 Projects:
@@ -272,7 +273,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
 
         // Update 2: reset project 2 to NULL colors
 
-        await client.UpdateUserInvoiceItemCustomizations(
+        await userClient.UpdateUserInvoiceItemCustomizations(
             request: new()
             {
                 InvoiceItems =
@@ -317,7 +318,7 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
             }
         );
 
-        userProjects = await client.GetUserProjects();
+        userProjects = await userClient.GetUserProjects();
         userProjects.ShouldBeEquivalentTo(
             new GetUserProjectsResponse(
                 Projects:
@@ -365,9 +366,9 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
 
         // No op
 
-        await client.UpdateUserInvoiceItemCustomizations(request: new() { InvoiceItems = [] });
+        await userClient.UpdateUserInvoiceItemCustomizations(request: new() { InvoiceItems = [] });
 
-        userProjects = await client.GetUserProjects();
+        userProjects = await userClient.GetUserProjects();
         userProjects.ShouldBeEquivalentTo(
             new GetUserProjectsResponse(
                 Projects:

@@ -26,6 +26,8 @@ public enum GetOrRegisterNewUserUseCaseError
 internal sealed class GetOrRegisterNewUserUseCase(
     IGetUser getUser,
     IUpdateUserInfo updateUserInfo,
+    IUserWithPermissionsExists userWithPermissionsExists,
+    IGetFirstAdminUserEmailAddress getFirstAdminUserEmailAddress,
     ISaveNewUser saveNewUser,
     ILogger<GetOrRegisterNewUserUseCase> logger
 ) : IGetOrRegisterNewUserUseCase
@@ -154,7 +156,7 @@ internal sealed class GetOrRegisterNewUserUseCase(
             >(
                 new GetOrRegisterNewUserUseCaseOutput(
                     User: secondGetUserResultSuccess,
-                    NewlyRegistered: false
+                    NewlyRegistered: true
                 )
             );
         }
@@ -178,19 +180,64 @@ internal sealed class GetOrRegisterNewUserUseCase(
         CancellationToken cancellationToken
     )
     {
-        var saveResult = await saveNewUser.Execute(
-            externalId: externalId,
-            emailAddress: emailAddress,
-            name: name,
-            userIdentityProvider: provider,
-            // TODO Add logic to differentiate between types of users and their
-            // permissions
+        var adminUserExistsResult = await userWithPermissionsExists.Execute(
             entriesPermission: UserPermission.ReadAndModify,
             exportsPermission: UserPermission.ReadAndModify,
             projectsPermission: UserPermission.ReadAndModify,
             usersPermission: UserPermission.ReadAndModify,
             cancellationToken: cancellationToken
         );
+        if (
+            !adminUserExistsResult.TrySuccess(out var adminUserExists, out var adminUserExistsError)
+        )
+        {
+            logger.LogError(
+                "Failed with error {Error} to check if admin user already exists",
+                adminUserExistsError
+            );
+            return Result.Failure(RegisterUserResult.AdminUserCheckFailed);
+        }
+
+        IMaybeErrorResult<SaveNewUserError> saveResult;
+        if (
+            !adminUserExists
+            && getFirstAdminUserEmailAddress
+                .Execute()
+                .TrySuccess(out var firstAdminUserEmailAddress, out _)
+            && firstAdminUserEmailAddress == emailAddress
+        )
+        {
+            logger.LogInformation(
+                "Registering {Provider} user {ExternalId} as the first admin user",
+                provider,
+                externalId
+            );
+            saveResult = await saveNewUser.Execute(
+                externalId: externalId,
+                emailAddress: emailAddress,
+                name: name,
+                userIdentityProvider: provider,
+                entriesPermission: UserPermission.ReadAndModify,
+                exportsPermission: UserPermission.ReadAndModify,
+                projectsPermission: UserPermission.ReadAndModify,
+                usersPermission: UserPermission.ReadAndModify,
+                cancellationToken: cancellationToken
+            );
+        }
+        else
+        {
+            saveResult = await saveNewUser.Execute(
+                externalId: externalId,
+                emailAddress: emailAddress,
+                name: name,
+                userIdentityProvider: provider,
+                entriesPermission: UserPermission.ReadAndModify,
+                exportsPermission: UserPermission.None,
+                projectsPermission: UserPermission.None,
+                usersPermission: UserPermission.None,
+                cancellationToken: cancellationToken
+            );
+        }
 
         if (saveResult.TrySuccess(out var saveErrorResult))
         {
@@ -215,5 +262,6 @@ internal sealed class GetOrRegisterNewUserUseCase(
     {
         Unknown,
         UserAlreadyExists,
+        AdminUserCheckFailed,
     };
 }

@@ -9,7 +9,14 @@ namespace Keepi.Infrastructure.Data.Users;
 internal sealed class UserRepository(
     DatabaseContext databaseContext,
     ILogger<UserRepository> logger
-) : IGetUserExists, IGetUser, ISaveNewUser, IUpdateUserInfo, IGetUsers, IUpdateUserPermissions
+)
+    : IGetUserExists,
+        IGetUser,
+        ISaveNewUser,
+        IUpdateUserInfo,
+        IGetUsers,
+        IUpdateUserPermissions,
+        IUserWithPermissionsExists
 {
     async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
         string externalId,
@@ -208,6 +215,44 @@ internal sealed class UserRepository(
         {
             logger.LogError(ex, "Unexpected error whilst updating user");
             return Result.Failure(UpdateUserPermissionsError.Unknown);
+        }
+    }
+
+    async Task<
+        IValueOrErrorResult<bool, UserWithPermissionsExistsError>
+    > IUserWithPermissionsExists.Execute(
+        Core.Users.UserPermission entriesPermission,
+        Core.Users.UserPermission exportsPermission,
+        Core.Users.UserPermission projectsPermission,
+        Core.Users.UserPermission usersPermission,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var mapppedEntriesPermission = ToDatabaseEnum(entriesPermission);
+            var mapppedExportsPermission = ToDatabaseEnum(exportsPermission);
+            var mapppedProjectsPermission = ToDatabaseEnum(projectsPermission);
+            var mapppedUsersPermission = ToDatabaseEnum(usersPermission);
+            var result = await databaseContext.Users.AnyAsync(
+                u =>
+                    u.EntriesPermission == mapppedEntriesPermission
+                    && u.ExportsPermission == mapppedExportsPermission
+                    && u.ProjectsPermission == mapppedProjectsPermission
+                    && u.UsersPermission == mapppedUsersPermission,
+                cancellationToken: cancellationToken
+            );
+            return Result.Success<bool, UserWithPermissionsExistsError>(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Unexpected error whilst checking for user with specified permissions"
+            );
+            return Result.Failure<bool, UserWithPermissionsExistsError>(
+                UserWithPermissionsExistsError.Unknown
+            );
         }
     }
 

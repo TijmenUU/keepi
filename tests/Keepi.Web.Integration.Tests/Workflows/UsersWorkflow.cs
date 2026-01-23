@@ -8,16 +8,13 @@ namespace Keepi.Web.Integration.Tests.Workflows;
 public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
 {
     [Fact]
-    public async Task New_user_can_register_with_the_application()
+    public async Task Admin_user_returns_expected_values()
     {
-        var subjectClaim = Guid.NewGuid().ToString();
-
-        var client = new KeepiClient(httpClient: applicationFactory.CreateClient());
-        client.ConfigureUser(name: "Henk de Vries", subjectClaim: subjectClaim);
+        var client = await applicationFactory.CreateClientForAdminUser();
 
         var currentUser = await client.GetUser();
-        currentUser.Name.ShouldBe("Henk de Vries");
-        currentUser.EmailAddress.ShouldBe($"{subjectClaim}@example.com");
+        currentUser.Name.ShouldBe("Bob");
+        currentUser.EmailAddress.ShouldEndWith("@example.com"); // Sanity check, the e-mail address is hardcoded and thus of little interest
         currentUser.EntriesPermission.ShouldBe(GetUserResponsePermission.ReadAndModify);
         currentUser.ExportsPermission.ShouldBe(GetUserResponsePermission.ReadAndModify);
         currentUser.ProjectsPermission.ShouldBe(GetUserResponsePermission.ReadAndModify);
@@ -25,15 +22,34 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
     }
 
     [Fact]
+    public async Task New_user_can_register_with_the_application()
+    {
+        var subjectClaim = Guid.NewGuid().ToString();
+
+        var client = await applicationFactory.CreateClientForNormalUser(
+            fullName: "Henk de Vries",
+            subjectClaim: subjectClaim
+        );
+
+        var currentUser = await client.GetUser();
+        currentUser.Name.ShouldBe("Henk de Vries");
+        currentUser.EmailAddress.ShouldBe($"{subjectClaim}@example.com");
+        currentUser.EntriesPermission.ShouldBe(GetUserResponsePermission.ReadAndModify);
+        currentUser.ExportsPermission.ShouldBe(GetUserResponsePermission.None);
+        currentUser.ProjectsPermission.ShouldBe(GetUserResponsePermission.None);
+        currentUser.UsersPermission.ShouldBe(GetUserResponsePermission.None);
+    }
+
+    [Fact]
     public async Task Create_user_and_update_user_permissions()
     {
-        var firstClient = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
 
         // Updating self should not be allowed
-        var firstUser = await firstClient.GetUser();
+        var adminUser = await adminClient.GetUser();
         await Should.ThrowAsync<KeepiClientBadRequestException>(() =>
-            firstClient.UpdateUserPermissions(
-                userId: firstUser.Id,
+            adminClient.UpdateUserPermissions(
+                userId: adminUser.Id,
                 request: new()
                 {
                     EntriesPermission = UpdateUserPermissionsRequestPermission.None,
@@ -45,8 +61,8 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
         );
 
         // Try all possible permission combinations and verify
-        var secondClient = await applicationFactory.CreateClientWithRandomUser();
-        var secondUser = await secondClient.GetUser();
+        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var normalUser = await userClient.GetUser();
 
         var combinations = new (
             UpdateUserPermissionsRequestPermission,
@@ -119,9 +135,9 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
         foreach (var combination in combinations)
         {
             await UpdateUserPermissionsAndValidate(
-                updateClient: firstClient,
-                userClient: secondClient,
-                userId: secondUser.Id,
+                updateClient: adminClient,
+                userClient: userClient,
+                userId: normalUser.Id,
                 entriesPermission: combination.Item1,
                 exportsPermission: combination.Item2,
                 projectsPermission: combination.Item3,

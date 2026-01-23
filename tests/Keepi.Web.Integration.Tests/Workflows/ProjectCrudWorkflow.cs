@@ -8,29 +8,31 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Create_update_delete_test()
     {
-        var client = await applicationFactory.CreateClientWithRandomUser();
+        var adminClient = await applicationFactory.CreateClientForAdminUser();
 
-        var user = await client.GetUser();
+        var firstUser = await (
+            await applicationFactory.CreateClientForRandomNormalUser()
+        ).GetUser();
 
         // Create
 
-        var createdProject = await client.CreateProject(
+        var createdProject = await adminClient.CreateProject(
             new()
             {
                 Name = "ProjectCrudWorkflow1",
                 Enabled = true,
-                UserIds = [user.Id],
+                UserIds = [firstUser.Id],
                 InvoiceItemNames = ["Item1"],
             }
         );
         createdProject.Id.ShouldBeGreaterThan(0);
 
-        var project = await client.GetProject(projectId: createdProject.Id);
+        var project = await adminClient.GetProject(projectId: createdProject.Id);
         project.Id.ShouldBe(createdProject.Id);
         project.Name.ShouldBe("ProjectCrudWorkflow1");
         project.Enabled.ShouldBe(true);
         project.Users.ShouldBeEquivalentTo(
-            new[] { new GetAllProjectsResponseProjectUser(Id: user.Id, Name: user.Name) }
+            new[] { new GetAllProjectsResponseProjectUser(Id: firstUser.Id, Name: firstUser.Name) }
         );
         project.InvoiceItems.Length.ShouldBe(1);
         project.InvoiceItems[0].Name.ShouldBe("Item1");
@@ -39,15 +41,17 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 
         var createdInvoiceItem1Id = project.InvoiceItems[0].Id;
 
-        var otherUser1 = await (await applicationFactory.CreateClientWithRandomUser()).GetUser();
+        var secondUser = await (
+            await applicationFactory.CreateClientForRandomNormalUser()
+        ).GetUser();
 
-        await client.UpdateProject(
+        await adminClient.UpdateProject(
             projectId: createdProject.Id,
             request: new()
             {
                 Name = "ProjectCrudWorkflow11",
                 Enabled = false,
-                UserIds = [user.Id, otherUser1.Id],
+                UserIds = [firstUser.Id, secondUser.Id],
                 InvoiceItems =
                 [
                     new() { Id = createdInvoiceItem1Id, Name = "Item11" },
@@ -56,15 +60,15 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
             }
         );
 
-        project = await client.GetProject(projectId: createdProject.Id);
+        project = await adminClient.GetProject(projectId: createdProject.Id);
         project.Id.ShouldBe(createdProject.Id);
         project.Name.ShouldBe("ProjectCrudWorkflow11");
         project.Enabled.ShouldBeFalse();
         project.Users.ShouldBeEquivalentTo(
             new[]
             {
-                new GetAllProjectsResponseProjectUser(Id: user.Id, Name: user.Name),
-                new GetAllProjectsResponseProjectUser(Id: otherUser1.Id, Name: otherUser1.Name),
+                new GetAllProjectsResponseProjectUser(Id: firstUser.Id, Name: firstUser.Name),
+                new GetAllProjectsResponseProjectUser(Id: secondUser.Id, Name: secondUser.Name),
             }
         );
         project.InvoiceItems.Length.ShouldBe(2);
@@ -74,37 +78,36 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 
         // Update 2
 
-        var otherUser2 = await (await applicationFactory.CreateClientWithRandomUser()).GetUser();
+        var thirdUser = await (
+            await applicationFactory.CreateClientForRandomNormalUser()
+        ).GetUser();
 
-        await client.UpdateProject(
+        await adminClient.UpdateProject(
             projectId: createdProject.Id,
             request: new()
             {
                 Name = "ProjectCrudWorkflow111",
                 Enabled = true,
-                UserIds = [otherUser2.Id],
+                UserIds = [thirdUser.Id],
                 InvoiceItems = [new() { Id = null, Name = "Item3" }],
             }
         );
 
-        project = await client.GetProject(projectId: createdProject.Id);
+        project = await adminClient.GetProject(projectId: createdProject.Id);
         project.Id.ShouldBe(createdProject.Id);
         project.Name.ShouldBe("ProjectCrudWorkflow111");
         project.Enabled.ShouldBeTrue();
         project.Users.ShouldBeEquivalentTo(
-            new[]
-            {
-                new GetAllProjectsResponseProjectUser(Id: otherUser2.Id, Name: otherUser2.Name),
-            }
+            new[] { new GetAllProjectsResponseProjectUser(Id: thirdUser.Id, Name: thirdUser.Name) }
         );
         project.InvoiceItems.Length.ShouldBe(1);
         project.InvoiceItems[0].Name.ShouldBe("Item3");
 
         // Delete
 
-        await client.DeleteProject(projectId: createdProject.Id);
+        await adminClient.DeleteProject(projectId: createdProject.Id);
 
-        var projects = await client.GetAllProjects();
+        var projects = await adminClient.GetAllProjects();
         projects.Projects.ShouldNotContain(p => p.Id == createdProject.Id);
     }
 }

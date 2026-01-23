@@ -6,8 +6,8 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Create_project_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
-        var user = await client.GetUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
+        var user = await (await applicationFactory.CreateClientForRandomNormalUser()).GetUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(() =>
             client.CreateProject(
                 request: new()
@@ -24,7 +24,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Delete_project_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(() =>
             client.DeleteProject(projectId: 99)
         );
@@ -33,15 +33,15 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Get_all_projects_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(client.GetAllProjects);
     }
 
     [Fact]
     public async Task Update_project_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
-        var user = await client.GetUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
+        var user = await (await applicationFactory.CreateClientForRandomNormalUser()).GetUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(() =>
             client.UpdateProject(
                 projectId: 99,
@@ -59,7 +59,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Get_user_entries_export_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(
             client.GetUserEntriesExportStream(
                 start: new DateOnly(year: 2025, month: 12, day: 15),
@@ -71,7 +71,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Get_user_entries_week_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(
             client.GetUserWeekEntries(year: 2025, weekNumber: 23)
         );
@@ -80,7 +80,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Update_user_entries_week_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(
             client.UpdateUserWeekEntries(
                 year: 2025,
@@ -102,7 +102,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Update_invoice_item_customizations_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(
             client.UpdateUserInvoiceItemCustomizations(request: new() { InvoiceItems = [] })
         );
@@ -111,14 +111,14 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Get_user_projects_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(client.GetUserProjects);
     }
 
     [Fact]
     public async Task Get_all_users_endpoint_returns_forbidden()
     {
-        var client = await applicationFactory.CreateClientWithRandomZeroPermissionsUser();
+        var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(client.GetAllUsers);
     }
 }
