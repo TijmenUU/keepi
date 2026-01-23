@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Keepi.Core;
 using Keepi.Core.Entries;
+using Keepi.Core.Exports;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -123,7 +124,6 @@ internal sealed class UserEntryRepository(
     }
 
     IAsyncEnumerable<ExportUserEntry> IGetExportUserEntries.Execute(
-        int userId,
         DateOnly start,
         DateOnly stop,
         CancellationToken cancellationToken
@@ -133,10 +133,11 @@ internal sealed class UserEntryRepository(
 
         return databaseContext
             .UserEntries.AsNoTracking()
-            .Where(e => e.UserId == userId)
             .Where(e => e.Date >= start && e.Date <= stop)
             .Select(ue => new ExportUserEntry(
                 ue.Id,
+                ue.UserId,
+                ue.User.Name,
                 ue.Date,
                 ue.InvoiceItem.Project.Id,
                 ue.InvoiceItem.Project.Name,

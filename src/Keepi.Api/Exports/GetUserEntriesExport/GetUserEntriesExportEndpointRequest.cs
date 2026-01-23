@@ -1,4 +1,4 @@
-namespace Keepi.Api.UserEntries.GetExport;
+namespace Keepi.Api.Exports.GetUserEntriesExport;
 
 public sealed class GetUserEntriesExportEndpointRequest
 {

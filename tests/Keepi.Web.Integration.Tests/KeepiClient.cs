@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Bogus;
+using Keepi.Api.Exports.GetUserEntriesExport;
 using Keepi.Api.Projects.Create;
 using Keepi.Api.Projects.GetAll;
 using Keepi.Api.Projects.Update;
-using Keepi.Api.UserEntries.GetExport;
 using Keepi.Api.UserEntries.GetWeek;
 using Keepi.Api.UserEntries.UpdateWeek;
 using Keepi.Api.UserInvoiceItemCustomizations.UpdateAll;
@@ -175,7 +175,7 @@ public class KeepiClient
     public async Task<Stream> GetUserEntriesExportStream(DateOnly start, DateOnly stop)
     {
         var response = await httpClient.PostAsJsonAsync(
-            requestUri: "/api/user/entries/export",
+            requestUri: "/api/export/userentries",
             value: new GetUserEntriesExportEndpointRequest { Start = start, Stop = stop },
             options: jsonSerializerOptions
         );

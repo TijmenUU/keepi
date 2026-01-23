@@ -127,7 +127,7 @@ export default class ApiClient {
       }),
     })
 
-    return this.makeRequest(`/user/entries/export`, options, [200]).andThen((result) =>
+    return this.makeRequest(`/export/userentries`, options, [200]).andThen((result) =>
       fromPromise(result.blob(), (reason) => {
         console.error('Failed to retrieve blob from response body', reason)
         return new ApiError('unknown')

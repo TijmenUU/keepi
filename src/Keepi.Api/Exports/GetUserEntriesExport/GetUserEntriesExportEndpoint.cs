@@ -3,16 +3,16 @@ using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration.Attributes;
 using FastEndpoints;
-using Keepi.Core.Entries;
+using Keepi.Core.Exports;
 
-namespace Keepi.Api.UserEntries.GetExport;
+namespace Keepi.Api.Exports.GetUserEntriesExport;
 
 public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase exportUserEntriesUseCase)
     : Endpoint<GetUserEntriesExportEndpointRequest>
 {
     public override void Configure()
     {
-        Post("/user/entries/export");
+        Post("/export/userentries");
     }
 
     public override async Task HandleAsync(
@@ -44,6 +44,7 @@ public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase expor
                 );
                 await outputStream.WriteRecordsAsync(
                     records: successResult.Select(e => new ExportRecord(
+                        UserName: e.UserName,
                         Date: e.Date,
                         ProjectName: e.ProjectName,
                         InvoiceItemName: e.InvoiceItemName,
@@ -106,7 +107,9 @@ public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase expor
 
     record ValidatedGetUserEntriesExportEndpointRequest(DateOnly Start, DateOnly Stop);
 
+    // TODO The name of user could not be enough to identify them, maybe export the email address or user ID as well?
     record ExportRecord(
+        [property: Name("Gebruiker")] string UserName,
         [property: Name("Datum")] DateOnly Date,
         [property: Name("Project")] string ProjectName,
         [property: Name("Post")] string InvoiceItemName,

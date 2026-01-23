@@ -1,6 +1,6 @@
 using Keepi.Core.Users;
 
-namespace Keepi.Core.Entries;
+namespace Keepi.Core.Exports;
 
 public interface IExportUserEntriesUseCase
 {
@@ -57,7 +57,6 @@ internal sealed class ExportUserEntriesUseCase(
 
         return Result.Success<IAsyncEnumerable<ExportUserEntry>, ExportUserEntriesUseCaseError>(
             getExportUserEntries.Execute(
-                userId: userSuccessResult.Id,
                 start: start,
                 stop: stop,
                 cancellationToken: cancellationToken

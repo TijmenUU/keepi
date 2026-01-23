@@ -1,8 +1,8 @@
-using Keepi.Core.Entries;
+using Keepi.Core.Exports;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 
-namespace Keepi.Core.Unit.Tests.Entries;
+namespace Keepi.Core.Unit.Tests.Exports;
 
 public class ExportUserEntriesUseCaseTests
 {
@@ -14,6 +14,8 @@ public class ExportUserEntriesUseCaseTests
             .WithExportEntries(
                 new ExportUserEntry(
                     Id: 1,
+                    UserId: 10,
+                    UserName: "Jaap",
                     Date: new DateOnly(2025, 6, 22),
                     ProjectId: 5,
                     ProjectName: "Ontwikkeling",
@@ -24,6 +26,8 @@ public class ExportUserEntriesUseCaseTests
                 ),
                 new ExportUserEntry(
                     Id: 3,
+                    UserId: 11,
+                    UserName: "Boris",
                     Date: new DateOnly(2025, 6, 23),
                     ProjectId: 6,
                     ProjectName: "Intern",
@@ -50,6 +54,8 @@ public class ExportUserEntriesUseCaseTests
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
                     Id: 1,
+                    UserId: 10,
+                    UserName: "Jaap",
                     Date: new DateOnly(2025, 6, 22),
                     ProjectId: 5,
                     ProjectName: "Ontwikkeling",
@@ -63,6 +69,8 @@ public class ExportUserEntriesUseCaseTests
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
                     Id: 3,
+                    UserId: 11,
+                    UserName: "Boris",
                     Date: new DateOnly(2025, 6, 23),
                     ProjectId: 6,
                     ProjectName: "Intern",
@@ -76,7 +84,6 @@ public class ExportUserEntriesUseCaseTests
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.GetExportUserEntriesStreamMock.Verify(x =>
             x.Execute(
-                42,
                 new DateOnly(2025, 6, 22),
                 new DateOnly(2025, 6, 23),
                 It.IsAny<CancellationToken>()
@@ -93,6 +100,8 @@ public class ExportUserEntriesUseCaseTests
             .WithExportEntries(
                 new ExportUserEntry(
                     Id: 1,
+                    UserId: 10,
+                    UserName: "Jaap",
                     Date: new DateOnly(2025, 6, 22),
                     ProjectId: 5,
                     ProjectName: "Ontwikkeling",
@@ -103,6 +112,8 @@ public class ExportUserEntriesUseCaseTests
                 ),
                 new ExportUserEntry(
                     Id: 3,
+                    UserId: 10,
+                    UserName: "Jaap",
                     Date: new DateOnly(2025, 6, 23),
                     ProjectId: 6,
                     ProjectName: "Intern",
@@ -204,7 +215,6 @@ public class ExportUserEntriesUseCaseTests
             GetExportUserEntriesStreamMock
                 .Setup(x =>
                     x.Execute(
-                        It.IsAny<int>(),
                         It.IsAny<DateOnly>(),
                         It.IsAny<DateOnly>(),
                         It.IsAny<CancellationToken>()

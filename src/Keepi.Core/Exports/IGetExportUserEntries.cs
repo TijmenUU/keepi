@@ -1,9 +1,8 @@
-namespace Keepi.Core.Entries;
+namespace Keepi.Core.Exports;
 
 public interface IGetExportUserEntries
 {
     IAsyncEnumerable<ExportUserEntry> Execute(
-        int userId,
         DateOnly start,
         DateOnly stop,
         CancellationToken cancellationToken
@@ -12,6 +11,8 @@ public interface IGetExportUserEntries
 
 public record ExportUserEntry(
     int Id,
+    int UserId,
+    string UserName,
     DateOnly Date,
     int ProjectId,
     string ProjectName,
