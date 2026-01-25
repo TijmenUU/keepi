@@ -19,7 +19,7 @@ import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'
 import { useNavigationChangeDialogConfirmation } from '@/dialog'
 import { StepForward, StepBack } from 'lucide-vue-next'
 import ApiClient from '@/api-client'
-import { handleApiError } from '@/router'
+import { handleApiError } from '@/error'
 
 const props = defineProps<{
   projects: IGetUserProjectsResponse['projects']

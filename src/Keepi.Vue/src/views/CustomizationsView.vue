@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ApiClient, { type IUpdateAllUserInvoiceItemCustomizationsRequest } from '@/api-client'
 import { getSortedInvoiceItems } from '@/invoiceitems'
-import { handleApiError } from '@/router'
+import { handleApiError } from '@/error'
 import { createSwapy, type Swapy } from 'swapy'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'

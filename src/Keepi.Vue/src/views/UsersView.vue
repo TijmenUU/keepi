@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ApiClient, { type IGetAllUsersResponse } from '@/api-client'
-import { handleApiError } from '@/router'
+import { handleApiError } from '@/error'
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import {

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/field'
 import { Label } from '@/components/ui/label'
 import { hasMaxLength, requiredValidator } from '@/regle'
-import { handleApiError } from '@/router'
+import { handleApiError } from '@/error'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
 import { Plus, Trash } from 'lucide-vue-next'

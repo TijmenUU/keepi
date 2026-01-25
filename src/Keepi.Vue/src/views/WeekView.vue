@@ -2,8 +2,9 @@
 import ApiClient, { type IGetWeekUserEntriesResponse } from '@/api-client'
 import KeepiWeekEditor from '@/components/KeepiWeekEditor.vue'
 import { type DateRange, getDateOfIsoWeek, getWeekDaysForDate, getWeekNumber } from '@/date'
-import { handleApiError, router } from '@/router'
+import { router } from '@/router'
 import { computed, ref, watch } from 'vue'
+import { handleApiError } from '@/error'
 
 const props = defineProps<{
   year: string | null | undefined

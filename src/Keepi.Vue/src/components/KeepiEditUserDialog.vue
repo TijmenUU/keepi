@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { getUserRole } from '@/user-roles'
-import { handleApiError } from '@/router'
+import { handleApiError } from '@/error'
 import type { UserRole } from '@/types'
 import { nextTick, ref } from 'vue'
 import {
