@@ -96,6 +96,28 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.ToTable("Projects");
                 });
 
+            modelBuilder.Entity("Keepi.Infrastructure.Data.Projects.ProjectEntityUserEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("ProjectId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectUsers");
+                });
+
             modelBuilder.Entity("Keepi.Infrastructure.Data.UserInvoiceItemCustomizations.UserInvoiceItemCustomizationEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -171,21 +193,6 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("ProjectEntityUserEntity", b =>
-                {
-                    b.Property<int>("ProjectsId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("UsersId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ProjectsId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("ProjectEntityUserEntity");
-                });
-
             modelBuilder.Entity("Keepi.Infrastructure.Data.Entries.UserEntryEntity", b =>
                 {
                     b.HasOne("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", "InvoiceItem")
@@ -216,6 +223,25 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.Navigation("Project");
                 });
 
+            modelBuilder.Entity("Keepi.Infrastructure.Data.Projects.ProjectEntityUserEntity", b =>
+                {
+                    b.HasOne("Keepi.Infrastructure.Data.Projects.ProjectEntity", "Project")
+                        .WithMany("ProjectUsers")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Keepi.Infrastructure.Data.Users.UserEntity", "User")
+                        .WithMany("ProjectUsers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Keepi.Infrastructure.Data.UserInvoiceItemCustomizations.UserInvoiceItemCustomizationEntity", b =>
                 {
                     b.HasOne("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", "InvoiceItem")
@@ -235,21 +261,6 @@ namespace Keepi.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ProjectEntityUserEntity", b =>
-                {
-                    b.HasOne("Keepi.Infrastructure.Data.Projects.ProjectEntity", null)
-                        .WithMany()
-                        .HasForeignKey("ProjectsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Keepi.Infrastructure.Data.Users.UserEntity", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Keepi.Infrastructure.Data.InvoiceItems.InvoiceItemEntity", b =>
                 {
                     b.Navigation("UserEntries");
@@ -260,11 +271,15 @@ namespace Keepi.Infrastructure.Data.Migrations
             modelBuilder.Entity("Keepi.Infrastructure.Data.Projects.ProjectEntity", b =>
                 {
                     b.Navigation("InvoiceItems");
+
+                    b.Navigation("ProjectUsers");
                 });
 
             modelBuilder.Entity("Keepi.Infrastructure.Data.Users.UserEntity", b =>
                 {
                     b.Navigation("Entries");
+
+                    b.Navigation("ProjectUsers");
 
                     b.Navigation("UserInvoiceItemCustomizations");
                 });

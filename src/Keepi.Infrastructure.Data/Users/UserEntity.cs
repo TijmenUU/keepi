@@ -28,6 +28,7 @@ internal sealed class UserEntity
     public UserPermission ProjectsPermission { get; set; }
     public UserPermission UsersPermission { get; set; }
 
+    public List<ProjectEntityUserEntity> ProjectUsers { get; set; }
     public List<ProjectEntity> Projects { get; set; }
     public List<UserEntryEntity> Entries { get; set; }
     public List<UserInvoiceItemCustomizationEntity> UserInvoiceItemCustomizations { get; set; }

@@ -66,24 +66,26 @@ namespace Keepi.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ProjectEntityUserEntity",
+                name: "ProjectUsers",
                 columns: table => new
                 {
-                    ProjectsId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UsersId = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ProjectId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ProjectEntityUserEntity", x => new { x.ProjectsId, x.UsersId });
+                    table.PrimaryKey("PK_ProjectUsers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ProjectEntityUserEntity_Projects_ProjectsId",
-                        column: x => x.ProjectsId,
+                        name: "FK_ProjectUsers_Projects_ProjectId",
+                        column: x => x.ProjectId,
                         principalTable: "Projects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ProjectEntityUserEntity_Users_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_ProjectUsers_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -158,15 +160,21 @@ namespace Keepi.Infrastructure.Data.Migrations
                 column: "ProjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ProjectEntityUserEntity_UsersId",
-                table: "ProjectEntityUserEntity",
-                column: "UsersId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Projects_Name",
                 table: "Projects",
                 column: "Name",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProjectUsers_ProjectId_UserId",
+                table: "ProjectUsers",
+                columns: new[] { "ProjectId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProjectUsers_UserId",
+                table: "ProjectUsers",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserEntries_Date",
@@ -211,7 +219,7 @@ namespace Keepi.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ProjectEntityUserEntity");
+                name: "ProjectUsers");
 
             migrationBuilder.DropTable(
                 name: "UserEntries");

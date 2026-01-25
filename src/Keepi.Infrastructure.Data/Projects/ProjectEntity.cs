@@ -15,6 +15,7 @@ internal sealed class ProjectEntity
     public string Name { get; set; }
     public bool Enabled { get; set; }
 
+    public List<ProjectEntityUserEntity> ProjectUsers { get; set; }
     public List<UserEntity> Users { get; set; }
     public List<InvoiceItemEntity> InvoiceItems { get; set; }
 }

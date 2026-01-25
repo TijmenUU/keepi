@@ -156,10 +156,14 @@ internal sealed class ProjectRepository(
         CancellationToken cancellationToken
     )
     {
+        await using var transaction = await databaseContext.Database.BeginTransactionAsync(
+            cancellationToken: cancellationToken
+        );
+
         try
         {
             var project = await databaseContext
-                .Projects.Include(p => p.Users)
+                .Projects.Include(p => p.ProjectUsers)
                 .Include(p => p.InvoiceItems)
                 .SingleOrDefaultAsync(p => p.Id == id, cancellationToken: cancellationToken);
 
@@ -171,33 +175,52 @@ internal sealed class ProjectRepository(
             project.Name = name;
             project.Enabled = enabled;
 
-            for (int i = project.Users.Count - 1; i >= 0; --i)
+            for (int i = project.ProjectUsers.Count - 1; i >= 0; --i)
             {
-                if (!userIds.Contains(project.Users[i].Id))
+                var projectUser = project.ProjectUsers[i];
+                if (!userIds.Contains(projectUser.UserId))
                 {
-                    databaseContext.Remove(project.Users[i]);
-                    project.Users.RemoveRange(index: i, count: 1);
+                    databaseContext.Remove(projectUser);
+                    project.ProjectUsers.RemoveRange(index: i, count: 1);
+
+                    await databaseContext
+                        .UserEntries.Where(ue =>
+                            ue.UserId == projectUser.UserId && ue.InvoiceItem.ProjectId == id
+                        )
+                        .ExecuteDeleteAsync(cancellationToken: cancellationToken);
+                    await databaseContext
+                        .UserInvoiceItemCustomizations.Where(c =>
+                            c.UserId == projectUser.UserId && c.InvoiceItem.ProjectId == id
+                        )
+                        .ExecuteDeleteAsync(cancellationToken: cancellationToken);
                 }
             }
             foreach (var userId in userIds)
             {
-                if (project.Users.Any(u => u.Id == userId))
+                if (project.ProjectUsers.Any(u => u.UserId == userId))
                 {
                     continue;
                 }
 
-                var entity = new UserEntity { Id = userId };
-                databaseContext.Attach(entity);
-
-                project.Users.Add(entity);
+                project.ProjectUsers.Add(
+                    new ProjectEntityUserEntity { ProjectId = id, UserId = userId }
+                );
             }
 
             for (int i = project.InvoiceItems.Count - 1; i >= 0; --i)
             {
-                if (!invoiceItems.Any(ii => ii.Id == project.InvoiceItems[i].Id))
+                var invoiceItem = project.InvoiceItems[i];
+                if (!invoiceItems.Any(ii => ii.Id == invoiceItem.Id))
                 {
-                    databaseContext.Remove(project.InvoiceItems[i]);
+                    databaseContext.Remove(invoiceItem);
                     project.InvoiceItems.RemoveRange(index: i, count: 1);
+
+                    await databaseContext
+                        .UserEntries.Where(ue => ue.InvoiceItemId == invoiceItem.Id)
+                        .ExecuteDeleteAsync(cancellationToken: cancellationToken);
+                    await databaseContext
+                        .UserInvoiceItemCustomizations.Where(c => c.InvoiceItemId == invoiceItem.Id)
+                        .ExecuteDeleteAsync(cancellationToken: cancellationToken);
                 }
             }
             foreach (var invoiceItem in invoiceItems)
@@ -216,12 +239,14 @@ internal sealed class ProjectRepository(
             }
 
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
+            await transaction.CommitAsync(cancellationToken: cancellationToken);
 
             return Result.Success<UpdateProjectError>();
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error saving new project {ProjectName}", name);
+            await transaction.RollbackAsync();
 
             if (ex is UniqueConstraintException)
             {

@@ -12,6 +12,7 @@ internal class DatabaseContext : DbContext
 {
     public DbSet<UserEntity> Users { get; set; }
     public DbSet<ProjectEntity> Projects { get; set; }
+    public DbSet<ProjectEntityUserEntity> ProjectUsers { get; set; }
     public DbSet<InvoiceItemEntity> InvoiceItems { get; set; }
     public DbSet<UserEntryEntity> UserEntries { get; set; }
     public DbSet<UserInvoiceItemCustomizationEntity> UserInvoiceItemCustomizations { get; set; }
@@ -24,5 +25,14 @@ internal class DatabaseContext : DbContext
         // Adds strongly typed exceptions
         // See https://github.com/Giorgi/EntityFramework.Exceptions/blob/main/EntityFramework.Exceptions.Sqlite/SqliteExceptionProcessorInterceptor.cs
         optionsBuilder.UseExceptionProcessor();
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .Entity<ProjectEntity>()
+            .HasMany(p => p.Users)
+            .WithMany(u => u.Projects)
+            .UsingEntity<ProjectEntityUserEntity>();
     }
 }
