@@ -4,7 +4,7 @@ type UserContext = {
   id: number
   name: string
   authenticated: boolean
-  role: UserRole | 'none'
+  role: UserRole
 }
 
 const context: UserContext = {

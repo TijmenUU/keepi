@@ -11,6 +11,7 @@ import ErrorView from '@/views/ErrorView.vue'
 import SignedOutView from '@/views/SignedOutView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
 import UsersView from '@/views/UsersView.vue'
+import DisabledUserView from '@/views/DisabledUserView.vue'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -40,6 +41,7 @@ export const router = createRouter({
     { path: '/customizations', component: CustomizationsView, meta: { requiresAuth: true } },
     { path: '/projects', component: ProjectsView, meta: { requiresAuth: true } },
     { path: '/users', component: UsersView, meta: { requiresAuth: true } },
+    { path: '/disableduser', component: DisabledUserView, meta: { requiresAuth: false } },
     // Public paths
     { path: '/error', component: ErrorView, meta: { requiresAuth: false } },
     { path: '/signedout', component: SignedOutView, meta: { requiresAuth: false } },

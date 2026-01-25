@@ -41,6 +41,7 @@ const selectedRole = ref(getUserRole(props.editingUser))
 const roleOptions = [
   { value: 'admin', label: 'Beheerder' },
   { value: 'user', label: 'Gebruiker' },
+  { value: 'none', label: 'Gedeactiveerd' },
 ]
 
 const onOpen = (ev: Event) => {
@@ -91,8 +92,16 @@ function getUserPermissionsForRole(role: UserRole): IUpdateUserPermissionsReques
       usersPermission: 'readAndModify',
     }
   }
+  if (role === 'user') {
+    return {
+      entriesPermission: 'readAndModify',
+      exportsPermission: 'none',
+      projectsPermission: 'none',
+      usersPermission: 'none',
+    }
+  }
   return {
-    entriesPermission: 'readAndModify',
+    entriesPermission: 'none',
     exportsPermission: 'none',
     projectsPermission: 'none',
     usersPermission: 'none',
@@ -113,7 +122,7 @@ function getUserPermissionsForRole(role: UserRole): IUpdateUserPermissionsReques
           <DialogDescription>
             Normale gebruikers hebben alleen toegang tot tijdsregistratie. Beheerders hebben toegang
             tot alle delen van de applicatie: tijdsregistratie, exports, projectenbeheer en
-            gebruikersbeheer.
+            gebruikersbeheer. Gedeactiveerde gebruikers hebben geen toegang tot de applicatie.
           </DialogDescription>
         </DialogHeader>
 

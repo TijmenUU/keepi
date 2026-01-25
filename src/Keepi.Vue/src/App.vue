@@ -28,18 +28,24 @@ const onToggleTheme = () => {
 }
 
 const hasLoaded = ref(false)
-const isAuthenticated = ref(false)
+const showSideBar = ref(false)
 
 onMounted(async () => {
   const apiClient = new ApiClient()
   try {
     await apiClient.getUser().match(
       (user) => {
-        isAuthenticated.value = true
-        setUserContext(user.id, user.name, getUserRole(user))
+        const userRole = getUserRole(user)
+        setUserContext(user.id, user.name, userRole)
+
+        if (userRole !== 'none') {
+          showSideBar.value = true
+        } else if (router.currentRoute.value.path !== '/disableduser') {
+          router.push('/disableduser')
+        }
       },
       () => {
-        isAuthenticated.value = false
+        showSideBar.value = false
         clearUserContext()
 
         if (router.currentRoute.value.meta.requiresAuth) {
@@ -58,7 +64,7 @@ onMounted(async () => {
     <KeepiSpinner />
   </div>
 
-  <TooltipProvider v-else-if="!isAuthenticated">
+  <TooltipProvider v-else-if="!showSideBar">
     <RouterView v-slot="{ Component, route }">
       <template v-if="Component != null && !route.meta.requiresAuth">
         <!-- Using a transition here causes the error <TypeError: can't access property "nextSibling", node is null> -->

@@ -7,10 +7,12 @@ const props = withDefaults(
   defineProps<{
     icon: LucideIcon
     message: string
+    showRecoveryButton?: boolean
     recoveryButtonHref?: string
     recoveryButtonLabel?: string
   }>(),
   {
+    showRecoveryButton: true,
     recoveryButtonHref: '/',
     recoveryButtonLabel: 'Terug naar start',
   },
@@ -24,7 +26,7 @@ const props = withDefaults(
 
       <p class="mt-2">{{ props.message }}</p>
 
-      <div class="mt-2 flex justify-end">
+      <div v-if="showRecoveryButton" class="mt-2 flex justify-end">
         <Button as="a" :href="props.recoveryButtonHref" variant="outline">
           {{ props.recoveryButtonLabel }}
         </Button>

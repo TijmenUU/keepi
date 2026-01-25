@@ -15,11 +15,31 @@ export function isAdmin(user: {
   )
 }
 
+export function isUser(user: {
+  entriesPermission: UserPermission
+  exportsPermission: UserPermission
+  projectsPermission: UserPermission
+  usersPermission: UserPermission
+}) {
+  return (
+    user.entriesPermission === 'readAndModify' &&
+    user.exportsPermission === 'none' &&
+    user.projectsPermission === 'none' &&
+    user.usersPermission === 'none'
+  )
+}
+
 export function getUserRole(user: {
   entriesPermission: UserPermission
   exportsPermission: UserPermission
   projectsPermission: UserPermission
   usersPermission: UserPermission
 }): UserRole {
-  return isAdmin(user) ? 'admin' : 'user'
+  if (isAdmin(user)) {
+    return 'admin'
+  }
+  if (isUser(user)) {
+    return 'user'
+  }
+  return 'none'
 }
