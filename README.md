@@ -66,6 +66,12 @@ _Dark and bright theme support_
 ![Mobile](docs/mobile.jpg)  
 _Responsive design_
 
+![Logs and Traces](docs/logs_and_traces.jpg)  
+_Logging and tracing exposed over OTLP_
+
+![Metrics](docs/metrics.jpg)  
+_Metrics exposed over OTLP_
+
 ## Repository structure
 
 This repository roughly follows the [.NET example](https://devblogs.microsoft.com/ise/next-level-clean-architecture-boilerplate/) of clean architecture. Key to the concept of clean architecture is that dependencies flow inward and any implementation details are provided through so-called plug-ins, also known as adapters. In practice this means that the `src/Keepi.Core` project represents the "center" towards which all projects "point" in terms of dependency. A project such as the `src/Keepi.Infrastructure.Data` provides a persistence plug-in to the core by implementing the persistence related interfaces declared by the core, also known as ports.
