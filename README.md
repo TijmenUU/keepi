@@ -37,6 +37,20 @@ Whilst the code is written in US English the localization of the application GUI
 ![User entries](docs/user_entries.jpg)
 _Matrix input_
 
+```csv
+Gebruiker;Datum;Project;Post;Minuten;Opmerking
+TijmenUU;26-01-2026;Algemeen;Dev;480;
+TijmenUU;27-01-2026;Algemeen;Dev;360;
+TijmenUU;27-01-2026;Algemeen;Administratie;120;
+TijmenUU;28-01-2026;Algemeen;Dev;240;
+TijmenUU;28-01-2026;Project H;Prototype H;240;
+TijmenUU;29-01-2026;Algemeen;Dev;480;
+TijmenUU;30-01-2026;Algemeen;Dev;420;
+TijmenUU;30-01-2026;Algemeen;Administratie;60;
+```
+
+_Example CSV export output of the entries shown before_
+
 ![User customization](docs/user_customization.jpg)
 _User customization options_
 
