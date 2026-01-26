@@ -34,7 +34,7 @@ In order to improve the user experience of the time tracking matrix input it can
 
 Whilst the code is written in US English the localization of the application GUI is currently Dutch only. See below how Keepi looks in practice!
 
-![User entries](docs/user_entries.jpg)
+![User entries](docs/user_entries.jpg)  
 _Matrix input_
 
 ```csv
@@ -51,16 +51,16 @@ TijmenUU;30-01-2026;Algemeen;Administratie;60;
 
 _Example CSV export output of the entries shown before_
 
-![User customization](docs/user_customization.jpg)
+![User customization](docs/user_customization.jpg)  
 _User customization options_
 
-![Projects](docs/projects.jpg)
+![Projects](docs/projects.jpg)  
 _Project administration_
 
-![User permission edit dialog](docs/users_editdialog.jpg)
+![User permission edit dialog](docs/users_editdialog.jpg)  
 _User administration_
 
-![Bright theme](docs/bright_theme.jpg)
+![Bright theme](docs/bright_theme.jpg)  
 _Dark and bright theme support_
 
 ![Mobile](docs/mobile.jpg)  
