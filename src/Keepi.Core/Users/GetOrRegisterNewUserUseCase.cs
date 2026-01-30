@@ -25,7 +25,7 @@ public enum GetOrRegisterNewUserUseCaseError
 
 internal sealed class GetOrRegisterNewUserUseCase(
     IGetUser getUser,
-    IUpdateUserInfo updateUserInfo,
+    IUpdateUserIdentity updateUserIdentity,
     IUserWithPermissionsExists userWithPermissionsExists,
     IGetFirstAdminUserEmailAddress getFirstAdminUserEmailAddress,
     ISaveNewUser saveNewUser,
@@ -58,7 +58,7 @@ internal sealed class GetOrRegisterNewUserUseCase(
                     externalId
                 );
 
-                var result = await updateUserInfo.Execute(
+                var result = await updateUserIdentity.Execute(
                     userId: getUserSuccess.Id,
                     emailAddress: emailAddress,
                     name: name,

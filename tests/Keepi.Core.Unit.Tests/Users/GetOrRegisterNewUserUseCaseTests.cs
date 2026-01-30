@@ -342,7 +342,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserInfoMock.Verify(x =>
+        context.UpdateUserIdentityMock.Verify(x =>
             x.Execute(42, "bob@example.com", "Bobby", It.IsAny<CancellationToken>())
         );
         context.VerifyNoOtherCalls();
@@ -395,7 +395,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserInfoMock.Verify(x =>
+        context.UpdateUserIdentityMock.Verify(x =>
             x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
         );
         context.VerifyNoOtherCalls();
@@ -448,7 +448,7 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetUserMock.Verify(x =>
             x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
         );
-        context.UpdateUserInfoMock.Verify(x =>
+        context.UpdateUserIdentityMock.Verify(x =>
             x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
         );
         context.LoggerMock.VerifyWarningLog(
@@ -660,7 +660,7 @@ public class GetOrRegisterNewUserUseCaseTests
     private class TestContext
     {
         public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IUpdateUserInfo> UpdateUserInfoMock { get; } = new(MockBehavior.Strict);
+        public Mock<IUpdateUserIdentity> UpdateUserIdentityMock { get; } = new(MockBehavior.Strict);
         public Mock<IUserWithPermissionsExists> UserWithPermissionsExistsMock { get; } =
             new(MockBehavior.Strict);
         public Mock<IGetFirstAdminUserEmailAddress> GetFirstAdminUserEmailAddressMock { get; } =
@@ -738,14 +738,14 @@ public class GetOrRegisterNewUserUseCaseTests
         }
 
         public TestContext WithUserUpdateSuccess() =>
-            WithUserUpdateResult(Result.Success<UpdateUserInfoError>());
+            WithUserUpdateResult(Result.Success<UpdateUserIdentityError>());
 
         public TestContext WithUserUpdateFailure() =>
-            WithUserUpdateResult(Result.Failure(UpdateUserInfoError.DuplicateUser));
+            WithUserUpdateResult(Result.Failure(UpdateUserIdentityError.DuplicateUser));
 
-        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserInfoError> result)
+        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserIdentityError> result)
         {
-            UpdateUserInfoMock
+            UpdateUserIdentityMock
                 .Setup(x =>
                     x.Execute(
                         It.IsAny<int>(),
@@ -835,7 +835,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public GetOrRegisterNewUserUseCase BuildUseCase() =>
             new(
                 getUser: GetUserMock.Object,
-                updateUserInfo: UpdateUserInfoMock.Object,
+                updateUserIdentity: UpdateUserIdentityMock.Object,
                 userWithPermissionsExists: UserWithPermissionsExistsMock.Object,
                 getFirstAdminUserEmailAddress: GetFirstAdminUserEmailAddressMock.Object,
                 saveNewUser: SaveNewUserMock.Object,
@@ -845,7 +845,7 @@ public class GetOrRegisterNewUserUseCaseTests
         public void VerifyNoOtherCalls()
         {
             GetUserMock.VerifyNoOtherCalls();
-            UpdateUserInfoMock.VerifyNoOtherCalls();
+            UpdateUserIdentityMock.VerifyNoOtherCalls();
             UserWithPermissionsExistsMock.VerifyNoOtherCalls();
             GetFirstAdminUserEmailAddressMock.VerifyNoOtherCalls();
             SaveNewUserMock.VerifyNoOtherCalls();

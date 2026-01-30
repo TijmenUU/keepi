@@ -1,8 +1,8 @@
 namespace Keepi.Core.Users;
 
-public interface IUpdateUserInfo
+public interface IUpdateUserIdentity
 {
-    Task<IMaybeErrorResult<UpdateUserInfoError>> Execute(
+    Task<IMaybeErrorResult<UpdateUserIdentityError>> Execute(
         int userId,
         string emailAddress,
         string name,
@@ -10,7 +10,7 @@ public interface IUpdateUserInfo
     );
 }
 
-public enum UpdateUserInfoError
+public enum UpdateUserIdentityError
 {
     Unknown,
     UnknownUserId,

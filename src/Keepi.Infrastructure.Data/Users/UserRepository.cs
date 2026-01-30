@@ -13,7 +13,7 @@ internal sealed class UserRepository(
     : IGetUserExists,
         IGetUser,
         ISaveNewUser,
-        IUpdateUserInfo,
+        IUpdateUserIdentity,
         IGetUsers,
         IUpdateUserPermissions,
         IUserWithPermissionsExists
@@ -103,7 +103,7 @@ internal sealed class UserRepository(
         };
     }
 
-    async Task<IMaybeErrorResult<UpdateUserInfoError>> IUpdateUserInfo.Execute(
+    async Task<IMaybeErrorResult<UpdateUserIdentityError>> IUpdateUserIdentity.Execute(
         int userId,
         string emailAddress,
         string name,
@@ -118,26 +118,26 @@ internal sealed class UserRepository(
             );
             if (entity == null)
             {
-                return Result.Failure(UpdateUserInfoError.UnknownUserId);
+                return Result.Failure(UpdateUserIdentityError.UnknownUserId);
             }
 
             entity.EmailAddress = emailAddress;
             entity.Name = name;
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
 
-            return Result.Success<UpdateUserInfoError>();
+            return Result.Success<UpdateUserIdentityError>();
         }
         // This is a bit of a rough catch as it is not known what caused the
         // exception. Sqlite does not provide the exact constraint nor column name
         // so for now this seems all that can be done.
         catch (UniqueConstraintException)
         {
-            return Result.Failure(UpdateUserInfoError.DuplicateUser);
+            return Result.Failure(UpdateUserIdentityError.DuplicateUser);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error whilst updating user");
-            return Result.Failure(UpdateUserInfoError.Unknown);
+            return Result.Failure(UpdateUserIdentityError.Unknown);
         }
     }
 
