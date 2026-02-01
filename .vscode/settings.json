@@ -1,6 +1,5 @@
 {
   "editor.tabSize": 4,
-  "dotnet.testWindow.useTestingPlatformProtocol": true,
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "tsconfig.json": "tsconfig.*.json, env.d.ts",
@@ -11,5 +10,8 @@
     "source.fixAll": "explicit"
   },
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[AXAML]": {
+    "editor.defaultFormatter": "dabbinavo.xamlstyler"
+  },
 }

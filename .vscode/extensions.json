@@ -6,6 +6,10 @@
     "esbenp.prettier-vscode",
     "oxc.oxc-vscode",
     "vitest.explorer",
-    "Vue.volar",
+    "dabbinavo.xamlstyler",
+    "avaloniateam.vscode-avalonia",
+    "csharpier.csharpier-vscode",
+    "ms-dotnettools.csdevkit",
+    "vue.volar",
   ]
 }
