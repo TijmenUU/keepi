@@ -78,13 +78,14 @@ This repository roughly follows the [.NET example](https://devblogs.microsoft.co
 
 The following (non-testing) projects are part of this repository, followed by a short description:
 
-| Name                      | Description                                                                                                                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Keepi.Core                | The project containing all business logic without concerning itself with the exact implementation of input and output.                              |
-| Keepi.Infrastructure.Data | A persistence layer implemented through EF Core and Sqlite3.                                                                                        |
-| Keepi.Api                 | A JSON API serving as an input output wrapper around Keepi.Core                                                                                     |
-| Keepi.Vue                 | A Vue 3 web application which uses the Keepi.Api provided HTTP endpoints to allow the user to interact with the business logic of Keepi.Core        |
-| Keepi.Web                 | An ASP.Net Core project that combines the JSON API of Keepi.Api and the web client of Keepi.Vue to create a so called backend before frontend setup |
+| Name                               | Description                                                                                                                                          |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keepi.Core                         | The project containing all business logic without concerning itself with the exact implementation of input and output.                               |
+| Keepi.Infrastructure.Data          | A persistence layer implemented through EF Core and Sqlite3.                                                                                         |
+| Keepi.Infrastructure.OpenTelemetry | OpenTelemetry implementation details, for example the tracing of use cases.                                                                          |
+| Keepi.Api                          | A JSON API serving as an input output wrapper around Keepi.Core.                                                                                     |
+| Keepi.Vue                          | A Vue 3 web application which uses the Keepi.Api provided HTTP endpoints to allow the user to interact with the business logic of Keepi.Core.        |
+| Keepi.Web                          | An ASP.Net Core project that combines the JSON API of Keepi.Api and the web client of Keepi.Vue to create a so called backend before frontend setup. |
 
 ## Development
 
