@@ -13,22 +13,21 @@
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="10.0.0" />
     <PackageReference Include="AspNetCore.SpaYarp" Version="2.0.1" />
-    <PackageReference Include="Castle.Core.AsyncInterceptor" Version="2.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
     <PackageReference
       Include="OpenTelemetry.Instrumentation.EntityFrameworkCore"
-      Version="1.13.0-beta.1"
+      Version="1.15.0-beta.1"
     />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Keepi.Api\Keepi.Api.csproj" />
     <ProjectReference Include="..\Keepi.Infrastructure.Data\Keepi.Infrastructure.Data.csproj" />
+    <ProjectReference Include="..\Keepi.Infrastructure.OpenTelemetry\Keepi.Infrastructure.OpenTelemetry.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="wwwroot\**\*.*">
