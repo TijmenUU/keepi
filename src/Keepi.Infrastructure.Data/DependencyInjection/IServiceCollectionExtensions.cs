@@ -37,4 +37,12 @@ public static class IServiceCollectionExtensions
             services.AddScoped(interfaceType, sp => sp.GetRequiredService(repositoryType));
         }
     }
+
+    public static IServiceCollection AddEnsureDatabaseCreatedHelper(
+        this IServiceCollection services
+    )
+    {
+        services.AddScoped<IEnsureDatabaseCreated, EnsureDatabaseCreated>();
+        return services;
+    }
 }
