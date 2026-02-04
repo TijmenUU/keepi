@@ -12,8 +12,6 @@ internal sealed class ResolveUser(
     ILogger<ResolveUser> logger
 ) : IResolveUser
 {
-    private const UserIdentityProvider identityProvider = UserIdentityProvider.GitHub;
-
     private readonly SemaphoreSlim getUserSemaphore = new(initialCount: 1, maxCount: 1);
 
     private bool hasCachedUser = false;
@@ -95,7 +93,7 @@ internal sealed class ResolveUser(
             externalId: userInfo.ExternalId,
             emailAddress: userInfo.EmailAddress,
             name: userInfo.Name,
-            identityProvider: identityProvider,
+            identityProvider: userInfo.Origin,
             cancellationToken: cancellationToken
         );
 
