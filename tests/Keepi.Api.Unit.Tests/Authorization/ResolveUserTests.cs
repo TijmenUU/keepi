@@ -10,7 +10,7 @@ namespace Keepi.Api.Unit.Tests.Authorization;
 public class ResolveUserTests
 {
     [Fact]
-    public async Task GetUserOrNull_returns_expected_user_for_existing_user()
+    public async Task Execute_returns_expected_user_for_existing_user()
     {
         var context = new TestContext()
             .WithExistingUser(
@@ -64,7 +64,7 @@ public class ResolveUserTests
     }
 
     [Fact]
-    public async Task GetUserOrNull_returns_newly_registered_user_for_new_user()
+    public async Task Execute_returns_newly_registered_user_for_new_user()
     {
         var context = new TestContext()
             .WithNewlyRegisteredUser(
@@ -118,7 +118,7 @@ public class ResolveUserTests
     }
 
     [Fact]
-    public async Task GetUserOrNull_returns_error_for_user_from_unsupported_identity_provider()
+    public async Task Execute_returns_error_for_user_from_unsupported_identity_provider()
     {
         var context = new TestContext().WithHttpContextIdentity(
             new ClaimsIdentity(
@@ -143,7 +143,7 @@ public class ResolveUserTests
     }
 
     [Fact]
-    public async Task GetUserOrNull_returns_error_for_unauthenticated_user()
+    public async Task Execute_returns_error_for_unauthenticated_user()
     {
         var context = new TestContext().WithoutHttpContextIdentity();
         var helper = context.BuildHelper();
@@ -167,7 +167,7 @@ public class ResolveUserTests
     [InlineData("Bob52", "bob@example.com", null)]
     [InlineData("Bob52", "bob@example.com", "")]
     [InlineData("Bob52", "bob@example.com", " ")]
-    public async Task GetUserOrNull_returns_error_for_user_with_unsupported_values(
+    public async Task Execute_returns_error_for_user_with_unsupported_values(
         string? name,
         string? email,
         string? subjectClaim
@@ -236,7 +236,7 @@ public class ResolveUserTests
         UserPermission.None,
         UserPermission.ReadAndModify
     )]
-    public async Task GetUserOrNull_returns_correctly_mapped_user_permissions(
+    public async Task Execute_returns_correctly_mapped_user_permissions(
         UserPermission entriesPermission,
         UserPermission exportsPermission,
         UserPermission projectsPermission,
