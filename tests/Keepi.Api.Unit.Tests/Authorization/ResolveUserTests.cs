@@ -117,90 +117,6 @@ public class ResolveUserTests
         context.VerifyNoOtherCalls();
     }
 
-    [Fact]
-    public async Task Execute_returns_error_for_user_from_unsupported_identity_provider()
-    {
-        var context = new TestContext().WithHttpContextIdentity(
-            new ClaimsIdentity(
-                claims:
-                [
-                    new(type: ClaimTypes.Name, value: "Bob52"),
-                    new(type: ClaimTypes.Email, value: "bob@example.com"),
-                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
-                ],
-                authenticationType: "Microsoft"
-            )
-        );
-        var helper = context.BuildHelper();
-
-        var result = await helper.Execute(cancellationToken: CancellationToken.None);
-        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
-
-        errorResult.ShouldBe(ResolveUserError.UnsupportedIdentityProvider);
-
-        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
-        context.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task Execute_returns_error_for_unauthenticated_user()
-    {
-        var context = new TestContext().WithoutHttpContextIdentity();
-        var helper = context.BuildHelper();
-
-        var result = await helper.Execute(cancellationToken: CancellationToken.None);
-        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
-
-        errorResult.ShouldBe(ResolveUserError.UserNotAuthenticated);
-
-        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
-        context.VerifyNoOtherCalls();
-    }
-
-    [Theory]
-    [InlineData(null, "bob@example.com", "github-33")]
-    [InlineData("", "bob@example.com", "github-33")]
-    [InlineData(" ", "bob@example.com", "github-33")]
-    [InlineData("Bob52", null, "github-33")]
-    [InlineData("Bob52", "", "github-33")]
-    [InlineData("Bob52", " ", "github-33")]
-    [InlineData("Bob52", "bob@example.com", null)]
-    [InlineData("Bob52", "bob@example.com", "")]
-    [InlineData("Bob52", "bob@example.com", " ")]
-    public async Task Execute_returns_error_for_user_with_unsupported_values(
-        string? name,
-        string? email,
-        string? subjectClaim
-    )
-    {
-        var claims = new List<Claim>();
-        if (name != null)
-        {
-            claims.Add(new(type: ClaimTypes.Name, value: name));
-        }
-        if (subjectClaim != null)
-        {
-            claims.Add(new(type: ClaimTypes.NameIdentifier, value: subjectClaim));
-        }
-        if (email != null)
-        {
-            claims.Add(new(type: ClaimTypes.Email, value: email));
-        }
-
-        var context = new TestContext().WithHttpContextIdentity(
-            new ClaimsIdentity(claims: claims, authenticationType: "GitHub")
-        );
-        var helper = context.BuildHelper();
-
-        var result = await helper.Execute(cancellationToken: CancellationToken.None);
-        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
-
-        errorResult.ShouldBe(ResolveUserError.MalformedUserClaims);
-
-        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
-        context.VerifyNoOtherCalls();
-    }
-
     [Theory]
     // Base case
     [InlineData(UserPermission.None, UserPermission.None, UserPermission.None, UserPermission.None)]
@@ -291,6 +207,90 @@ public class ResolveUserTests
                 It.IsAny<CancellationToken>()
             )
         );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_returns_error_for_user_from_unsupported_identity_provider()
+    {
+        var context = new TestContext().WithHttpContextIdentity(
+            new ClaimsIdentity(
+                claims:
+                [
+                    new(type: ClaimTypes.Name, value: "Bob52"),
+                    new(type: ClaimTypes.Email, value: "bob@example.com"),
+                    new(type: ClaimTypes.NameIdentifier, value: "github-33"),
+                ],
+                authenticationType: "Microsoft"
+            )
+        );
+        var helper = context.BuildHelper();
+
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+
+        errorResult.ShouldBe(ResolveUserError.UnsupportedIdentityProvider);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task Execute_returns_error_for_unauthenticated_user()
+    {
+        var context = new TestContext().WithoutHttpContextIdentity();
+        var helper = context.BuildHelper();
+
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+
+        errorResult.ShouldBe(ResolveUserError.UserNotAuthenticated);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
+        context.VerifyNoOtherCalls();
+    }
+
+    [Theory]
+    [InlineData(null, "bob@example.com", "github-33")]
+    [InlineData("", "bob@example.com", "github-33")]
+    [InlineData(" ", "bob@example.com", "github-33")]
+    [InlineData("Bob52", null, "github-33")]
+    [InlineData("Bob52", "", "github-33")]
+    [InlineData("Bob52", " ", "github-33")]
+    [InlineData("Bob52", "bob@example.com", null)]
+    [InlineData("Bob52", "bob@example.com", "")]
+    [InlineData("Bob52", "bob@example.com", " ")]
+    public async Task Execute_returns_error_for_user_with_unsupported_values(
+        string? name,
+        string? email,
+        string? subjectClaim
+    )
+    {
+        var claims = new List<Claim>();
+        if (name != null)
+        {
+            claims.Add(new(type: ClaimTypes.Name, value: name));
+        }
+        if (subjectClaim != null)
+        {
+            claims.Add(new(type: ClaimTypes.NameIdentifier, value: subjectClaim));
+        }
+        if (email != null)
+        {
+            claims.Add(new(type: ClaimTypes.Email, value: email));
+        }
+
+        var context = new TestContext().WithHttpContextIdentity(
+            new ClaimsIdentity(claims: claims, authenticationType: "GitHub")
+        );
+        var helper = context.BuildHelper();
+
+        var result = await helper.Execute(cancellationToken: CancellationToken.None);
+        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
+
+        errorResult.ShouldBe(ResolveUserError.MalformedUserClaims);
+
+        context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.VerifyNoOtherCalls();
     }
 
