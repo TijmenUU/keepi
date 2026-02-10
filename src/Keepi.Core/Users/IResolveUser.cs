@@ -25,4 +25,6 @@ public enum ResolveUserError
     UserNotAuthenticated,
     UserNotFound,
     UserRegistrationFailed,
+    UnexpectedLocalApplicationUser,
+    UnexpectedNonLocalApplicationUser,
 }

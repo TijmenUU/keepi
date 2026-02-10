@@ -26,4 +26,10 @@
     <PackageReference Include="HotAvalonia" Version="3.0.2" PrivateAssets="All" Publish="True" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- For Moq mocking -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+    <InternalsVisibleTo Include="Keepi.App.Unit.Tests" />
+  </ItemGroup>
 </Project>
