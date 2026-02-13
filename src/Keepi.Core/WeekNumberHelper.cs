@@ -1,8 +1,9 @@
 using System.Globalization;
 
-namespace Keepi.Core.Entries;
+namespace Keepi.Core;
 
-internal static class WeekNumberHelper
+
+public static class WeekNumberHelper
 {
     public static DateOnly[] WeekNumberToDates(int year, int number)
     {

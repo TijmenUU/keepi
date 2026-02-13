@@ -1,6 +1,4 @@
-using Keepi.Core.Entries;
-
-namespace Keepi.Core.Unit.Tests.Entries;
+namespace Keepi.Core.Unit.Tests;
 
 public class WeekNumberHelperTests
 {
