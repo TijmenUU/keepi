@@ -73,4 +73,62 @@ public class WeekNumberHelperTests
             }
         );
     }
+
+    [Fact]
+    public void GetCurrentWeek_returns_current_week()
+    {
+        var result = WeekNumberHelper.GetCurrentWeek();
+        result.Year.ShouldBe(DateTime.Today.Year);
+        result.Number.ShouldBeGreaterThan(0);
+        result.Number.ShouldBeLessThan(54);
+    }
+
+    [Theory]
+    [InlineData(2024, 1, 2024, 2)]
+    [InlineData(2024, 50, 2024, 51)]
+    [InlineData(2024, 52, 2025, 1)]
+    [InlineData(2026, 53, 2027, 1)]
+    public void GetNextWeek_returns_expected_week(
+        int inputYear,
+        int inputWeekNumber,
+        int expectedYear,
+        int expectedWeekNumber
+    )
+    {
+        var result = WeekNumberHelper.GetNextWeek(new(Year: inputYear, Number: inputWeekNumber));
+        result.ShouldBeEquivalentTo(new Week(Year: expectedYear, Number: expectedWeekNumber));
+    }
+
+    [Theory]
+    [InlineData(2024, 2, 2024, 1)]
+    [InlineData(2024, 51, 2024, 50)]
+    [InlineData(2025, 1, 2024, 52)]
+    [InlineData(2027, 1, 2026, 53)]
+    public void GetPreviousWeek_returns_expected_week(
+        int inputYear,
+        int inputWeekNumber,
+        int expectedYear,
+        int expectedWeekNumber
+    )
+    {
+        var result = WeekNumberHelper.GetPreviousWeek(
+            new(Year: inputYear, Number: inputWeekNumber)
+        );
+        result.ShouldBeEquivalentTo(new Week(Year: expectedYear, Number: expectedWeekNumber));
+    }
+
+    [Theory]
+    [InlineData("2024-02-29", 2024, 9)] // Leap year day
+    [InlineData("2024-12-30", 2025, 1)] // First week starts in previous year
+    [InlineData("2026-02-13", 2026, 7)] // Normal week
+    [InlineData("2027-01-01", 2026, 53)] // Last week overlaps with next year
+    public void GetWeekForDate_returns_expected_week(
+        string inputDate,
+        int expectedYear,
+        int expectedWeekNumber
+    )
+    {
+        var result = WeekNumberHelper.GetWeekForDate(DateOnly.Parse(inputDate));
+        result.ShouldBeEquivalentTo(new Week(Year: expectedYear, Number: expectedWeekNumber));
+    }
 }

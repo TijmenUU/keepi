@@ -1,71 +1,76 @@
 <Window
-    x:Class="Keepi.App.Views.MainWindow"
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="using:Keepi.App.ViewModels"
-    Title="Keepi.App"
-    Width="400"
-    Height="450"
-    x:DataType="vm:MainWindowViewModel"
-    Icon="/Assets/avalonia-logo.ico"
-    mc:Ignorable="d">
+x:Class="Keepi.App.Views.MainWindow"
+xmlns="https://github.com/avaloniaui"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:vm="using:Keepi.App.ViewModels"
+xmlns:dialogs="using:AvaloniaDialogs.Views"
+xmlns:models="using:Keepi.App.Models"
+xmlns:dataTemplates="using:Keepi.App.DataTemplates"
+Title="Keepi.App"
+Width="800"
+Height="600"
+x:DataType="vm:MainWindowViewModel"
+Icon="/Assets/avalonia-logo.ico"
+mc:Ignorable="d"
+XYFocus.NavigationModes="Enabled"
+XYFocus.UpNavigationStrategy="Projection"
+XYFocus.DownNavigationStrategy="Projection"
+XYFocus.LeftNavigationStrategy="Projection"
+XYFocus.RightNavigationStrategy="Projection">
 
-    <Design.DataContext>
-        <!--
-            This only sets the DataContext for the previewer in an IDE,
-            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
-        -->
-        <vm:MainWindowViewModel />
-    </Design.DataContext>
+    <dialogs:ReactiveDialogHost CloseOnClickAway="True" >
+        <StackPanel Margin="4">
+            <ContentControl Content="{Binding LoadingState}" Name="mainContent">
+                <ContentControl.ContentTemplate>
+                    <dataTemplates:LoadingStateTemplateSelector>
+                        <DataTemplate x:Key="Loading" DataType="dataTemplates:LoadingState">
+                            <ProgressBar VerticalAlignment="Center" IsIndeterminate="True" />
+                        </DataTemplate>
 
-    <StackPanel>
-        <Border
-            Margin="5"
-            Background="LightBlue"
-            CornerRadius="10">
-            <TextBlock
-                Margin="5"
-                HorizontalAlignment="Center"
-                FontSize="24"
-                Text="Temperature Converter" />
-        </Border>
+                        <DataTemplate x:Key="Crashed" DataType="dataTemplates:LoadingState">
+                            <TextBlock VerticalAlignment="Center" Text="Er is iets helemaal stuk gegaan." />
+                        </DataTemplate>
 
-        <Grid
-            Margin="5"
-            ColumnDefinitions="120, 100"
-            RowDefinitions="Auto, Auto"
-            ShowGridLines="False">
-            <TextBlock
-                Grid.Row="0"
-                Grid.Column="0"
-                Margin="10">
-                Celsius
-            </TextBlock>
-            <TextBox
-                Name="Celcius"
-                Grid.Row="0"
-                Grid.Column="1"
-                Margin="0,5"
-                Text="{Binding Celcius}" />
+                        <DataTemplate x:Key="Loaded" DataType="dataTemplates:LoadingState">
+                            <DockPanel>
+                                <TabControl
+                                Margin="0 16"
+                                TabStripPlacement="Top">
+                                    <TabItem Header="Invoer">
+                                        <StackPanel Orientation="Vertical" Spacing="8">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
+                                                <Button>Vorige week</Button>
+                                                <Button>Vandaag</Button>
+                                                <Button>Volgende week</Button>
+                                            </StackPanel>
 
-            <TextBlock
-                Grid.Row="1"
-                Grid.Column="0"
-                Margin="10">
-                Fahrenheit
-            </TextBlock>
-            <TextBox
-                Name="Fahrenheit"
-                Grid.Row="1"
-                Grid.Column="1"
-                Margin="0,5"
-                IsEnabled="False"
-                Text="{Binding Fahrenheit, Mode=OneWay}" />
-        </Grid>
+                                            <ContentControl x:DataType="vm:MainWindowViewModel" Content="{Binding #mainContent.DataContext.WeekInputGrid}" />
+                                        </StackPanel>
+                                    </TabItem>
 
-        <Button HorizontalAlignment="Center" Click="Button_OnClick">Calculate</Button>
-    </StackPanel>
+                                    <TabItem Header="Export">
+                                        <StackPanel Orientation="Vertical" Spacing="8">
+                                            <TextBlock>Exports enzo</TextBlock>
+                                        </StackPanel>
+                                    </TabItem>
 
+                                    <TabItem Header="Personalisatie">
+                                        <StackPanel Orientation="Vertical" Spacing="8">
+                                            <TextBlock>Kekke kleurtjes</TextBlock>
+                                        </StackPanel>
+                                    </TabItem>
+
+                                    <TabItem Header="Projecten">
+                                        <TextBlock>Configuratie van vanalles</TextBlock>
+                                    </TabItem>
+                                </TabControl>
+                            </DockPanel>
+                        </DataTemplate>
+                    </dataTemplates:LoadingStateTemplateSelector>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </StackPanel>
+    </dialogs:ReactiveDialogHost>
 </Window>

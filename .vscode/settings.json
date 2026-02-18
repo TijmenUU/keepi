@@ -15,4 +15,7 @@
     "editor.defaultFormatter": "dabbinavo.xamlstyler"
   },
   "avalonia.preview.autoOpen": false,
+  "[axaml]": {
+    "editor.defaultFormatter": "AvaloniaTeam.vscode-avalonia"
+  },
 }
