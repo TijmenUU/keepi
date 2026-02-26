@@ -16,11 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Shouldly" />
-    <Using Include="Xunit" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\src\Keepi.Web\Keepi.Web.csproj" />
   </ItemGroup>
 </Project>
