@@ -4,15 +4,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="FastEndpoints" Version="7.2.0" />
   </ItemGroup>
+
   <ItemGroup>
     <!-- For Moq mocking -->
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="Keepi.Api.Unit.Tests" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Keepi.Core\Keepi.Core.csproj" />
   </ItemGroup>

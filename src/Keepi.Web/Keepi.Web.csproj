@@ -5,11 +5,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>44a4bbde-dd34-4f40-a841-54f558250522</UserSecretsId>
   </PropertyGroup>
+
   <PropertyGroup>
     <SpaRoot>..\Keepi.Vue\</SpaRoot>
     <SpaClientUrl>http://localhost:5173</SpaClientUrl>
     <SpaLaunchCommand>bun run dev</SpaLaunchCommand>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="10.0.0" />
     <PackageReference Include="AspNetCore.SpaYarp" Version="2.0.1" />
@@ -24,19 +26,23 @@
       Version="1.15.0-beta.1"
     />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Keepi.Api\Keepi.Api.csproj" />
     <ProjectReference Include="..\Keepi.Infrastructure.Data\Keepi.Infrastructure.Data.csproj" />
     <ProjectReference Include="..\Keepi.Infrastructure.OpenTelemetry\Keepi.Infrastructure.OpenTelemetry.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <None Update="wwwroot\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Keepi.Web.Integration.Tests" />
   </ItemGroup>
+
   <Target Name="SpaBuild" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="bun ci" WorkingDirectory="../Keepi.Vue" />
     <Exec Command="bun run build" WorkingDirectory="../Keepi.Vue" />
