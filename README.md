@@ -8,6 +8,7 @@ Keepi is a practice project first and foremost. It was developed to get some pra
 - [SPA YARP proxy](https://github.com/berhir/AspNetCore.SpaYarp) to use the backend before frontend pattern even during development
 - The TypeScript [neverthrow library](https://github.com/supermacro/neverthrow) to avoid exceptions and use the result pattern instead
 - [Shadcn](https://www.shadcn-vue.com/) to build a modern Vue frontend without reinventing the wheel
+- [Roslyn code generation](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md) to generate repetitive test context code for unit test projects
 
 **Table of Contents**
 
@@ -20,6 +21,7 @@ Keepi is a practice project first and foremost. It was developed to get some pra
     - [Database migrations](#database-migrations)
     - [HTTPS certificate not trusted on Linux](#https-certificate-not-trusted-on-linux)
     - [EF Core exceptions](#ef-core-exceptions)
+    - [Test context code generation](#test-context-code-generation)
     - [Running Keepi Locally](#running-keepi-locally)
       - [Secrets](#secrets)
       - [Creating the database](#creating-the-database)
@@ -131,6 +133,10 @@ dotnet linux-dev-certs install
 ### EF Core exceptions
 
 By default the EF core exceptions are not exactly developer friendly, hence a third party strongly typed exceptions [package](https://github.com/Giorgi/EntityFramework.Exceptions) is used to make it easier to implement specific exception behaviour.
+
+### Test context code generation
+
+For the test context classes the code generator project [Keepi.Generators](tests/Keepi.Generators/Keepi.Generators.csproj) is used. To see the generated source files the property `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` can be added, as a child of a `PropertyGroup` element, to the csproj of any project using Keepi.Generators.
 
 ### Running Keepi Locally
 

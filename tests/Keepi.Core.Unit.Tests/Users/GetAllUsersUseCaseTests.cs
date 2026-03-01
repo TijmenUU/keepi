@@ -1,5 +1,6 @@
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Users;
 
@@ -8,7 +9,7 @@ public class GetAllUsersUseCaseTests
     [Fact]
     public async Task Execute_returns_projects()
     {
-        var context = new TestContext()
+        var context = new GetAllUsersUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUsersResult(
                 new GetUsersResultUser(
@@ -33,7 +34,7 @@ public class GetAllUsersUseCaseTests
                 )
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
@@ -113,7 +114,7 @@ public class GetAllUsersUseCaseTests
         UserPermission usersPermission
     )
     {
-        var context = new TestContext()
+        var context = new GetAllUsersUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUsersResult(
                 new GetUsersResultUser(
@@ -128,9 +129,7 @@ public class GetAllUsersUseCaseTests
                 )
             );
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
@@ -159,11 +158,11 @@ public class GetAllUsersUseCaseTests
         GetAllUsersUseCaseError expectedError
     )
     {
-        var context = new TestContext()
+        var context = new GetAllUsersUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUsersResult(repositoryError);
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -186,11 +185,9 @@ public class GetAllUsersUseCaseTests
         GetAllUsersUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new GetAllUsersUseCaseTestContext().WithResolveUserError(resolveUserError);
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
@@ -199,70 +196,57 @@ public class GetAllUsersUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new GetAllUsersUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithUsersPermission(UserPermission.None)
                 .Build()
         );
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(GetAllUsersUseCaseError.UnauthorizedUser);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(GetAllUsersUseCase))]
+internal partial class GetAllUsersUseCaseTestContext
+{
+    public GetAllUsersUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IGetUsers> GetUsersMock { get; } = new(MockBehavior.Strict);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+        return this;
+    }
 
-            return this;
-        }
+    public GetAllUsersUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+        return this;
+    }
 
-            return this;
-        }
+    public GetAllUsersUseCaseTestContext WithUsersResult(params GetUsersResultUser[] users)
+    {
+        GetUsersMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                Result.Success<GetUsersResult, GetUsersError>(new GetUsersResult(Users: users))
+            );
 
-        public TestContext WithUsersResult(params GetUsersResultUser[] users)
-        {
-            GetUsersMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(
-                    Result.Success<GetUsersResult, GetUsersError>(new GetUsersResult(Users: users))
-                );
+        return this;
+    }
 
-            return this;
-        }
+    public GetAllUsersUseCaseTestContext WithUsersResult(GetUsersError error)
+    {
+        GetUsersMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<GetUsersResult, GetUsersError>(error));
 
-        public TestContext WithUsersResult(GetUsersError error)
-        {
-            GetUsersMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<GetUsersResult, GetUsersError>(error));
-
-            return this;
-        }
-
-        public GetAllUsersUseCase BuildUseCase() =>
-            new(resolveUser: ResolveUserMock.Object, getUsers: GetUsersMock.Object);
-
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-            GetUsersMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

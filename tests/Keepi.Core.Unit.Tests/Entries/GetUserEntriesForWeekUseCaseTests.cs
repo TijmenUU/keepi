@@ -1,7 +1,7 @@
 using Keepi.Core.Entries;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Entries;
 
@@ -10,7 +10,7 @@ public class GetUserEntriesForWeekUseCaseTests
     [Fact]
     public async Task Execute_stores_expected_entities()
     {
-        var context = new TestContext()
+        var context = new GetUserEntriesForWeekUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetUserEntriesForDatesSuccessResult(
                 new GetUserEntriesForDatesResultEntry(
@@ -44,7 +44,7 @@ public class GetUserEntriesForWeekUseCaseTests
             );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
@@ -119,12 +119,12 @@ public class GetUserEntriesForWeekUseCaseTests
     [Fact]
     public async Task Execute_returns_unknown_get_user_entries_error()
     {
-        var context = new TestContext()
+        var context = new GetUserEntriesForWeekUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetUserEntriesForDatesFailureResult(GetUserEntriesForDatesError.Unknown);
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -148,10 +148,12 @@ public class GetUserEntriesForWeekUseCaseTests
         GetUserEntriesForWeekUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new GetUserEntriesForWeekUseCaseTestContext().WithResolveUserError(
+            resolveUserError
+        );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -161,7 +163,7 @@ public class GetUserEntriesForWeekUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new GetUserEntriesForWeekUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(UserPermission.None)
@@ -169,94 +171,64 @@ public class GetUserEntriesForWeekUseCaseTests
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(GetUserEntriesForWeekUseCaseError.UnauthorizedUser);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(GetUserEntriesForWeekUseCase))]
+internal partial class GetUserEntriesForWeekUseCaseTestContext
+{
+    public GetUserEntriesForWeekUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public Mock<IGetUserEntriesForDates> GetUserEntriesForDatesMock { get; } =
-            new(MockBehavior.Strict);
+        return this;
+    }
 
-        public Mock<ILogger<GetUserEntriesForWeekUseCase>> LoggerMock { get; } =
-            new(MockBehavior.Loose);
+    public GetUserEntriesForWeekUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+        return this;
+    }
 
-            return this;
-        }
-
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-            return this;
-        }
-
-        public TestContext WithGetUserEntriesForDatesSuccessResult(
-            params GetUserEntriesForDatesResultEntry[] entities
-        )
-        {
-            GetUserEntriesForDatesMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<int>(),
-                        It.IsAny<DateOnly[]>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesSuccessResult(
+        params GetUserEntriesForDatesResultEntry[] entities
+    )
+    {
+        GetUserEntriesForDatesMock
+            .Setup(x =>
+                x.Execute(It.IsAny<int>(), It.IsAny<DateOnly[]>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                Result.Success<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
+                    new(Entries: entities)
                 )
-                .ReturnsAsync(
-                    Result.Success<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
-                        new(Entries: entities)
-                    )
-                );
-
-            return this;
-        }
-
-        public TestContext WithGetUserEntriesForDatesFailureResult(
-            GetUserEntriesForDatesError result
-        )
-        {
-            GetUserEntriesForDatesMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<int>(),
-                        It.IsAny<DateOnly[]>(),
-                        It.IsAny<CancellationToken>()
-                    )
-                )
-                .ReturnsAsync(
-                    Result.Failure<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
-                        result
-                    )
-                );
-
-            return this;
-        }
-
-        public GetUserEntriesForWeekUseCase BuildUseCase() =>
-            new(
-                resolveUser: ResolveUserMock.Object,
-                getUserEntriesForDates: GetUserEntriesForDatesMock.Object,
-                logger: LoggerMock.Object
             );
 
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-            GetUserEntriesForDatesMock.VerifyNoOtherCalls();
-        }
+        return this;
+    }
+
+    public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesFailureResult(
+        GetUserEntriesForDatesError result
+    )
+    {
+        GetUserEntriesForDatesMock
+            .Setup(x =>
+                x.Execute(It.IsAny<int>(), It.IsAny<DateOnly[]>(), It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(
+                Result.Failure<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(result)
+            );
+
+        return this;
     }
 }

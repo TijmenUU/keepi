@@ -1,7 +1,7 @@
 using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Projects;
 
@@ -10,12 +10,12 @@ public class CreateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_created_project_ID()
     {
-        var context = new TestContext()
+        var context = new CreateProjectUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithSaveNewProjectSuccessResult(1);
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -46,12 +46,12 @@ public class CreateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_project_name(string projectName)
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new CreateProjectUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: projectName,
                 enabled: true,
@@ -67,12 +67,12 @@ public class CreateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_user_ids()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new CreateProjectUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -91,12 +91,12 @@ public class CreateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_invoice_item_name(string invoiceItemName)
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new CreateProjectUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -112,12 +112,12 @@ public class CreateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_invoice_item_names()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new CreateProjectUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -142,12 +142,12 @@ public class CreateProjectUseCaseTests
         CreateProjectUseCaseError expectedError
     )
     {
-        var context = new TestContext()
+        var context = new CreateProjectUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithSaveNewProjectFailureResult(saveError);
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -174,10 +174,10 @@ public class CreateProjectUseCaseTests
         CreateProjectUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new CreateProjectUseCaseTestContext().WithResolveUserError(resolveUserError);
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -195,7 +195,7 @@ public class CreateProjectUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission projectsPermission)
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new CreateProjectUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithProjectsPermission(projectsPermission)
@@ -203,7 +203,7 @@ public class CreateProjectUseCaseTests
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 name: "Algemeen",
                 enabled: true,
@@ -214,76 +214,62 @@ public class CreateProjectUseCaseTests
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(CreateProjectUseCaseError.UnauthorizedUser);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(CreateProjectUseCase))]
+internal partial class CreateProjectUseCaseTestContext
+{
+    public CreateProjectUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<ISaveNewProject> SaveNewProjectMock { get; } = new(MockBehavior.Strict);
-        public Mock<ILogger<CreateProjectUseCase>> LoggerMock { get; } = new(MockBehavior.Loose);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+        return this;
+    }
 
-            return this;
-        }
+    public CreateProjectUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+        return this;
+    }
 
-            return this;
-        }
-
-        public TestContext WithSaveNewProjectSuccessResult(int result)
-        {
-            SaveNewProjectMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<bool>(),
-                        It.IsAny<int[]>(),
-                        It.IsAny<string[]>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public CreateProjectUseCaseTestContext WithSaveNewProjectSuccessResult(int result)
+    {
+        SaveNewProjectMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<int[]>(),
+                    It.IsAny<string[]>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Success<int, SaveNewProjectError>(result));
+            )
+            .ReturnsAsync(Result.Success<int, SaveNewProjectError>(result));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithSaveNewProjectFailureResult(SaveNewProjectError result)
-        {
-            SaveNewProjectMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<bool>(),
-                        It.IsAny<int[]>(),
-                        It.IsAny<string[]>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public CreateProjectUseCaseTestContext WithSaveNewProjectFailureResult(
+        SaveNewProjectError result
+    )
+    {
+        SaveNewProjectMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<int[]>(),
+                    It.IsAny<string[]>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Failure<int, SaveNewProjectError>(result));
+            )
+            .ReturnsAsync(Result.Failure<int, SaveNewProjectError>(result));
 
-            return this;
-        }
-
-        public CreateProjectUseCase BuildUseCase() =>
-            new(
-                resolveUser: ResolveUserMock.Object,
-                saveNewProject: SaveNewProjectMock.Object,
-                logger: LoggerMock.Object
-            );
-
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-            SaveNewProjectMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

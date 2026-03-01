@@ -1,5 +1,6 @@
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Users;
 
@@ -8,13 +9,11 @@ public class GetUserUseCaseTests
     [Fact]
     public async Task Execute_returns_expected_user()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new GetUserUseCaseTestContext().WithResolvedUser(
             ResolvedUserBuilder.CreateAdministratorBob()
         );
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
@@ -72,7 +71,7 @@ public class GetUserUseCaseTests
         UserPermission usersPermission
     )
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new GetUserUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(entriesPermission)
@@ -82,9 +81,7 @@ public class GetUserUseCaseTests
                 .Build()
         );
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
@@ -111,43 +108,33 @@ public class GetUserUseCaseTests
         GetUserUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new GetUserUseCaseTestContext().WithResolveUserError(resolveUserError);
 
-        var result = await context
-            .BuildUseCase()
-            .Execute(cancellationToken: CancellationToken.None);
+        var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(GetUserUseCase))]
+internal partial class GetUserUseCaseTestContext
+{
+    public GetUserUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+        return this;
+    }
 
-            return this;
-        }
+    public GetUserUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-            return this;
-        }
-
-        public GetUserUseCase BuildUseCase() => new(resolveUser: ResolveUserMock.Object);
-
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

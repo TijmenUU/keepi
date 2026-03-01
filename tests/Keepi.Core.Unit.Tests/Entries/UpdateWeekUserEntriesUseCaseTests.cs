@@ -3,7 +3,7 @@ using Keepi.Core.Entries;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Entries;
 
@@ -12,7 +12,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_stores_expected_entities()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -49,7 +49,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
             .WithSaveUserEntriesResult(Result.Success<SaveUserEntriesError>());
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -146,7 +146,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_only_deleted_enabled_projects()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -183,7 +183,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
             .WithSaveUserEntriesResult(Result.Success<SaveUserEntriesError>());
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -224,7 +224,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_non_existing_invoice_item()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -248,7 +248,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -283,7 +283,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_disabled_project()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -307,7 +307,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -342,7 +342,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_invalid_minutes()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -366,7 +366,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -401,7 +401,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_invalid_remark()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -425,7 +425,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 )
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -462,11 +462,11 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_unknown_get_user_projects_error()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsFailureResult(GetUserProjectsError.Unknown);
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -499,7 +499,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_delete_user_entries_error()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -526,7 +526,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                 Result.Failure(DeleteUserEntriesForDateRangeError.Unknown)
             );
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -559,7 +559,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_save_user_entries_error()
     {
-        var context = new TestContext()
+        var context = new UpdateWeekUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithUserProjectsSuccessResult(
                 new(
@@ -585,7 +585,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .WithDeleteUserEntriesResult(Result.Success<DeleteUserEntriesForDateRangeError>())
             .WithSaveUserEntriesResult(Result.Failure(SaveUserEntriesError.Unknown));
 
-        var useCase = context.BuildUseCase();
+        var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
             year: 2025,
@@ -632,10 +632,12 @@ public class UpdateWeekUserEntriesUseCaseTests
         UpdateWeekUserEntriesUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new UpdateWeekUserEntriesUseCaseTestContext().WithResolveUserError(
+            resolveUserError
+        );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 year: 2025,
                 weekNumber: 25,
@@ -660,7 +662,7 @@ public class UpdateWeekUserEntriesUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission entriesPermission)
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new UpdateWeekUserEntriesUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(entriesPermission)
@@ -668,7 +670,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 year: 2025,
                 weekNumber: 25,
@@ -686,95 +688,75 @@ public class UpdateWeekUserEntriesUseCaseTests
         result.TrySuccess(out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.UnauthorizedUser);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(UpdateWeekUserEntriesUseCase))]
+internal partial class UpdateWeekUserEntriesUseCaseTestContext
+{
+    public UpdateWeekUserEntriesUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IGetUserProjects> GetUserProjectsMock { get; } = new(MockBehavior.Strict);
-        public Mock<IDeleteUserEntriesForDateRange> DeleteUserEntriesForDateRangeMock { get; } =
-            new(MockBehavior.Strict);
-        public Mock<ISaveUserEntries> SaveUserEntriesMock { get; } = new(MockBehavior.Strict);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public Mock<ILogger<UpdateWeekUserEntriesUseCase>> LoggerMock = new(MockBehavior.Loose);
+        return this;
+    }
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+    public UpdateWeekUserEntriesUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+    public UpdateWeekUserEntriesUseCaseTestContext WithUserProjectsSuccessResult(
+        GetUserProjectResult result
+    )
+    {
+        GetUserProjectsMock
+            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<GetUserProjectResult, GetUserProjectsError>(result));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithUserProjectsSuccessResult(GetUserProjectResult result)
-        {
-            GetUserProjectsMock
-                .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<GetUserProjectResult, GetUserProjectsError>(result));
+    public UpdateWeekUserEntriesUseCaseTestContext WithUserProjectsFailureResult(
+        GetUserProjectsError result
+    )
+    {
+        GetUserProjectsMock
+            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<GetUserProjectResult, GetUserProjectsError>(result));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithUserProjectsFailureResult(GetUserProjectsError result)
-        {
-            GetUserProjectsMock
-                .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<GetUserProjectResult, GetUserProjectsError>(result));
-
-            return this;
-        }
-
-        public TestContext WithDeleteUserEntriesResult(
-            IMaybeErrorResult<DeleteUserEntriesForDateRangeError> result
-        )
-        {
-            DeleteUserEntriesForDateRangeMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<DeleteUserEntriesForDateRangeInput>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public UpdateWeekUserEntriesUseCaseTestContext WithDeleteUserEntriesResult(
+        IMaybeErrorResult<DeleteUserEntriesForDateRangeError> result
+    )
+    {
+        DeleteUserEntriesForDateRangeMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<DeleteUserEntriesForDateRangeInput>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(result);
+            )
+            .ReturnsAsync(result);
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithSaveUserEntriesResult(IMaybeErrorResult<SaveUserEntriesError> result)
-        {
-            SaveUserEntriesMock
-                .Setup(x =>
-                    x.Execute(It.IsAny<SaveUserEntriesInput>(), It.IsAny<CancellationToken>())
-                )
-                .ReturnsAsync(result);
+    public UpdateWeekUserEntriesUseCaseTestContext WithSaveUserEntriesResult(
+        IMaybeErrorResult<SaveUserEntriesError> result
+    )
+    {
+        SaveUserEntriesMock
+            .Setup(x => x.Execute(It.IsAny<SaveUserEntriesInput>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(result);
 
-            return this;
-        }
-
-        public UpdateWeekUserEntriesUseCase BuildUseCase() =>
-            new(
-                resolveUser: ResolveUserMock.Object,
-                getUserProjects: GetUserProjectsMock.Object,
-                deleteUserEntriesForDateRange: DeleteUserEntriesForDateRangeMock.Object,
-                saveUserEntries: SaveUserEntriesMock.Object,
-                logger: LoggerMock.Object
-            );
-
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-            GetUserProjectsMock.VerifyNoOtherCalls();
-            DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
-            SaveUserEntriesMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

@@ -1,6 +1,7 @@
 using Keepi.Core.Exports;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Exports;
 
@@ -9,7 +10,7 @@ public class ExportUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_expected_entries()
     {
-        var context = new TestContext()
+        var context = new ExportUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
@@ -39,7 +40,7 @@ public class ExportUserEntriesUseCaseTests
             );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 start: new DateOnly(2025, 6, 22),
                 stop: new DateOnly(2025, 6, 23),
@@ -82,7 +83,7 @@ public class ExportUserEntriesUseCaseTests
             );
 
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
-        context.GetExportUserEntriesStreamMock.Verify(x =>
+        context.GetExportUserEntriesMock.Verify(x =>
             x.Execute(
                 new DateOnly(2025, 6, 22),
                 new DateOnly(2025, 6, 23),
@@ -95,7 +96,7 @@ public class ExportUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_start_date_greater_than_stop_date()
     {
-        var context = new TestContext()
+        var context = new ExportUserEntriesUseCaseTestContext()
             .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
@@ -125,7 +126,7 @@ public class ExportUserEntriesUseCaseTests
             );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 start: new DateOnly(2025, 6, 24),
                 stop: new DateOnly(2025, 6, 23),
@@ -152,10 +153,12 @@ public class ExportUserEntriesUseCaseTests
         ExportUserEntriesUseCaseError expectedError
     )
     {
-        var context = new TestContext().WithResolveUserError(resolveUserError);
+        var context = new ExportUserEntriesUseCaseTestContext().WithResolveUserError(
+            resolveUserError
+        );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 start: new DateOnly(2025, 6, 24),
                 stop: new DateOnly(2025, 6, 23),
@@ -168,7 +171,7 @@ public class ExportUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new TestContext().WithResolvedUser(
+        var context = new ExportUserEntriesUseCaseTestContext().WithResolvedUser(
             user: ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithExportsPermission(UserPermission.None)
@@ -176,7 +179,7 @@ public class ExportUserEntriesUseCaseTests
         );
 
         var result = await context
-            .BuildUseCase()
+            .BuildTarget()
             .Execute(
                 start: new DateOnly(2025, 6, 24),
                 stop: new DateOnly(2025, 6, 23),
@@ -185,56 +188,37 @@ public class ExportUserEntriesUseCaseTests
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(ExportUserEntriesUseCaseError.UnauthorizedUser);
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(ExportUserEntriesUseCase))]
+internal partial class ExportUserEntriesUseCaseTestContext
+{
+    public ExportUserEntriesUseCaseTestContext WithResolvedUser(ResolvedUser user)
     {
-        public Mock<IResolveUser> ResolveUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IGetExportUserEntries> GetExportUserEntriesStreamMock { get; } =
-            new(MockBehavior.Strict);
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
 
-        public TestContext WithResolvedUser(ResolvedUser user)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
+        return this;
+    }
 
-            return this;
-        }
+    public ExportUserEntriesUseCaseTestContext WithResolveUserError(ResolveUserError error)
+    {
+        ResolveUserMock
+            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
 
-        public TestContext WithResolveUserError(ResolveUserError error)
-        {
-            ResolveUserMock
-                .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
+        return this;
+    }
 
-            return this;
-        }
+    public ExportUserEntriesUseCaseTestContext WithExportEntries(params ExportUserEntry[] entries)
+    {
+        GetExportUserEntriesMock
+            .Setup(x =>
+                x.Execute(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>())
+            )
+            .Returns(entries.ToAsyncEnumerable());
 
-        public TestContext WithExportEntries(params ExportUserEntry[] entries)
-        {
-            GetExportUserEntriesStreamMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<DateOnly>(),
-                        It.IsAny<DateOnly>(),
-                        It.IsAny<CancellationToken>()
-                    )
-                )
-                .Returns(entries.ToAsyncEnumerable());
-
-            return this;
-        }
-
-        public ExportUserEntriesUseCase BuildUseCase() =>
-            new(
-                resolveUser: ResolveUserMock.Object,
-                getExportUserEntries: GetExportUserEntriesStreamMock.Object
-            );
-
-        public void VerifyNoOtherCalls()
-        {
-            ResolveUserMock.VerifyNoOtherCalls();
-            GetExportUserEntriesStreamMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

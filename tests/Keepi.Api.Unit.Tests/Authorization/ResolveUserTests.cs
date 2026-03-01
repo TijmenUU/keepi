@@ -2,8 +2,8 @@ using System.Security.Claims;
 using Keepi.Api.Authorization;
 using Keepi.Core;
 using Keepi.Core.Users;
+using Keepi.Generators;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace Keepi.Api.Unit.Tests.Authorization;
 
@@ -12,7 +12,7 @@ public class ResolveUserTests
     [Fact]
     public async Task Execute_returns_expected_user_for_existing_user()
     {
-        var context = new TestContext()
+        var context = new ResolveUserTestContext()
             .WithExistingUser(
                 id: 42,
                 name: "Bob52",
@@ -33,7 +33,7 @@ public class ResolveUserTests
                     authenticationType: "GitHub"
                 )
             );
-        var helper = context.BuildHelper();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
@@ -66,7 +66,7 @@ public class ResolveUserTests
     [Fact]
     public async Task Execute_returns_newly_registered_user_for_new_user()
     {
-        var context = new TestContext()
+        var context = new ResolveUserTestContext()
             .WithNewlyRegisteredUser(
                 id: 42,
                 name: "Bob52",
@@ -87,7 +87,7 @@ public class ResolveUserTests
                     authenticationType: "GitHub"
                 )
             );
-        var helper = context.BuildHelper();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
@@ -159,7 +159,7 @@ public class ResolveUserTests
         UserPermission usersPermission
     )
     {
-        var context = new TestContext()
+        var context = new ResolveUserTestContext()
             .WithExistingUser(
                 id: 42,
                 name: "Bob52",
@@ -180,7 +180,7 @@ public class ResolveUserTests
                     authenticationType: "GitHub"
                 )
             );
-        var helper = context.BuildHelper();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
@@ -213,7 +213,7 @@ public class ResolveUserTests
     [Fact]
     public async Task Execute_returns_error_for_user_from_unsupported_identity_provider()
     {
-        var context = new TestContext().WithHttpContextIdentity(
+        var context = new ResolveUserTestContext().WithHttpContextIdentity(
             new ClaimsIdentity(
                 claims:
                 [
@@ -224,7 +224,7 @@ public class ResolveUserTests
                 authenticationType: "Microsoft"
             )
         );
-        var helper = context.BuildHelper();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -238,8 +238,8 @@ public class ResolveUserTests
     [Fact]
     public async Task Execute_returns_error_for_unauthenticated_user()
     {
-        var context = new TestContext().WithoutHttpContextIdentity();
-        var helper = context.BuildHelper();
+        var context = new ResolveUserTestContext().WithoutHttpContextIdentity();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -280,10 +280,10 @@ public class ResolveUserTests
             claims.Add(new(type: ClaimTypes.Email, value: email));
         }
 
-        var context = new TestContext().WithHttpContextIdentity(
+        var context = new ResolveUserTestContext().WithHttpContextIdentity(
             new ClaimsIdentity(claims: claims, authenticationType: "GitHub")
         );
-        var helper = context.BuildHelper();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(cancellationToken: CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
@@ -305,7 +305,7 @@ public class ResolveUserTests
         ResolveUserError expectedError
     )
     {
-        var context = new TestContext()
+        var context = new ResolveUserTestContext()
             .WithGetOrRegisterNewUserUseCaseError(useCaseError)
             .WithHttpContextIdentity(
                 new ClaimsIdentity(
@@ -319,7 +319,7 @@ public class ResolveUserTests
                 )
             );
 
-        var result = await context.BuildHelper().Execute(CancellationToken.None);
+        var result = await context.BuildTarget().Execute(CancellationToken.None);
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
 
         errorResult.ShouldBe(expectedError);
@@ -336,147 +336,127 @@ public class ResolveUserTests
         );
         context.VerifyNoOtherCalls();
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(ResolveUser))]
+internal partial class ResolveUserTestContext
+{
+    public ResolveUserTestContext WithHttpContextIdentity(ClaimsIdentity identity)
     {
-        public Mock<IHttpContextAccessor> HttpContextAccessorMock { get; } =
-            new(MockBehavior.Strict);
-        public Mock<IGetOrRegisterNewUserUseCase> GetOrRegisterNewUserUseCaseMock { get; } =
-            new(MockBehavior.Strict);
-        public Mock<ILogger<ResolveUser>> LoggerMock { get; } = new(MockBehavior.Strict);
+        HttpContextAccessorMock
+            .Setup(x => x.HttpContext)
+            .Returns(new DefaultHttpContext() { User = new ClaimsPrincipal(identity: identity) });
 
-        public TestContext WithHttpContextIdentity(ClaimsIdentity identity)
-        {
-            HttpContextAccessorMock
-                .Setup(x => x.HttpContext)
-                .Returns(
-                    new DefaultHttpContext() { User = new ClaimsPrincipal(identity: identity) }
-                );
+        return this;
+    }
 
-            return this;
-        }
+    public ResolveUserTestContext WithoutHttpContextIdentity()
+    {
+        HttpContextAccessorMock.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
 
-        public TestContext WithoutHttpContextIdentity()
-        {
-            HttpContextAccessorMock.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
+        return this;
+    }
 
-            return this;
-        }
+    public ResolveUserTestContext WithExistingUser(
+        int id,
+        string name,
+        string emailAddress,
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission
+    )
+    {
+        return WithGetOrRegisterNewUserUseCaseSuccess(
+            id: id,
+            name: name,
+            emailAddress: emailAddress,
+            entriesPermission: entriesPermission,
+            exportsPermission: exportsPermission,
+            projectsPermission: projectsPermission,
+            usersPermission: usersPermission,
+            newlyRegistered: false
+        );
+    }
 
-        public TestContext WithExistingUser(
-            int id,
-            string name,
-            string emailAddress,
-            UserPermission entriesPermission,
-            UserPermission exportsPermission,
-            UserPermission projectsPermission,
-            UserPermission usersPermission
-        )
-        {
-            return WithGetOrRegisterNewUserUseCaseSuccess(
-                id: id,
-                name: name,
-                emailAddress: emailAddress,
-                entriesPermission: entriesPermission,
-                exportsPermission: exportsPermission,
-                projectsPermission: projectsPermission,
-                usersPermission: usersPermission,
-                newlyRegistered: false
-            );
-        }
+    public ResolveUserTestContext WithNewlyRegisteredUser(
+        int id,
+        string name,
+        string emailAddress,
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission
+    )
+    {
+        return WithGetOrRegisterNewUserUseCaseSuccess(
+            id: id,
+            name: name,
+            emailAddress: emailAddress,
+            entriesPermission: entriesPermission,
+            exportsPermission: exportsPermission,
+            projectsPermission: projectsPermission,
+            usersPermission: usersPermission,
+            newlyRegistered: true
+        );
+    }
 
-        public TestContext WithNewlyRegisteredUser(
-            int id,
-            string name,
-            string emailAddress,
-            UserPermission entriesPermission,
-            UserPermission exportsPermission,
-            UserPermission projectsPermission,
-            UserPermission usersPermission
-        )
-        {
-            return WithGetOrRegisterNewUserUseCaseSuccess(
-                id: id,
-                name: name,
-                emailAddress: emailAddress,
-                entriesPermission: entriesPermission,
-                exportsPermission: exportsPermission,
-                projectsPermission: projectsPermission,
-                usersPermission: usersPermission,
-                newlyRegistered: true
-            );
-        }
-
-        private TestContext WithGetOrRegisterNewUserUseCaseSuccess(
-            int id,
-            string name,
-            string emailAddress,
-            UserPermission entriesPermission,
-            UserPermission exportsPermission,
-            UserPermission projectsPermission,
-            UserPermission usersPermission,
-            bool newlyRegistered
-        ) =>
-            WithGetOrRegisterNewUserUseCaseResult(
-                Result.Success<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
-                    new GetOrRegisterNewUserUseCaseOutput(
-                        User: new(
-                            Id: id,
-                            Name: name,
-                            EmailAddress: emailAddress,
-                            IdentityOrigin: UserIdentityProvider.GitHub,
-                            EntriesPermission: entriesPermission,
-                            ExportsPermission: exportsPermission,
-                            ProjectsPermission: projectsPermission,
-                            UsersPermission: usersPermission
-                        ),
-                        NewlyRegistered: newlyRegistered
-                    )
+    private ResolveUserTestContext WithGetOrRegisterNewUserUseCaseSuccess(
+        int id,
+        string name,
+        string emailAddress,
+        UserPermission entriesPermission,
+        UserPermission exportsPermission,
+        UserPermission projectsPermission,
+        UserPermission usersPermission,
+        bool newlyRegistered
+    ) =>
+        WithGetOrRegisterNewUserUseCaseResult(
+            Result.Success<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
+                new GetOrRegisterNewUserUseCaseOutput(
+                    User: new(
+                        Id: id,
+                        Name: name,
+                        EmailAddress: emailAddress,
+                        IdentityOrigin: UserIdentityProvider.GitHub,
+                        EntriesPermission: entriesPermission,
+                        ExportsPermission: exportsPermission,
+                        ProjectsPermission: projectsPermission,
+                        UsersPermission: usersPermission
+                    ),
+                    NewlyRegistered: newlyRegistered
                 )
-            );
+            )
+        );
 
-        public TestContext WithGetOrRegisterNewUserUseCaseError(
-            GetOrRegisterNewUserUseCaseError error
-        ) =>
-            WithGetOrRegisterNewUserUseCaseResult(
-                Result.Failure<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
-                    error
+    public ResolveUserTestContext WithGetOrRegisterNewUserUseCaseError(
+        GetOrRegisterNewUserUseCaseError error
+    ) =>
+        WithGetOrRegisterNewUserUseCaseResult(
+            Result.Failure<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
+                error
+            )
+        );
+
+    private ResolveUserTestContext WithGetOrRegisterNewUserUseCaseResult(
+        IValueOrErrorResult<
+            GetOrRegisterNewUserUseCaseOutput,
+            GetOrRegisterNewUserUseCaseError
+        > result
+    )
+    {
+        GetOrRegisterNewUserUseCaseMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<CancellationToken>()
                 )
-            );
+            )
+            .ReturnsAsync(result);
 
-        private TestContext WithGetOrRegisterNewUserUseCaseResult(
-            IValueOrErrorResult<
-                GetOrRegisterNewUserUseCaseOutput,
-                GetOrRegisterNewUserUseCaseError
-            > result
-        )
-        {
-            GetOrRegisterNewUserUseCaseMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<CancellationToken>()
-                    )
-                )
-                .ReturnsAsync(result);
-
-            return this;
-        }
-
-        public ResolveUser BuildHelper() =>
-            new(
-                httpContextAccessor: HttpContextAccessorMock.Object,
-                getOrRegisterNewUserUseCase: GetOrRegisterNewUserUseCaseMock.Object,
-                logger: LoggerMock.Object
-            );
-
-        public void VerifyNoOtherCalls()
-        {
-            HttpContextAccessorMock.VerifyNoOtherCalls();
-            GetOrRegisterNewUserUseCaseMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }

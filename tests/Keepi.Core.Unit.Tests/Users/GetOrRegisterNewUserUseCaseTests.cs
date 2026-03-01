@@ -1,5 +1,5 @@
 using Keepi.Core.Users;
-using Microsoft.Extensions.Logging;
+using Keepi.Generators;
 
 namespace Keepi.Core.Unit.Tests.Users;
 
@@ -8,7 +8,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_returns_user_if_it_already_exists()
     {
-        var context = new TestContext().WithFirstGetUserResult(
+        var context = new GetOrRegisterNewUserUseCaseTestContext().WithFirstGetUserResult(
             new GetUserResult(
                 Id: 42,
                 Name: "Bob",
@@ -20,7 +20,7 @@ public class GetOrRegisterNewUserUseCaseTests
                 UsersPermission: UserPermission.ReadAndModify
             )
         );
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -56,7 +56,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_registers_user_as_first_admin_if_it_does_not_yet_exist()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
@@ -74,7 +74,7 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -136,7 +136,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_registers_user_as_normal_user_if_and_admin_already_exists()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
@@ -153,7 +153,7 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithUserWithPermissionsExistSuccess(result: true)
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -218,7 +218,7 @@ public class GetOrRegisterNewUserUseCaseTests
         GetFirstAdminUserEmailAddressError error
     )
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
@@ -236,7 +236,7 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithGetFirstAdminUserEmailAddressFailure(error)
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -298,7 +298,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_updates_user_if_the_name_changed()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserResult(
                 new GetUserResult(
                     Id: 42,
@@ -312,7 +312,7 @@ public class GetOrRegisterNewUserUseCaseTests
                 )
             )
             .WithUserUpdateSuccess();
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -351,7 +351,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_updates_user_if_the_email_address_changed()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserResult(
                 new GetUserResult(
                     Id: 42,
@@ -365,7 +365,7 @@ public class GetOrRegisterNewUserUseCaseTests
                 )
             )
             .WithUserUpdateSuccess();
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -404,7 +404,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_logs_user_update_failure_and_returns_non_updated_values()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserResult(
                 new GetUserResult(
                     Id: 42,
@@ -418,7 +418,7 @@ public class GetOrRegisterNewUserUseCaseTests
                 )
             )
             .WithUserUpdateFailure();
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -460,9 +460,11 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unknown_user_retrieval_failure()
     {
-        var context = new TestContext().WithFirstGetUserError(GetUserError.Unknown);
+        var context = new GetOrRegisterNewUserUseCaseTestContext().WithFirstGetUserError(
+            GetUserError.Unknown
+        );
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -486,7 +488,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [InlineData(SaveNewUserError.DuplicateUser)]
     public async Task Execute_returns_error_for_user_registration_failure(SaveNewUserError error)
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
@@ -504,7 +506,7 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Failure(error));
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -553,7 +555,7 @@ public class GetOrRegisterNewUserUseCaseTests
         GetUserError secondGetUserErrror
     )
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondError(
                 firstError: GetUserError.DoesNotExist,
                 secondError: secondGetUserErrror
@@ -562,7 +564,7 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
             .WithSaveNewUserResult(Result.Success<SaveNewUserError>());
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -610,7 +612,7 @@ public class GetOrRegisterNewUserUseCaseTests
     [Fact]
     public async Task Execute_returns_error_if_admin_user_exists_check_fails()
     {
-        var context = new TestContext()
+        var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
@@ -626,7 +628,7 @@ public class GetOrRegisterNewUserUseCaseTests
             )
             .WithUserWithPermissionsExistFailure(UserWithPermissionsExistsError.Unknown);
 
-        var helper = context.BuildUseCase();
+        var helper = context.BuildTarget();
 
         var result = await helper.Execute(
             externalId: "github-33",
@@ -656,199 +658,179 @@ public class GetOrRegisterNewUserUseCaseTests
         );
         context.VerifyNoOtherCalls();
     }
+}
 
-    private class TestContext
+[GenerateTestContext(TargetType = typeof(GetOrRegisterNewUserUseCase))]
+internal partial class GetOrRegisterNewUserUseCaseTestContext
+{
+    public GetOrRegisterNewUserUseCaseTestContext WithFirstGetUserResult(GetUserResult result)
     {
-        public Mock<IGetUser> GetUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<IUpdateUserIdentity> UpdateUserIdentityMock { get; } = new(MockBehavior.Strict);
-        public Mock<IUserWithPermissionsExists> UserWithPermissionsExistsMock { get; } =
-            new(MockBehavior.Strict);
-        public Mock<IGetFirstAdminUserEmailAddress> GetFirstAdminUserEmailAddressMock { get; } =
-            new(MockBehavior.Strict);
-        public Mock<ISaveNewUser> SaveNewUserMock { get; } = new(MockBehavior.Strict);
-        public Mock<ILogger<GetOrRegisterNewUserUseCase>> LoggerMock { get; } =
-            new(MockBehavior.Loose);
-
-        public TestContext WithFirstGetUserResult(GetUserResult result)
-        {
-            GetUserMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<CancellationToken>()
-                    )
+        GetUserMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Success<GetUserResult, GetUserError>(result));
+            )
+            .ReturnsAsync(Result.Success<GetUserResult, GetUserError>(result));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithFirstGetUserError(GetUserError error)
-        {
-            GetUserMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetOrRegisterNewUserUseCaseTestContext WithFirstGetUserError(GetUserError error)
+    {
+        GetUserMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(error));
+            )
+            .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(error));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithFirstGetUserErrorAndSecondWithResult(
-            GetUserError error,
-            GetUserResult result
-        )
-        {
-            GetUserMock
-                .SetupSequence(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetOrRegisterNewUserUseCaseTestContext WithFirstGetUserErrorAndSecondWithResult(
+        GetUserError error,
+        GetUserResult result
+    )
+    {
+        GetUserMock
+            .SetupSequence(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(error))
-                .ReturnsAsync(Result.Success<GetUserResult, GetUserError>(result));
+            )
+            .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(error))
+            .ReturnsAsync(Result.Success<GetUserResult, GetUserError>(result));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithFirstGetUserErrorAndSecondError(
-            GetUserError firstError,
-            GetUserError secondError
-        )
-        {
-            GetUserMock
-                .SetupSequence(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetOrRegisterNewUserUseCaseTestContext WithFirstGetUserErrorAndSecondError(
+        GetUserError firstError,
+        GetUserError secondError
+    )
+    {
+        GetUserMock
+            .SetupSequence(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(firstError))
-                .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(secondError));
+            )
+            .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(firstError))
+            .ReturnsAsync(Result.Failure<GetUserResult, GetUserError>(secondError));
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithUserUpdateSuccess() =>
-            WithUserUpdateResult(Result.Success<UpdateUserIdentityError>());
+    public GetOrRegisterNewUserUseCaseTestContext WithUserUpdateSuccess() =>
+        WithUserUpdateResult(Result.Success<UpdateUserIdentityError>());
 
-        public TestContext WithUserUpdateFailure() =>
-            WithUserUpdateResult(Result.Failure(UpdateUserIdentityError.DuplicateUser));
+    public GetOrRegisterNewUserUseCaseTestContext WithUserUpdateFailure() =>
+        WithUserUpdateResult(Result.Failure(UpdateUserIdentityError.DuplicateUser));
 
-        public TestContext WithUserUpdateResult(IMaybeErrorResult<UpdateUserIdentityError> result)
-        {
-            UpdateUserIdentityMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<int>(),
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetOrRegisterNewUserUseCaseTestContext WithUserUpdateResult(
+        IMaybeErrorResult<UpdateUserIdentityError> result
+    )
+    {
+        UpdateUserIdentityMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<int>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(result);
+            )
+            .ReturnsAsync(result);
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithUserWithPermissionsExistSuccess(bool result) =>
-            WithUserWithPermissionsExistResult(
-                Result.Success<bool, UserWithPermissionsExistsError>(result)
-            );
+    public GetOrRegisterNewUserUseCaseTestContext WithUserWithPermissionsExistSuccess(
+        bool result
+    ) =>
+        WithUserWithPermissionsExistResult(
+            Result.Success<bool, UserWithPermissionsExistsError>(result)
+        );
 
-        public TestContext WithUserWithPermissionsExistFailure(
-            UserWithPermissionsExistsError error
-        ) =>
-            WithUserWithPermissionsExistResult(
-                Result.Failure<bool, UserWithPermissionsExistsError>(error)
-            );
+    public GetOrRegisterNewUserUseCaseTestContext WithUserWithPermissionsExistFailure(
+        UserWithPermissionsExistsError error
+    ) =>
+        WithUserWithPermissionsExistResult(
+            Result.Failure<bool, UserWithPermissionsExistsError>(error)
+        );
 
-        private TestContext WithUserWithPermissionsExistResult(
-            IValueOrErrorResult<bool, UserWithPermissionsExistsError> result
-        )
-        {
-            UserWithPermissionsExistsMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    private GetOrRegisterNewUserUseCaseTestContext WithUserWithPermissionsExistResult(
+        IValueOrErrorResult<bool, UserWithPermissionsExistsError> result
+    )
+    {
+        UserWithPermissionsExistsMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(result);
+            )
+            .ReturnsAsync(result);
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithGetFirstAdminUserEmailAddressSuccess(string result) =>
-            WithGetFirstAdminUserEmailAddressResult(
-                Result.Success<string, GetFirstAdminUserEmailAddressError>(result)
-            );
+    public GetOrRegisterNewUserUseCaseTestContext WithGetFirstAdminUserEmailAddressSuccess(
+        string result
+    ) =>
+        WithGetFirstAdminUserEmailAddressResult(
+            Result.Success<string, GetFirstAdminUserEmailAddressError>(result)
+        );
 
-        public TestContext WithGetFirstAdminUserEmailAddressFailure(
-            GetFirstAdminUserEmailAddressError error
-        ) =>
-            WithGetFirstAdminUserEmailAddressResult(
-                Result.Failure<string, GetFirstAdminUserEmailAddressError>(error)
-            );
+    public GetOrRegisterNewUserUseCaseTestContext WithGetFirstAdminUserEmailAddressFailure(
+        GetFirstAdminUserEmailAddressError error
+    ) =>
+        WithGetFirstAdminUserEmailAddressResult(
+            Result.Failure<string, GetFirstAdminUserEmailAddressError>(error)
+        );
 
-        private TestContext WithGetFirstAdminUserEmailAddressResult(
-            IValueOrErrorResult<string, GetFirstAdminUserEmailAddressError> result
-        )
-        {
-            GetFirstAdminUserEmailAddressMock.Setup(x => x.Execute()).Returns(result);
+    private GetOrRegisterNewUserUseCaseTestContext WithGetFirstAdminUserEmailAddressResult(
+        IValueOrErrorResult<string, GetFirstAdminUserEmailAddressError> result
+    )
+    {
+        GetFirstAdminUserEmailAddressMock.Setup(x => x.Execute()).Returns(result);
 
-            return this;
-        }
+        return this;
+    }
 
-        public TestContext WithSaveNewUserResult(IMaybeErrorResult<SaveNewUserError> result)
-        {
-            SaveNewUserMock
-                .Setup(x =>
-                    x.Execute(
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<string>(),
-                        It.IsAny<UserIdentityProvider>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<UserPermission>(),
-                        It.IsAny<CancellationToken>()
-                    )
+    public GetOrRegisterNewUserUseCaseTestContext WithSaveNewUserResult(
+        IMaybeErrorResult<SaveNewUserError> result
+    )
+    {
+        SaveNewUserMock
+            .Setup(x =>
+                x.Execute(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<UserIdentityProvider>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<UserPermission>(),
+                    It.IsAny<CancellationToken>()
                 )
-                .ReturnsAsync(result);
+            )
+            .ReturnsAsync(result);
 
-            return this;
-        }
-
-        public GetOrRegisterNewUserUseCase BuildUseCase() =>
-            new(
-                getUser: GetUserMock.Object,
-                updateUserIdentity: UpdateUserIdentityMock.Object,
-                userWithPermissionsExists: UserWithPermissionsExistsMock.Object,
-                getFirstAdminUserEmailAddress: GetFirstAdminUserEmailAddressMock.Object,
-                saveNewUser: SaveNewUserMock.Object,
-                logger: LoggerMock.Object
-            );
-
-        public void VerifyNoOtherCalls()
-        {
-            GetUserMock.VerifyNoOtherCalls();
-            UpdateUserIdentityMock.VerifyNoOtherCalls();
-            UserWithPermissionsExistsMock.VerifyNoOtherCalls();
-            GetFirstAdminUserEmailAddressMock.VerifyNoOtherCalls();
-            SaveNewUserMock.VerifyNoOtherCalls();
-        }
+        return this;
     }
 }
