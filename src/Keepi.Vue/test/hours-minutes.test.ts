@@ -1,26 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import {
   toHoursMinutesNotation,
-  toShortDutchDate,
-  toShortIsoDate,
   tryParseColonTimeNotation,
-  tryParseDutchDate,
-  tryParseIsoDate,
   tryParseSuffixTimeNotation,
   tryParseTimeNotation,
-} from '@/format'
+} from '@/hours-minutes'
 
-describe.concurrent('format', () => {
-  test('toShortIsoDate', () => {
-    expect(toShortIsoDate(new Date(2020, 2, 28, 4))).toBe('2020-03-28')
-    expect(toShortIsoDate(new Date(2020, 11, 31, 4))).toBe('2020-12-31')
-  })
-
-  test('toShortDutchDate', () => {
-    expect(toShortDutchDate(new Date(2020, 1, 28))).toBe('28-02-2020')
-    expect(toShortDutchDate(new Date(2020, 11, 31))).toBe('31-12-2020')
-  })
-
+describe.concurrent('hours-minutes', () => {
   test('toHoursMinutesNotation', () => {
     expect(toHoursMinutesNotation(0)).toBe('')
     expect(toHoursMinutesNotation(1)).toBe('1m')
@@ -89,52 +75,4 @@ describe.concurrent('format', () => {
     expect(tryParseColonTimeNotation('1:30')).toBe(90)
     expect(tryParseColonTimeNotation('10:30')).toBe(630)
   })
-
-  test('tryParseDutchDate', () => {
-    expect(tryParseDutchDate('')).toBe(null)
-    expect(tryParseDutchDate('1')).toBe(null)
-    expect(tryParseDutchDate('1-1')).toBe(null)
-    expect(tryParseDutchDate('1-1-abc')).toBe(null)
-    expect(tryParseDutchDate('1-abc-2000')).toBe(null)
-    expect(tryParseDutchDate('abc-1-2000')).toBe(null)
-    expect(tryParseDutchDate('1a-1-2000')).toBe(null)
-    expect(tryParseDutchDate('1-1a-2000')).toBe(null)
-    expect(tryParseDutchDate('1-1-2000a')).toBe(null)
-    expect(tryParseDutchDate('29-2-2025')).toBe(null)
-
-    expectLocalDatesToBeEqual(tryParseDutchDate('1-1-2000'), new Date(2000, 0, 1))
-    expectLocalDatesToBeEqual(tryParseDutchDate('01-01-2000'), new Date(2000, 0, 1))
-    expectLocalDatesToBeEqual(tryParseDutchDate('31-12-2025'), new Date(2025, 11, 31))
-    expectLocalDatesToBeEqual(tryParseDutchDate('29-2-2024'), new Date(2024, 1, 29))
-    expectLocalDatesToBeEqual(tryParseDutchDate('29-02-2024'), new Date(2024, 1, 29))
-  })
-
-  test('tryParseIsoDate', () => {
-    expect(tryParseIsoDate('')).toBe(null)
-    expect(tryParseIsoDate('1')).toBe(null)
-    expect(tryParseIsoDate('1-1')).toBe(null)
-    expect(tryParseIsoDate('1-1-abc')).toBe(null)
-    expect(tryParseIsoDate('1-abc-2000')).toBe(null)
-    expect(tryParseIsoDate('abc-1-2000')).toBe(null)
-    expect(tryParseIsoDate('1a-1-2000')).toBe(null)
-    expect(tryParseIsoDate('1-1a-2000')).toBe(null)
-    expect(tryParseIsoDate('1-1-2000a')).toBe(null)
-    expect(tryParseIsoDate('28-2-2025')).toBe(null)
-    expect(tryParseIsoDate('28-2-2025')).toBe(null)
-    expect(tryParseIsoDate('2025-2-29')).toBe(null)
-
-    expectLocalDatesToBeEqual(tryParseIsoDate('2000-1-1'), new Date(2000, 0, 1))
-    expectLocalDatesToBeEqual(tryParseIsoDate('2000-01-01'), new Date(2000, 0, 1))
-    expectLocalDatesToBeEqual(tryParseIsoDate('2025-12-31'), new Date(2025, 11, 31))
-    expectLocalDatesToBeEqual(tryParseIsoDate('2024-2-29'), new Date(2024, 1, 29))
-    expectLocalDatesToBeEqual(tryParseIsoDate('2024-02-29'), new Date(2024, 1, 29))
-  })
 })
-
-function expectLocalDatesToBeEqual(actual: Date | null, expected: Date) {
-  expect(actual).not.toBeNull()
-
-  expect(actual?.getDate()).toBe(expected.getDate())
-  expect(actual?.getMonth()).toBe(expected.getMonth())
-  expect(actual?.getFullYear()).toBe(expected.getFullYear())
-}

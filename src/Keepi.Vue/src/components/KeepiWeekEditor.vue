@@ -5,8 +5,8 @@ import type {
   IGetWeekUserEntriesResponseDay,
   IPutUpdateWeekUserEntriesRequestDay,
 } from '@/api-client'
-import { getWeekNumber, type DateRange } from '@/date'
-import { toHoursMinutesNotation, toShortDutchDate, tryParseTimeNotation } from '@/format'
+import { getWeekNumber, toShortDutchDate, type DateRange } from '@/date'
+import { toHoursMinutesNotation, tryParseTimeNotation } from '@/hours-minutes'
 import { loggableDays, type InvoiceItem, type TimeTableEntry } from '@/types'
 import { computed, onMounted, ref } from 'vue'
 import { useRegle } from '@regle/core'

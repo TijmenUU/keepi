@@ -1,4 +1,4 @@
-import { tryParseDutchDate } from '@/format'
+import { tryParseDutchDate } from '@/date'
 import { maxLength, required, withMessage } from '@regle/rules'
 
 export const requiredValidator = withMessage(required, 'Dit veld is verplicht')

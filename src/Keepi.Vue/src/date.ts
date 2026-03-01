@@ -1,5 +1,61 @@
 export type DateRange = { weekNumber: number; year: number; dates: Date[] }
 
+export function toShortIsoDate(d: Date): string {
+  return `${d.getFullYear()}-${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+}
+
+export function toShortDutchDate(d: Date): string {
+  return `${d.getDate().toString().padStart(2, '0')}-${(d.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}-${d.getFullYear()}`
+}
+
+export function tryParseDutchDate(userValue: string): Date | null {
+  const trimmedValue = userValue.trim()
+  if (/^[0-3]?[0-9]-[0-2]?[0-9]-[0-9]{4}$/.test(trimmedValue)) {
+    // example: 31-12-2025 or 1-5-2025
+    const values = trimmedValue.split('-')
+    const day = parseInt(values[0])
+    const monthIndex = parseInt(values[1]) - 1
+    const year = parseInt(values[2])
+
+    const candidate = new Date(year, monthIndex, day)
+    if (
+      candidate.getDate() === day &&
+      candidate.getMonth() === monthIndex &&
+      candidate.getFullYear() === year
+    ) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
+export function tryParseIsoDate(userValue: string): Date | null {
+  const trimmedValue = userValue.trim()
+  if (/^[0-9]{4}-[0-2]?[0-9]-[0-3]?[0-9]$/.test(trimmedValue)) {
+    // example: 2025-12-31 or 2025-5-1
+    const values = trimmedValue.split('-')
+    const year = parseInt(values[0])
+    const monthIndex = parseInt(values[1]) - 1
+    const day = parseInt(values[2])
+
+    const candidate = new Date(year, monthIndex, day)
+    if (
+      candidate.getDate() === day &&
+      candidate.getMonth() === monthIndex &&
+      candidate.getFullYear() === year
+    ) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
 export function getWeekDaysForDate(d: Date): DateRange {
   const weekNumber = getWeekNumber(d)
   const dates: Date[] = []
