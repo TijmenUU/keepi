@@ -136,7 +136,7 @@ By default the EF core exceptions are not exactly developer friendly, hence a th
 
 ### Test context code generation
 
-For the test context classes the code generator project [Keepi.Generators](tests/Keepi.Generators/Keepi.Generators.csproj) is used. To see the generated source files the property `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` can be added, as a child of a `PropertyGroup` element, to the csproj of any project using Keepi.Generators.
+For the test context classes the code generator project [Keepi.Generators](tests/Keepi.Generators/Keepi.Generators.csproj) is used. To see the generated source files the property `<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>` can be added, as a child of a `PropertyGroup` element, to the csproj of any project using Keepi.Generators. As an example, the generated files for the `Keepi.Core.Unit.Tests` project, after a (re)build, should appear in `tests/Keepi.Core.Unit.Tests/obj/Debug/net10.0/generated/Keepi.Generators/Keepi.Generators.TestContextClassGenerator/`.
 
 ### Running Keepi Locally
 
