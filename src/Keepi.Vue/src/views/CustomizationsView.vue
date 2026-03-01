@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ApiClient, { type IUpdateAllUserInvoiceItemCustomizationsRequest } from '@/api-client'
-import { getSortedInvoiceItems } from '@/invoiceitems'
+import { getSortedInvoiceItems } from '@/invoice-items'
 import { handleApiError } from '@/error'
 import { createSwapy, type Swapy } from 'swapy'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'

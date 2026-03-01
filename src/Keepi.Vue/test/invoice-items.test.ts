@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { getSortedInvoiceItems } from '@/invoiceitems'
+import { getSortedInvoiceItems } from '@/invoice-items'
 
 describe.concurrent('getSortedInvoiceItems', () => {
   test('empty', () => {
