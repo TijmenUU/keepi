@@ -18,6 +18,8 @@ import { computed } from 'vue'
 const props = defineProps<{
   // Expects an ISO 8601 date string (yyyy-mm-dd)
   modelValue?: string
+  maxValue?: DateValue
+  minValue?: DateValue
 }>()
 
 const emits = defineEmits<{
@@ -65,6 +67,8 @@ const df = new DateFormatter('nl-NL', {
         :default-placeholder="defaultPlaceholder"
         layout="month-and-year"
         initial-focus
+        :min-value="props.minValue"
+        :max-value="props.maxValue"
         @update:model-value="(value) => onModelValueUpdate(value, close)" />
     </PopoverContent>
   </Popover>

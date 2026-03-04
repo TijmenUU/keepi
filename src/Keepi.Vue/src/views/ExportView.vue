@@ -8,7 +8,8 @@ import { requiredValidator } from '@/regle'
 import { handleApiError } from '@/error'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { parseDate, type DateValue, } from '@internationalized/date'
 
 const apiClient = new ApiClient()
 const disableUserInteraction = ref(false)
@@ -82,6 +83,26 @@ const onSubmit = async () => {
     disableUserInteraction.value = false
   }
 }
+
+const maximumFromValue = computed<DateValue | undefined>(() => {
+  try
+  {
+    return parseDate(formValues.value.to);
+  } catch
+  {
+    return;
+  }
+})
+
+const minimumToValue = computed<DateValue | undefined>(() => {
+  try
+  {
+    return parseDate(formValues.value.from);
+  } catch
+  {
+    return;
+  }
+})
 </script>
 
 <template>
@@ -89,12 +110,12 @@ const onSubmit = async () => {
     <div class="flex flex-wrap gap-2">
       <Label>
         Van
-        <KeepiDatePicker v-model="formValues.from" autofocus />
+        <KeepiDatePicker v-model="formValues.from" autofocus :max-value="maximumFromValue" />
       </Label>
 
       <Label>
         tot en met
-        <KeepiDatePicker v-model="formValues.to" />
+        <KeepiDatePicker v-model="formValues.to" :min-value="minimumToValue" />
       </Label>
     </div>
 
