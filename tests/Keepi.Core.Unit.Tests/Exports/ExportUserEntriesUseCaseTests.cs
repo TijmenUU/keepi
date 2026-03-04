@@ -49,7 +49,9 @@ public class ExportUserEntriesUseCaseTests
 
         result.TrySuccess(out var entriesTask, out _).ShouldBeTrue();
 
-        var entries = await entriesTask.ToArrayAsync();
+        var entries = await entriesTask.ToArrayAsync(
+            cancellationToken: TestContext.Current.CancellationToken
+        );
         entries.Length.ShouldBe(2);
         entries[0]
             .ShouldBeEquivalentTo(
@@ -123,7 +125,9 @@ public class ExportUserEntriesUseCaseTests
 
         result.TrySuccess(out var entriesTask, out _).ShouldBeTrue();
 
-        var entries = await entriesTask.ToArrayAsync();
+        var entries = await entriesTask.ToArrayAsync(
+            cancellationToken: TestContext.Current.CancellationToken
+        );
         entries.Length.ShouldBe(1);
         entries[0]
             .ShouldBeEquivalentTo(

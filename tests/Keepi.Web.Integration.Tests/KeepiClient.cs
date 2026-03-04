@@ -177,11 +177,14 @@ public class KeepiClient
         var response = await httpClient.PostAsJsonAsync(
             requestUri: "/api/export/userentries",
             value: new GetUserEntriesExportEndpointRequest { Start = start, Stop = stop },
-            options: jsonSerializerOptions
+            options: jsonSerializerOptions,
+            cancellationToken: TestContext.Current.CancellationToken
         );
         ThrowIfUnsuccesful(response);
 
-        return await response.Content.ReadAsStreamAsync();
+        return await response.Content.ReadAsStreamAsync(
+            cancellationToken: TestContext.Current.CancellationToken
+        );
     }
 
     private Task<TResponse> MakeDebuggableRequestWithResponse<TResponse>(
@@ -231,8 +234,13 @@ public class KeepiClient
             );
         }
 
-        var response = await httpClient.SendAsync(request: request);
-        var body = await response.Content.ReadAsStringAsync();
+        var response = await httpClient.SendAsync(
+            request: request,
+            cancellationToken: TestContext.Current.CancellationToken
+        );
+        var body = await response.Content.ReadAsStringAsync(
+            cancellationToken: TestContext.Current.CancellationToken
+        );
 
         ThrowIfUnsuccesful(response);
 
