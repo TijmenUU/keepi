@@ -25,7 +25,7 @@ const { r$ } = useRegle(formValues, {
   },
   to: {
     required: requiredValidator,
-    dateAfter: withMessage((value) => {
+    isEqualOrAfterFrom: withMessage((value) => {
       if (value == null || typeof value !== 'string') {
         return true
       }
