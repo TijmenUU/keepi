@@ -28,17 +28,17 @@ public class KeepiClient
         jsonSerializerOptions = options;
     }
 
-    public static async Task<KeepiClient> CreateWithRandomUser(HttpClient httpClient)
+    public static KeepiClient CreateWithRandomUser(HttpClient httpClient)
     {
         var faker = new Faker(locale: "nl");
-        return await CreateWithUser(
+        return CreateWithUser(
             httpClient: httpClient,
             fullName: faker.Person.FullName,
             subjectClaim: Guid.NewGuid().ToString()
         );
     }
 
-    public static async Task<KeepiClient> CreateWithUser(
+    public static KeepiClient CreateWithUser(
         HttpClient httpClient,
         string fullName,
         string subjectClaim

@@ -12,8 +12,8 @@ public class UserProjectCrudWorkflow(KeepiWebApplicationFactory applicationFacto
     [Fact]
     public async Task Create_update_delete_test()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
 
         var user = await userClient.GetUser();
 

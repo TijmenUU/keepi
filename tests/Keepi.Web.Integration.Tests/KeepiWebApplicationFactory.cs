@@ -63,9 +63,9 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
 
     public async Task<KeepiClient> CreateClientForRandomZeroPermissionsUser()
     {
-        var adminKeepiClient = await CreateClientForAdminUser();
+        var adminKeepiClient = CreateClientForAdminUser();
 
-        var zeroPermissionKeepiClient = await CreateClientForRandomNormalUser();
+        var zeroPermissionKeepiClient = CreateClientForRandomNormalUser();
         var zeroPermissionUser = await zeroPermissionKeepiClient.GetUser();
 
         await adminKeepiClient.UpdateUserPermissions(
@@ -94,7 +94,7 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
         return zeroPermissionKeepiClient;
     }
 
-    public async Task<KeepiClient> CreateClientForAdminUser()
+    public KeepiClient CreateClientForAdminUser()
     {
         var httpClient = CreateClient(); // Force initialization of the app factory
 
@@ -103,21 +103,21 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
             throw new InvalidOperationException("The admin user has not (yet) been set");
         }
 
-        return await KeepiClient.CreateWithUser(
+        return KeepiClient.CreateWithUser(
             httpClient: httpClient,
             fullName: adminUserName,
             subjectClaim: adminUserSubjectClaim
         );
     }
 
-    public async Task<KeepiClient> CreateClientForRandomNormalUser()
+    public KeepiClient CreateClientForRandomNormalUser()
     {
-        return await KeepiClient.CreateWithRandomUser(httpClient: CreateClient());
+        return KeepiClient.CreateWithRandomUser(httpClient: CreateClient());
     }
 
-    public async Task<KeepiClient> CreateClientForNormalUser(string fullName, string subjectClaim)
+    public KeepiClient CreateClientForNormalUser(string fullName, string subjectClaim)
     {
-        return await KeepiClient.CreateWithUser(
+        return KeepiClient.CreateWithUser(
             httpClient: CreateClient(),
             fullName: fullName,
             subjectClaim: subjectClaim

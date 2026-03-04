@@ -8,9 +8,9 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Create_update_delete_test()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
-        var firstUserClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var firstUserClient = applicationFactory.CreateClientForRandomNormalUser();
         var firstUser = await firstUserClient.GetUser();
 
         // Create
@@ -44,7 +44,7 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 
         var createdInvoiceItem1Id = project.InvoiceItems[0].Id;
 
-        var secondUserClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var secondUserClient = applicationFactory.CreateClientForRandomNormalUser();
         var secondUser = await secondUserClient.GetUser();
 
         await adminClient.UpdateProject(
@@ -87,7 +87,7 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
 
         // Update 2
 
-        var thirdUserclient = await applicationFactory.CreateClientForRandomNormalUser();
+        var thirdUserclient = applicationFactory.CreateClientForRandomNormalUser();
         var thirdUser = await thirdUserclient.GetUser();
 
         await adminClient.UpdateProject(
@@ -145,9 +145,9 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Delete_project_wipes_related_user_entries()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
         var user = await userClient.GetUser();
 
         // Create
@@ -235,9 +235,9 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Removing_user_from_project_wipes_related_user_entries()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
         var user = await userClient.GetUser();
 
         // Create
@@ -343,9 +343,9 @@ public class ProjectCrudWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Delete_invoice_item_from_project_wipes_related_user_entries()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
         var user = await userClient.GetUser();
 
         // Create

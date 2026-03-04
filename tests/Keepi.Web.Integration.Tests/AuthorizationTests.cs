@@ -7,7 +7,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     public async Task Create_project_endpoint_returns_forbidden()
     {
         var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
-        var user = await (await applicationFactory.CreateClientForRandomNormalUser()).GetUser();
+        var user = applicationFactory.CreateClientForRandomNormalUser().GetUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(() =>
             client.CreateProject(
                 request: new()
@@ -41,7 +41,7 @@ public class AuthorizationTests(KeepiWebApplicationFactory applicationFactory)
     public async Task Update_project_endpoint_returns_forbidden()
     {
         var client = await applicationFactory.CreateClientForRandomZeroPermissionsUser();
-        var user = await (await applicationFactory.CreateClientForRandomNormalUser()).GetUser();
+        var user = applicationFactory.CreateClientForRandomNormalUser().GetUser();
         await Should.ThrowAsync<KeepiClientForbiddenException>(() =>
             client.UpdateProject(
                 projectId: 99,

@@ -10,8 +10,8 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     [Fact]
     public async Task Create_read_update_delete_entries_test()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
 
         var user = await userClient.GetUser();
 
@@ -315,8 +315,8 @@ public class UserEntryCrudWorkflow(KeepiWebApplicationFactory applicationFactory
     [Fact]
     public async Task Disabled_project_entries_should_not_be_modified_by_week_entries_update()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
 
         var user = await userClient.GetUser();
 

@@ -6,15 +6,15 @@ public class UserEntryExportWorkflow(KeepiWebApplicationFactory applicationFacto
     [Fact]
     public async Task Export_user_entries_returns_expected_entries()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
-        var firstUserClient = await applicationFactory.CreateClientForNormalUser(
+        var firstUserClient = applicationFactory.CreateClientForNormalUser(
             fullName: "EersteExportGebruiker",
             subjectClaim: Guid.NewGuid().ToString()
         );
         var firstUser = await firstUserClient.GetUser();
 
-        var secondUserClient = await applicationFactory.CreateClientForNormalUser(
+        var secondUserClient = applicationFactory.CreateClientForNormalUser(
             fullName: "TweedeExportGebruiker",
             subjectClaim: Guid.NewGuid().ToString()
         );

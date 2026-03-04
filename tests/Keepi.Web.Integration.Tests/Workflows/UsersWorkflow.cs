@@ -10,7 +10,7 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Admin_user_returns_expected_values()
     {
-        var client = await applicationFactory.CreateClientForAdminUser();
+        var client = applicationFactory.CreateClientForAdminUser();
 
         var currentUser = await client.GetUser();
         currentUser.Name.ShouldBe("Bob");
@@ -26,7 +26,7 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
     {
         var subjectClaim = Guid.NewGuid().ToString();
 
-        var client = await applicationFactory.CreateClientForNormalUser(
+        var client = applicationFactory.CreateClientForNormalUser(
             fullName: "Henk de Vries",
             subjectClaim: subjectClaim
         );
@@ -43,7 +43,7 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
     [Fact]
     public async Task Create_user_and_update_user_permissions()
     {
-        var adminClient = await applicationFactory.CreateClientForAdminUser();
+        var adminClient = applicationFactory.CreateClientForAdminUser();
 
         // Updating self should not be allowed
         var adminUser = await adminClient.GetUser();
@@ -61,7 +61,7 @@ public class UsersWorkflow(KeepiWebApplicationFactory applicationFactory)
         );
 
         // Try all possible permission combinations and verify
-        var userClient = await applicationFactory.CreateClientForRandomNormalUser();
+        var userClient = applicationFactory.CreateClientForRandomNormalUser();
         var normalUser = await userClient.GetUser();
 
         var combinations = new (
