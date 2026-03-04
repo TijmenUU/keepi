@@ -94,6 +94,65 @@ public class ExportUserEntriesUseCaseTests
     }
 
     [Fact]
+    public async Task Execute_returns_expected_entries_for_single_day_export()
+    {
+        var context = new ExportUserEntriesUseCaseTestContext()
+            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithExportEntries(
+                new ExportUserEntry(
+                    Id: 1,
+                    UserId: 10,
+                    UserName: "Jaap",
+                    Date: new DateOnly(2025, 6, 22),
+                    ProjectId: 5,
+                    ProjectName: "Ontwikkeling",
+                    InvoiceItemId: 2,
+                    InvoiceItemName: "Dev",
+                    Minutes: 60,
+                    Remark: "Project Flyby"
+                )
+            );
+
+        var result = await context
+            .BuildTarget()
+            .Execute(
+                start: new DateOnly(2025, 6, 22),
+                stop: new DateOnly(2025, 6, 22),
+                CancellationToken.None
+            );
+
+        result.TrySuccess(out var entriesTask, out _).ShouldBeTrue();
+
+        var entries = await entriesTask.ToArrayAsync();
+        entries.Length.ShouldBe(1);
+        entries[0]
+            .ShouldBeEquivalentTo(
+                new ExportUserEntry(
+                    Id: 1,
+                    UserId: 10,
+                    UserName: "Jaap",
+                    Date: new DateOnly(2025, 6, 22),
+                    ProjectId: 5,
+                    ProjectName: "Ontwikkeling",
+                    InvoiceItemId: 2,
+                    InvoiceItemName: "Dev",
+                    Minutes: 60,
+                    Remark: "Project Flyby"
+                )
+            );
+
+        context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
+        context.GetExportUserEntriesMock.Verify(x =>
+            x.Execute(
+                new DateOnly(2025, 6, 22),
+                new DateOnly(2025, 6, 22),
+                It.IsAny<CancellationToken>()
+            )
+        );
+        context.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task Execute_returns_error_for_start_date_greater_than_stop_date()
     {
         var context = new ExportUserEntriesUseCaseTestContext()

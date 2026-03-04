@@ -48,7 +48,7 @@ internal sealed class ExportUserEntriesUseCase(
             );
         }
 
-        if (start >= stop)
+        if (start > stop)
         {
             return Result.Failure<IAsyncEnumerable<ExportUserEntry>, ExportUserEntriesUseCaseError>(
                 ExportUserEntriesUseCaseError.StartGreaterThanStop
