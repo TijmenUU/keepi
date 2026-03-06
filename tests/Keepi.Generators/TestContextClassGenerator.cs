@@ -153,7 +153,10 @@ namespace Keepi.Generators
                     var toMock = GetMockedDependencies(targetType: targetType);
                     var sourceBuilder = new StringBuilder();
                     sourceBuilder.AppendLine("using Moq;");
-                    sourceBuilder.AppendLine($"namespace {testContextClassNamespace};");
+                    if (!string.IsNullOrWhiteSpace(testContextClassNamespace))
+                    {
+                        sourceBuilder.AppendLine($"namespace {testContextClassNamespace};");
+                    }
                     sourceBuilder.AppendLine($"internal partial class {testContextClassShortName}");
                     sourceBuilder.AppendLine("{");
 
