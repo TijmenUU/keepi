@@ -169,16 +169,34 @@ namespace Keepi.Generators
                     }
                     sourceBuilder.AppendLine($"    public {targetClassFullName} BuildTarget()");
                     sourceBuilder.AppendLine("    {");
-                    sourceBuilder.Append($"        return new {targetClassFullName}(");
-                    for (int i = 0; i < toMock.Length; ++i)
+                    if (IsFastEndpoint(targetType: targetType))
                     {
-                        if (i > 0)
+                        sourceBuilder.Append(
+                            $"        return FastEndpoints.Factory.Create<{targetClassFullName}>("
+                        );
+                        for (int i = 0; i < toMock.Length; ++i)
                         {
-                            sourceBuilder.Append(", ");
+                            if (i > 0)
+                            {
+                                sourceBuilder.Append(", ");
+                            }
+                            sourceBuilder.Append($"{toMock[i].MockName}.Object");
                         }
-                        sourceBuilder.Append($"{toMock[i].MockName}.Object");
+                        sourceBuilder.AppendLine(");");
                     }
-                    sourceBuilder.AppendLine(");");
+                    else
+                    {
+                        sourceBuilder.Append($"        return new {targetClassFullName}(");
+                        for (int i = 0; i < toMock.Length; ++i)
+                        {
+                            if (i > 0)
+                            {
+                                sourceBuilder.Append(", ");
+                            }
+                            sourceBuilder.Append($"{toMock[i].MockName}.Object");
+                        }
+                        sourceBuilder.AppendLine(");");
+                    }
                     sourceBuilder.AppendLine("    }");
 
                     sourceBuilder.AppendLine("    public void VerifyNoOtherCalls()");
@@ -263,6 +281,13 @@ namespace Keepi.Generators
             public string MockName { get; }
             public bool IsLooseMock { get; }
             public bool IsVerified { get; }
+        }
+
+        private static bool IsFastEndpoint(INamedTypeSymbol targetType)
+        {
+            return targetType.AllInterfaces.Any(i =>
+                i.ContainingNamespace.ToDisplayString() == "FastEndpoints" && i.Name == "IEndpoint"
+            );
         }
     }
 }
