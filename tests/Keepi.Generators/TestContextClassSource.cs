@@ -43,6 +43,15 @@ internal sealed class TestContextClassSource
             }
         }
 
+        foreach (var dependency in targetDependencies)
+        {
+            GenerateWithCallMethods(
+                sourceBuilder: sourceBuilder,
+                testContextClassName: className,
+                dependency: dependency
+            );
+        }
+
         sourceBuilder.AppendLine("}");
 
         return new TestContextClassSource(
@@ -122,6 +131,63 @@ internal sealed class TestContextClassSource
             sourceBuilder.AppendLine($"        {property.MockName}.VerifyNoOtherCalls();");
         }
         sourceBuilder.AppendLine("    }");
+    }
+
+    private static void GenerateWithCallMethods(
+        StringBuilder sourceBuilder,
+        string testContextClassName,
+        TestContextTargetDependency dependency
+    )
+    {
+        if (!dependency.GenerateWithCallMethods || dependency.Methods.Length < 1)
+        {
+            return;
+        }
+
+        foreach (var method in dependency.Methods)
+        {
+            if (dependency.Methods.Length > 1)
+            {
+                sourceBuilder.AppendLine(
+                    $"    public {testContextClassName} With{dependency.ShortName}{method.Name}Call()"
+                );
+            }
+            else
+            {
+                sourceBuilder.AppendLine(
+                    $"    public {testContextClassName} With{dependency.ShortName}Call({method.ReturnTypeFullName} result)"
+                );
+            }
+
+            sourceBuilder.AppendLine("    {");
+
+            sourceBuilder.Append($"        {dependency.MockName}.Setup(x => x.{method.Name}(");
+            for (var i = 0; i < method.ParameterTypeFullNames.Length; ++i)
+            {
+                if (i > 0)
+                {
+                    sourceBuilder.Append(", ");
+                }
+                sourceBuilder.Append($"It.IsAny<{method.ParameterTypeFullNames[i]}>()");
+            }
+            sourceBuilder.Append("))");
+
+            if (method.ReturnTypeFullName != "void")
+            {
+                if (method.UseAsyncReturn)
+                {
+                    sourceBuilder.Append($".ReturnsAsync(result)");
+                }
+                else
+                {
+                    sourceBuilder.Append($".Returns(result)");
+                }
+            }
+            sourceBuilder.AppendLine(";");
+
+            sourceBuilder.AppendLine("        return this;");
+            sourceBuilder.AppendLine("    }");
+        }
     }
 
     private TestContextClassSource(string name, string content)

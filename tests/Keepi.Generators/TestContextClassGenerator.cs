@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
@@ -13,12 +15,12 @@ namespace Keepi.Generators
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
 #if DEBUG
-            // Only works on Windows
+            // // Only works on Windows
             // if (!Debugger.IsAttached)
             // {
             //     Debugger.Launch();
             // }
-            // Spin so that Linux users can manually attach
+            // // Spin so that Linux users can manually attach
             // while (!Debugger.IsAttached)
             // {
             //     Thread.Sleep(500);
@@ -144,11 +146,23 @@ namespace Keepi.Generators
                 }
 
                 INamedTypeSymbol targetType = null;
+                bool generateWithCallMethods = false;
+                bool verifyLogging = false;
                 foreach (var argument in attribute.NamedArguments)
                 {
-                    if (argument.Key == nameof(GenerateTestContextAttribute.TargetType))
+                    switch (argument.Key)
                     {
-                        targetType = argument.Value.Value as INamedTypeSymbol;
+                        case nameof(GenerateTestContextAttribute.TargetType):
+                            targetType = argument.Value.Value as INamedTypeSymbol;
+                            break;
+
+                        case nameof(GenerateTestContextAttribute.GenerateWithCallMethods):
+                            generateWithCallMethods = ParseBool(argument.Value.Value);
+                            break;
+
+                        case nameof(GenerateTestContextAttribute.VerifyLogging):
+                            verifyLogging = ParseBool(argument.Value.Value);
+                            break;
                     }
                 }
                 if (targetType == null)
@@ -156,11 +170,18 @@ namespace Keepi.Generators
                     return null;
                 }
 
-                return new GenerateTestContextAttributeData(targetType: targetType);
+                return new GenerateTestContextAttributeData(
+                    targetType: targetType,
+                    generateWithCallMethods: generateWithCallMethods,
+                    verifyLogging: verifyLogging
+                );
             }
 
             return null;
         }
+
+        private static bool ParseBool(object typedConstant) =>
+            typedConstant is bool booleanValue && booleanValue;
 
         private static void AddGeneratedSourceFor(
             SourceProductionContext context,
@@ -196,7 +217,11 @@ namespace Keepi.Generators
                 )
             );
 
-            var mocks = GetTestContextTargetDependencies(targetType: attributeData.TargetType);
+            var mocks = GetTestContextTargetDependencies(
+                targetType: attributeData.TargetType,
+                gatherMethods: attributeData.GenerateWithCallMethods,
+                verifyLogging: attributeData.VerifyLogging
+            );
 
             return TestContextClassSource.Create(
                 @namespace: testContextClassNamespace,
@@ -215,7 +240,9 @@ namespace Keepi.Generators
         }
 
         private static TestContextTargetDependency[] GetTestContextTargetDependencies(
-            INamedTypeSymbol targetType
+            INamedTypeSymbol targetType,
+            bool gatherMethods,
+            bool verifyLogging
         )
         {
             if (targetType.Constructors.Length != 1)
@@ -245,10 +272,113 @@ namespace Keepi.Generators
                     )
                 );
 
-                results.Add(new(fullName: fullName, shortName: shortName));
+                var methods = Array.Empty<TestContextTargetDependencyMethod>();
+                if (gatherMethods)
+                {
+                    methods = GetTestContextTargetDependencyMethods(type: parameter.Type);
+                }
+
+                results.Add(
+                    new(
+                        fullName: fullName,
+                        shortName: shortName,
+                        methods: methods,
+                        verifyLogging: verifyLogging
+                    )
+                );
             }
 
             return results.ToArray();
+        }
+
+        private static TestContextTargetDependencyMethod[] GetTestContextTargetDependencyMethods(
+            ITypeSymbol type
+        )
+        {
+            var hasMethods = type.TypeKind == TypeKind.Interface || type.TypeKind == TypeKind.Class;
+            if (!hasMethods)
+            {
+                return Array.Empty<TestContextTargetDependencyMethod>();
+            }
+
+            Debug.Assert(!type.IsStatic);
+
+            var methods = new List<TestContextTargetDependencyMethod>();
+            foreach (var member in type.GetMembers())
+            {
+                if (
+                    member.Kind != SymbolKind.Method
+                    || !IsPublicOrInternal(accessibility: member.DeclaredAccessibility)
+                )
+                {
+                    continue;
+                }
+
+                methods.Add(
+                    item: GetTestContextTargetDependencyMethod(member: member as IMethodSymbol)
+                );
+            }
+
+            return methods.ToArray();
+        }
+
+        private static bool IsPublicOrInternal(Accessibility accessibility) =>
+            accessibility == Accessibility.Public || accessibility == Accessibility.Internal;
+
+        private static TestContextTargetDependencyMethod GetTestContextTargetDependencyMethod(
+            IMethodSymbol member
+        )
+        {
+            Debug.Assert(member != null);
+
+            var parameterTypes = new List<string>();
+            foreach (var parameter in member.Parameters)
+            {
+                parameterTypes.Add(
+                    parameter.Type.ToDisplayString(
+                        new SymbolDisplayFormat(
+                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                        )
+                    )
+                );
+            }
+
+            var returnTypeFullName = member.ReturnsVoid
+                ? "void"
+                : member.ReturnType.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                    )
+                );
+
+            var useAsyncReturn = false;
+            if (
+                member.ReturnType is INamedTypeSymbol returnNamedTypeSymbol
+                && returnNamedTypeSymbol.IsGenericType
+                && returnTypeFullName.StartsWith("System.Threading.Tasks.Task<")
+            )
+            {
+                Debug.Assert(returnNamedTypeSymbol.TypeArguments.Length == 1);
+
+                useAsyncReturn = true;
+                returnTypeFullName = returnNamedTypeSymbol
+                    .TypeArguments[0]
+                    .ToDisplayString(
+                        new SymbolDisplayFormat(
+                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                        )
+                    );
+            }
+
+            return new TestContextTargetDependencyMethod(
+                name: member.Name,
+                parameterTypeFullNames: parameterTypes.ToArray(),
+                returnTypeFullName: returnTypeFullName,
+                useAsyncReturn: useAsyncReturn
+            );
         }
     }
 }
