@@ -1,23 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keepi.Generators
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class GenerateTestContextAttribute : Attribute
-    {
-        public const string FullName = "Keepi.Generators.GenerateTestContextAttribute";
-
-        public Type TargetType { get; set; }
-    }
-
     [Generator(LanguageNames.CSharp)]
     internal sealed class TestContextClassGenerator : IIncrementalGenerator
     {
@@ -46,7 +35,7 @@ namespace Keepi.Generators
             var compilationAndClasses = context.CompilationProvider.Combine(
                 classDeclarations.Collect()
             );
-            context.RegisterSourceOutput(compilationAndClasses, GenerateTestContextFor);
+            context.RegisterSourceOutput(compilationAndClasses, GeneratedTestContexts);
         }
 
         private static bool IsApplicableNode(
@@ -92,7 +81,7 @@ namespace Keepi.Generators
             return null;
         }
 
-        private static void GenerateTestContextFor(
+        private static void GeneratedTestContexts(
             SourceProductionContext context,
             (Compilation, ImmutableArray<ClassDeclarationSyntax>) values
         )
@@ -103,127 +92,131 @@ namespace Keepi.Generators
                 return;
             }
 
-            foreach (var testContextClassToGenerate in classes.Distinct())
+            foreach (var @class in classes.Distinct())
             {
-                var testContextClassSemanticModel = values.Item1.GetSemanticModel(
-                    testContextClassToGenerate.SyntaxTree
+                GeneratedTestContext(
+                    testContextClass: @class,
+                    compilation: values.Item1,
+                    context: context
                 );
-                var testContextClassSymbol = testContextClassSemanticModel.GetDeclaredSymbol(
-                    declaration: testContextClassToGenerate
-                );
-                var testContextClassAttributes = testContextClassSymbol.GetAttributes();
-                foreach (var testContextClassAttribute in testContextClassAttributes)
-                {
-                    if (
-                        testContextClassAttribute.AttributeClass.ToDisplayString()
-                        != GenerateTestContextAttribute.FullName
-                    )
-                    {
-                        continue;
-                    }
-
-                    INamedTypeSymbol targetType = null;
-                    foreach (var argument in testContextClassAttribute.NamedArguments)
-                    {
-                        if (argument.Key == nameof(GenerateTestContextAttribute.TargetType))
-                        {
-                            targetType = argument.Value.Value as INamedTypeSymbol;
-                        }
-                    }
-                    if (targetType == null)
-                    {
-                        break;
-                    }
-
-                    var testContextClassNamespace =
-                        testContextClassSymbol.ContainingNamespace.ToDisplayString();
-                    var testContextClassShortName = testContextClassSymbol.ToDisplayString(
-                        new SymbolDisplayFormat(
-                            genericsOptions: SymbolDisplayGenericsOptions.None,
-                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
-                        )
-                    );
-                    var targetClassFullName = targetType.ToDisplayString(
-                        new SymbolDisplayFormat(
-                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
-                        )
-                    );
-
-                    var toMock = GetMockedDependencies(targetType: targetType);
-                    var sourceBuilder = new StringBuilder();
-                    sourceBuilder.AppendLine("using Moq;");
-                    if (!string.IsNullOrWhiteSpace(testContextClassNamespace))
-                    {
-                        sourceBuilder.AppendLine($"namespace {testContextClassNamespace};");
-                    }
-                    sourceBuilder.AppendLine($"internal partial class {testContextClassShortName}");
-                    sourceBuilder.AppendLine("{");
-
-                    foreach (var type in toMock)
-                    {
-                        var behavior = type.IsLooseMock ? "Loose" : "Strict";
-                        sourceBuilder.AppendLine(
-                            $"    public Mock<{type.FullName}> {type.MockName} {{ get; }} = new(MockBehavior.{behavior});"
-                        );
-                    }
-                    sourceBuilder.AppendLine($"    public {targetClassFullName} BuildTarget()");
-                    sourceBuilder.AppendLine("    {");
-                    if (IsFastEndpoint(targetType: targetType))
-                    {
-                        sourceBuilder.Append(
-                            $"        return FastEndpoints.Factory.Create<{targetClassFullName}>("
-                        );
-                        for (int i = 0; i < toMock.Length; ++i)
-                        {
-                            if (i > 0)
-                            {
-                                sourceBuilder.Append(", ");
-                            }
-                            sourceBuilder.Append($"{toMock[i].MockName}.Object");
-                        }
-                        sourceBuilder.AppendLine(");");
-                    }
-                    else
-                    {
-                        sourceBuilder.Append($"        return new {targetClassFullName}(");
-                        for (int i = 0; i < toMock.Length; ++i)
-                        {
-                            if (i > 0)
-                            {
-                                sourceBuilder.Append(", ");
-                            }
-                            sourceBuilder.Append($"{toMock[i].MockName}.Object");
-                        }
-                        sourceBuilder.AppendLine(");");
-                    }
-                    sourceBuilder.AppendLine("    }");
-
-                    sourceBuilder.AppendLine("    public void VerifyNoOtherCalls()");
-                    sourceBuilder.AppendLine("    {");
-                    foreach (var type in toMock)
-                    {
-                        if (!type.IsVerified)
-                        {
-                            continue;
-                        }
-
-                        sourceBuilder.AppendLine($"        {type.MockName}.VerifyNoOtherCalls();");
-                    }
-                    sourceBuilder.AppendLine("    }");
-
-                    sourceBuilder.AppendLine("}");
-
-                    context.AddSource(
-                        hintName: $"{testContextClassShortName}.g.cs",
-                        source: sourceBuilder.ToString()
-                    );
-                    break;
-                }
             }
         }
 
-        private static TypeToMock[] GetMockedDependencies(INamedTypeSymbol targetType)
+        private static void GeneratedTestContext(
+            ClassDeclarationSyntax testContextClass,
+            Compilation compilation,
+            SourceProductionContext context
+        )
+        {
+            var testContextClassSemanticModel = compilation.GetSemanticModel(
+                testContextClass.SyntaxTree
+            );
+            var testContextClassSymbol = testContextClassSemanticModel.GetDeclaredSymbol(
+                declaration: testContextClass
+            );
+            var generateTestContextAttribute = GetGenerateTestContextAttributeOrNull(
+                attributes: testContextClassSymbol.GetAttributes()
+            );
+            if (generateTestContextAttribute == null)
+            {
+                return;
+            }
+
+            AddGeneratedSourceFor(
+                context: context,
+                testContextClassSymbol: testContextClassSymbol,
+                attributeData: generateTestContextAttribute
+            );
+        }
+
+        private static GenerateTestContextAttributeData GetGenerateTestContextAttributeOrNull(
+            ImmutableArray<AttributeData> attributes
+        )
+        {
+            foreach (var attribute in attributes)
+            {
+                if (
+                    attribute.AttributeClass.ToDisplayString()
+                    != GenerateTestContextAttribute.FullName
+                )
+                {
+                    continue;
+                }
+
+                INamedTypeSymbol targetType = null;
+                foreach (var argument in attribute.NamedArguments)
+                {
+                    if (argument.Key == nameof(GenerateTestContextAttribute.TargetType))
+                    {
+                        targetType = argument.Value.Value as INamedTypeSymbol;
+                    }
+                }
+                if (targetType == null)
+                {
+                    return null;
+                }
+
+                return new GenerateTestContextAttributeData(targetType: targetType);
+            }
+
+            return null;
+        }
+
+        private static void AddGeneratedSourceFor(
+            SourceProductionContext context,
+            ISymbol testContextClassSymbol,
+            GenerateTestContextAttributeData attributeData
+        )
+        {
+            var sourceFile = GenerateSourceFile(
+                testContextClassSymbol: testContextClassSymbol,
+                attributeData: attributeData
+            );
+
+            context.AddSource(hintName: sourceFile.Name, source: sourceFile.Content);
+        }
+
+        private static TestContextClassSource GenerateSourceFile(
+            ISymbol testContextClassSymbol,
+            GenerateTestContextAttributeData attributeData
+        )
+        {
+            var testContextClassNamespace =
+                testContextClassSymbol.ContainingNamespace.ToDisplayString();
+            var testContextClassShortName = testContextClassSymbol.ToDisplayString(
+                new SymbolDisplayFormat(
+                    genericsOptions: SymbolDisplayGenericsOptions.None,
+                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
+                )
+            );
+            var targetClassFullName = attributeData.TargetType.ToDisplayString(
+                new SymbolDisplayFormat(
+                    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                )
+            );
+
+            var mocks = GetTestContextTargetDependencies(targetType: attributeData.TargetType);
+
+            return TestContextClassSource.Create(
+                @namespace: testContextClassNamespace,
+                className: testContextClassShortName,
+                targetFullName: targetClassFullName,
+                targetDependencies: mocks,
+                targetIsFastEndpoint: IsFastEndpoint(targetType: attributeData.TargetType)
+            );
+        }
+
+        private static bool IsFastEndpoint(INamedTypeSymbol targetType)
+        {
+            return targetType.AllInterfaces.Any(i =>
+                i.ContainingNamespace.ToDisplayString() == "FastEndpoints" && i.Name == "IEndpoint"
+            );
+        }
+
+        private static TestContextTargetDependency[] GetTestContextTargetDependencies(
+            INamedTypeSymbol targetType
+        )
         {
             if (targetType.Constructors.Length != 1)
             {
@@ -231,7 +224,7 @@ namespace Keepi.Generators
                 return [];
             }
 
-            var results = new List<TypeToMock>();
+            var results = new List<TestContextTargetDependency>();
             foreach (var parameter in targetType.Constructors[0].Parameters)
             {
                 var shortName = parameter.Type.ToDisplayString(
@@ -252,42 +245,10 @@ namespace Keepi.Generators
                     )
                 );
 
-                var isLoose = fullName.StartsWith("Microsoft.Extensions.Logging.ILogger<");
-
-                results.Add(
-                    new(
-                        fullName: fullName,
-                        mockName: $"{shortName}Mock",
-                        isLooseMock: isLoose,
-                        isVerified: !isLoose
-                    )
-                );
+                results.Add(new(fullName: fullName, shortName: shortName));
             }
 
             return results.ToArray();
-        }
-
-        private class TypeToMock
-        {
-            public TypeToMock(string fullName, string mockName, bool isLooseMock, bool isVerified)
-            {
-                FullName = fullName;
-                MockName = mockName;
-                IsLooseMock = isLooseMock;
-                IsVerified = isVerified;
-            }
-
-            public string FullName { get; }
-            public string MockName { get; }
-            public bool IsLooseMock { get; }
-            public bool IsVerified { get; }
-        }
-
-        private static bool IsFastEndpoint(INamedTypeSymbol targetType)
-        {
-            return targetType.AllInterfaces.Any(i =>
-                i.ContainingNamespace.ToDisplayString() == "FastEndpoints" && i.Name == "IEndpoint"
-            );
         }
     }
 }
