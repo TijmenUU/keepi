@@ -18,7 +18,7 @@ public class TestContextTargetDependencyTests
         result.IsLooseMock.ShouldBeFalse();
         result.Methods.ShouldBeEmpty();
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeFalse();
+        result.GenerateWithMethods.ShouldBeFalse();
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class TestContextTargetDependencyTests
         resultMethod.Kind.ShouldBe(TestContextTargetDependencyMethodKind.Method);
 
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeTrue();
+        result.GenerateWithMethods.ShouldBeTrue();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class TestContextTargetDependencyTests
         resultMethod.Kind.ShouldBe(TestContextTargetDependencyMethodKind.AsyncMethod);
 
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeTrue();
+        result.GenerateWithMethods.ShouldBeTrue();
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class TestContextTargetDependencyTests
         resultMethod.Kind.ShouldBe(TestContextTargetDependencyMethodKind.ResultMethod);
 
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeTrue();
+        result.GenerateWithMethods.ShouldBeTrue();
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public class TestContextTargetDependencyTests
         resultMethod.Kind.ShouldBe(TestContextTargetDependencyMethodKind.AsyncResultMethod);
 
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeTrue();
+        result.GenerateWithMethods.ShouldBeTrue();
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class TestContextTargetDependencyTests
         result.IsLooseMock.ShouldBeTrue();
         result.Methods.ShouldBeEmpty();
         result.IsVerified.ShouldBeFalse();
-        result.GenerateWithCallMethods.ShouldBeFalse();
+        result.GenerateWithMethods.ShouldBeFalse();
     }
 
     [Fact]
@@ -216,6 +216,6 @@ public class TestContextTargetDependencyTests
         result.IsLooseMock.ShouldBeTrue();
         result.Methods.ShouldBeEmpty();
         result.IsVerified.ShouldBeTrue();
-        result.GenerateWithCallMethods.ShouldBeFalse();
+        result.GenerateWithMethods.ShouldBeFalse();
     }
 }

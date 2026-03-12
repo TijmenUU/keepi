@@ -34,7 +34,7 @@ internal sealed class TestContextTargetDependency
         MockName = $"{shortName}Mock";
         IsLooseMock = isLogger;
         IsVerified = !isLogger || verifyLogging;
-        GenerateWithCallMethods = methods.Length > 0 && !isLogger;
+        GenerateWithMethods = methods.Length > 0 && !isLogger;
         Methods = methods ?? throw new ArgumentNullException(paramName: nameof(methods));
     }
 
@@ -43,7 +43,7 @@ internal sealed class TestContextTargetDependency
     public string MockName { get; }
     public bool IsLooseMock { get; }
     public bool IsVerified { get; }
-    public bool GenerateWithCallMethods { get; }
+    public bool GenerateWithMethods { get; }
     public ITestContextTargetDependencyMethod[] Methods { get; }
 }
 

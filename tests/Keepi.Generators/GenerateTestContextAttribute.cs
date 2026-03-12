@@ -15,7 +15,7 @@ public sealed class GenerateTestContextAttribute : Attribute
     public Type TargetType { get; set; }
 
     /// <summary>
-    /// Whether the WithXCall methods should be generated automatically. It will
+    /// Whether the WithX methods should be generated automatically. It will
     /// generated a simple moq setup for each public or internal method of the
     /// target type with return value if applicable. The arguments of the method
     /// are not verified in the generated Setup code, verification is expected
@@ -24,9 +24,9 @@ public sealed class GenerateTestContextAttribute : Attribute
     ///
     /// For the Microsoft ILogger interface methods are never generated.
     ///
-    /// By default no WithXCall methods are generated.
+    /// By default no WithX methods are generated.
     /// </summary>
-    public bool GenerateWithCallMethods { get; set; }
+    public bool GenerateWithMethods { get; set; }
 
     /// <summary>
     /// Indicate whether the generated VerifyNoOtherCalls method should verify
@@ -40,16 +40,16 @@ internal sealed class GenerateTestContextAttributeData
 {
     public GenerateTestContextAttributeData(
         INamedTypeSymbol targetType,
-        bool generateWithCallMethods,
+        bool generateWithMethods,
         bool verifyLogging
     )
     {
         TargetType = targetType ?? throw new ArgumentNullException(paramName: nameof(targetType));
-        GenerateWithCallMethods = generateWithCallMethods;
+        GenerateWithMethods = generateWithMethods;
         VerifyLogging = verifyLogging;
     }
 
     public INamedTypeSymbol TargetType { get; }
-    public bool GenerateWithCallMethods { get; }
+    public bool GenerateWithMethods { get; }
     public bool VerifyLogging { get; }
 }

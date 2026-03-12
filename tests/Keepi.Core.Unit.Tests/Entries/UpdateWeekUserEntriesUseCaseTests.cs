@@ -688,8 +688,5 @@ public class UpdateWeekUserEntriesUseCaseTests
     }
 }
 
-[GenerateTestContext(
-    TargetType = typeof(UpdateWeekUserEntriesUseCase),
-    GenerateWithCallMethods = true
-)]
+[GenerateTestContext(TargetType = typeof(UpdateWeekUserEntriesUseCase), GenerateWithMethods = true)]
 internal partial class UpdateWeekUserEntriesUseCaseTestContext { }

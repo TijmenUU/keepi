@@ -48,7 +48,7 @@ public class GetFirstAdminUserEmailAddressTests
 
 [GenerateTestContext(
     TargetType = typeof(GetFirstAdminUserEmailAddress),
-    GenerateWithCallMethods = false
+    GenerateWithMethods = false
 )]
 internal partial class GetFirstAdminUserEmailAddressTestContext
 {

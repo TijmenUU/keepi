@@ -48,7 +48,7 @@ internal sealed class TestContextClassSource
 
         foreach (var dependency in targetDependencies)
         {
-            GenerateWithCallMethods(
+            GenerateWithMethods(
                 sourceBuilder: sourceBuilder,
                 testContextClassName: className,
                 dependency: dependency
@@ -136,20 +136,20 @@ internal sealed class TestContextClassSource
         sourceBuilder.AppendLine("    }");
     }
 
-    private static void GenerateWithCallMethods(
+    private static void GenerateWithMethods(
         StringBuilder sourceBuilder,
         string testContextClassName,
         TestContextTargetDependency dependency
     )
     {
-        if (!dependency.GenerateWithCallMethods || dependency.Methods.Length < 1)
+        if (!dependency.GenerateWithMethods || dependency.Methods.Length < 1)
         {
             return;
         }
 
         foreach (var method in dependency.Methods)
         {
-            GenerateWithCallMethodsMockSetup(
+            GenerateWithMethodsMockSetup(
                 method: method,
                 dependency: dependency,
                 testContextClassName: testContextClassName,
@@ -158,7 +158,7 @@ internal sealed class TestContextClassSource
         }
     }
 
-    private static void GenerateWithCallMethodsMockSetup(
+    private static void GenerateWithMethodsMockSetup(
         ITestContextTargetDependencyMethod method,
         TestContextTargetDependency dependency,
         string testContextClassName,

@@ -100,5 +100,5 @@ public class DeleteProjectUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(DeleteProjectUseCase), GenerateWithCallMethods = true)]
+[GenerateTestContext(TargetType = typeof(DeleteProjectUseCase), GenerateWithMethods = true)]
 internal partial class DeleteProjectUseCaseTestContext { }

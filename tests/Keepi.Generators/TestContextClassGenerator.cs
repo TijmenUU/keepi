@@ -146,7 +146,7 @@ namespace Keepi.Generators
                 }
 
                 INamedTypeSymbol targetType = null;
-                bool generateWithCallMethods = false;
+                bool generateWithMethods = false;
                 bool verifyLogging = false;
                 foreach (var argument in attribute.NamedArguments)
                 {
@@ -156,8 +156,8 @@ namespace Keepi.Generators
                             targetType = argument.Value.Value as INamedTypeSymbol;
                             break;
 
-                        case nameof(GenerateTestContextAttribute.GenerateWithCallMethods):
-                            generateWithCallMethods = ParseBool(argument.Value.Value);
+                        case nameof(GenerateTestContextAttribute.GenerateWithMethods):
+                            generateWithMethods = ParseBool(argument.Value.Value);
                             break;
 
                         case nameof(GenerateTestContextAttribute.VerifyLogging):
@@ -172,7 +172,7 @@ namespace Keepi.Generators
 
                 return new GenerateTestContextAttributeData(
                     targetType: targetType,
-                    generateWithCallMethods: generateWithCallMethods,
+                    generateWithMethods: generateWithMethods,
                     verifyLogging: verifyLogging
                 );
             }
@@ -219,7 +219,7 @@ namespace Keepi.Generators
 
             var mocks = GetTestContextTargetDependencies(
                 targetType: attributeData.TargetType,
-                gatherMethods: attributeData.GenerateWithCallMethods,
+                gatherMethods: attributeData.GenerateWithMethods,
                 verifyLogging: attributeData.VerifyLogging
             );
 
