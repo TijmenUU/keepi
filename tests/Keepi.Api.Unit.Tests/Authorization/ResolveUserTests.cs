@@ -338,24 +338,16 @@ public class ResolveUserTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(ResolveUser))]
+[GenerateTestContext(TargetType = typeof(ResolveUser), GenerateWithCallMethods = true)]
 internal partial class ResolveUserTestContext
 {
-    public ResolveUserTestContext WithHttpContextIdentity(ClaimsIdentity identity)
-    {
-        HttpContextAccessorMock
-            .Setup(x => x.HttpContext)
-            .Returns(new DefaultHttpContext() { User = new ClaimsPrincipal(identity: identity) });
+    public ResolveUserTestContext WithHttpContextIdentity(ClaimsIdentity identity) =>
+        WithHttpContextAccessorHttpContextGet(
+            new DefaultHttpContext() { User = new ClaimsPrincipal(identity: identity) }
+        );
 
-        return this;
-    }
-
-    public ResolveUserTestContext WithoutHttpContextIdentity()
-    {
-        HttpContextAccessorMock.Setup(x => x.HttpContext).Returns(new DefaultHttpContext());
-
-        return this;
-    }
+    public ResolveUserTestContext WithoutHttpContextIdentity() =>
+        WithHttpContextAccessorHttpContextGet(new DefaultHttpContext());
 
     public ResolveUserTestContext WithExistingUser(
         int id,
@@ -411,52 +403,19 @@ internal partial class ResolveUserTestContext
         UserPermission usersPermission,
         bool newlyRegistered
     ) =>
-        WithGetOrRegisterNewUserUseCaseResult(
-            Result.Success<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
-                new GetOrRegisterNewUserUseCaseOutput(
-                    User: new(
-                        Id: id,
-                        Name: name,
-                        EmailAddress: emailAddress,
-                        IdentityOrigin: UserIdentityProvider.GitHub,
-                        EntriesPermission: entriesPermission,
-                        ExportsPermission: exportsPermission,
-                        ProjectsPermission: projectsPermission,
-                        UsersPermission: usersPermission
-                    ),
-                    NewlyRegistered: newlyRegistered
-                )
+        WithGetOrRegisterNewUserUseCaseSuccess(
+            new GetOrRegisterNewUserUseCaseOutput(
+                User: new(
+                    Id: id,
+                    Name: name,
+                    EmailAddress: emailAddress,
+                    IdentityOrigin: UserIdentityProvider.GitHub,
+                    EntriesPermission: entriesPermission,
+                    ExportsPermission: exportsPermission,
+                    ProjectsPermission: projectsPermission,
+                    UsersPermission: usersPermission
+                ),
+                NewlyRegistered: newlyRegistered
             )
         );
-
-    public ResolveUserTestContext WithGetOrRegisterNewUserUseCaseError(
-        GetOrRegisterNewUserUseCaseError error
-    ) =>
-        WithGetOrRegisterNewUserUseCaseResult(
-            Result.Failure<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>(
-                error
-            )
-        );
-
-    private ResolveUserTestContext WithGetOrRegisterNewUserUseCaseResult(
-        IValueOrErrorResult<
-            GetOrRegisterNewUserUseCaseOutput,
-            GetOrRegisterNewUserUseCaseError
-        > result
-    )
-    {
-        GetOrRegisterNewUserUseCaseMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<UserIdentityProvider>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(result);
-
-        return this;
-    }
 }

@@ -46,7 +46,10 @@ public class GetFirstAdminUserEmailAddressTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetFirstAdminUserEmailAddress))]
+[GenerateTestContext(
+    TargetType = typeof(GetFirstAdminUserEmailAddress),
+    GenerateWithCallMethods = false
+)]
 internal partial class GetFirstAdminUserEmailAddressTestContext
 {
     public const string ConfigurationKey = "Authentication:FirstAdminUserEmailAddress";

@@ -11,8 +11,8 @@ public class GetAllProjectsUseCaseTests
     public async Task Execute_returns_projects()
     {
         var context = new GetAllProjectsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithProjectsResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetProjectsSuccess(
                 new GetProjectsResultProject(
                     Id: 1,
                     Name: "Project 1",
@@ -63,8 +63,8 @@ public class GetAllProjectsUseCaseTests
     )
     {
         var context = new GetAllProjectsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithProjectsResult(repositoryError);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetProjectsError(repositoryError);
 
         var useCase = context.BuildTarget();
 
@@ -105,8 +105,8 @@ public class GetAllProjectsUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new GetAllProjectsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new GetAllProjectsUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithProjectsPermission(UserPermission.None)
                 .Build()
@@ -118,48 +118,10 @@ public class GetAllProjectsUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetAllProjectsUseCase))]
+[GenerateTestContext(TargetType = typeof(GetAllProjectsUseCase), GenerateWithCallMethods = true)]
 internal partial class GetAllProjectsUseCaseTestContext
 {
-    public GetAllProjectsUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public GetAllProjectsUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public GetAllProjectsUseCaseTestContext WithProjectsResult(
+    public GetAllProjectsUseCaseTestContext WithGetProjectsSuccess(
         params GetProjectsResultProject[] projects
-    )
-    {
-        GetProjectsMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-                Result.Success<GetProjectsResult, GetProjectsError>(
-                    new GetProjectsResult(Projects: projects)
-                )
-            );
-
-        return this;
-    }
-
-    public GetAllProjectsUseCaseTestContext WithProjectsResult(GetProjectsError error)
-    {
-        GetProjectsMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<GetProjectsResult, GetProjectsError>(error));
-
-        return this;
-    }
+    ) => WithGetProjectsSuccess(new GetProjectsResult(Projects: projects));
 }

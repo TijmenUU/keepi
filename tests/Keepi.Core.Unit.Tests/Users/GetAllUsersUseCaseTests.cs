@@ -10,8 +10,8 @@ public class GetAllUsersUseCaseTests
     public async Task Execute_returns_projects()
     {
         var context = new GetAllUsersUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUsersResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUsersSuccess(
                 new GetUsersResultUser(
                     Id: 1,
                     Name: "Bob",
@@ -115,8 +115,8 @@ public class GetAllUsersUseCaseTests
     )
     {
         var context = new GetAllUsersUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUsersResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUsersSuccess(
                 new GetUsersResultUser(
                     Id: 1,
                     Name: "Bobby",
@@ -159,8 +159,8 @@ public class GetAllUsersUseCaseTests
     )
     {
         var context = new GetAllUsersUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUsersResult(repositoryError);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUsersError(repositoryError);
 
         var useCase = context.BuildTarget();
 
@@ -196,8 +196,8 @@ public class GetAllUsersUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new GetAllUsersUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new GetAllUsersUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithUsersPermission(UserPermission.None)
                 .Build()
@@ -209,44 +209,9 @@ public class GetAllUsersUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetAllUsersUseCase))]
+[GenerateTestContext(TargetType = typeof(GetAllUsersUseCase), GenerateWithCallMethods = true)]
 internal partial class GetAllUsersUseCaseTestContext
 {
-    public GetAllUsersUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public GetAllUsersUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public GetAllUsersUseCaseTestContext WithUsersResult(params GetUsersResultUser[] users)
-    {
-        GetUsersMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-                Result.Success<GetUsersResult, GetUsersError>(new GetUsersResult(Users: users))
-            );
-
-        return this;
-    }
-
-    public GetAllUsersUseCaseTestContext WithUsersResult(GetUsersError error)
-    {
-        GetUsersMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<GetUsersResult, GetUsersError>(error));
-
-        return this;
-    }
+    public GetAllUsersUseCaseTestContext WithGetUsersSuccess(params GetUsersResultUser[] users) =>
+        WithGetUsersSuccess(new GetUsersResult(Users: users));
 }

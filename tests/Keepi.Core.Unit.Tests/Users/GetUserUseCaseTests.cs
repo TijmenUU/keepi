@@ -9,7 +9,7 @@ public class GetUserUseCaseTests
     [Fact]
     public async Task Execute_returns_expected_user()
     {
-        var context = new GetUserUseCaseTestContext().WithResolvedUser(
+        var context = new GetUserUseCaseTestContext().WithResolveUserSuccess(
             ResolvedUserBuilder.CreateAdministratorBob()
         );
 
@@ -71,8 +71,8 @@ public class GetUserUseCaseTests
         UserPermission usersPermission
     )
     {
-        var context = new GetUserUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new GetUserUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(entriesPermission)
                 .WithExportsPermission(exportsPermission)
@@ -117,24 +117,5 @@ public class GetUserUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetUserUseCase))]
-internal partial class GetUserUseCaseTestContext
-{
-    public GetUserUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public GetUserUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-}
+[GenerateTestContext(TargetType = typeof(GetUserUseCase), GenerateWithCallMethods = true)]
+internal partial class GetUserUseCaseTestContext { }

@@ -11,8 +11,8 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     public async Task Execute_returns_success()
     {
         var context = new UpdateUserInvoiceCustomizationsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithOverwriteCustomizationsSuccessResult();
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithOverwriteUserInvoiceItemCustomizationsSuccess();
 
         var result = await context
             .BuildTarget()
@@ -65,9 +65,10 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_invoice_item_ids()
     {
-        var context = new UpdateUserInvoiceCustomizationsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
-        );
+        var context =
+            new UpdateUserInvoiceCustomizationsUseCaseTestContext().WithResolveUserSuccess(
+                ResolvedUserBuilder.CreateAdministratorBob()
+            );
 
         var result = await context
             .BuildTarget()
@@ -94,8 +95,8 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     public async Task Execute_returns_unknown_invoice_item_id_overwrite_customizations_error()
     {
         var context = new UpdateUserInvoiceCustomizationsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithOverwriteCustomizationsFailureResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithOverwriteUserInvoiceItemCustomizationsError(
                 OverwriteUserInvoiceItemCustomizationsError.UnknownInvoiceItemId
             );
 
@@ -124,8 +125,8 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     public async Task Execute_returns_unknown_overwrite_customizations_error()
     {
         var context = new UpdateUserInvoiceCustomizationsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithOverwriteCustomizationsFailureResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithOverwriteUserInvoiceItemCustomizationsError(
                 OverwriteUserInvoiceItemCustomizationsError.Unknown
             );
 
@@ -202,12 +203,13 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission entriesPermission)
     {
-        var context = new UpdateUserInvoiceCustomizationsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
-                .AsAdministratorBob()
-                .WithEntriesPermission(entriesPermission)
-                .Build()
-        );
+        var context =
+            new UpdateUserInvoiceCustomizationsUseCaseTestContext().WithResolveUserSuccess(
+                ResolvedUserBuilder
+                    .AsAdministratorBob()
+                    .WithEntriesPermission(entriesPermission)
+                    .Build()
+            );
 
         var result = await context
             .BuildTarget()
@@ -230,56 +232,8 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(UpdateUserInvoiceCustomizationsUseCase))]
-internal partial class UpdateUserInvoiceCustomizationsUseCaseTestContext
-{
-    public UpdateUserInvoiceCustomizationsUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public UpdateUserInvoiceCustomizationsUseCaseTestContext WithResolveUserError(
-        ResolveUserError error
-    )
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public UpdateUserInvoiceCustomizationsUseCaseTestContext WithOverwriteCustomizationsSuccessResult()
-    {
-        OverwriteUserInvoiceItemCustomizationsMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<OverwriteUserInvoiceItemCustomizationsInput>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(Result.Success<OverwriteUserInvoiceItemCustomizationsError>());
-
-        return this;
-    }
-
-    public UpdateUserInvoiceCustomizationsUseCaseTestContext WithOverwriteCustomizationsFailureResult(
-        OverwriteUserInvoiceItemCustomizationsError result
-    )
-    {
-        OverwriteUserInvoiceItemCustomizationsMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<OverwriteUserInvoiceItemCustomizationsInput>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(Result.Failure(result));
-
-        return this;
-    }
-}
+[GenerateTestContext(
+    TargetType = typeof(UpdateUserInvoiceCustomizationsUseCase),
+    GenerateWithCallMethods = true
+)]
+internal partial class UpdateUserInvoiceCustomizationsUseCaseTestContext { }

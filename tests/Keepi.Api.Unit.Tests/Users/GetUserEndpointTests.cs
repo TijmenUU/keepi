@@ -1,5 +1,4 @@
 using Keepi.Api.Users.Get;
-using Keepi.Core;
 using Keepi.Core.Users;
 using Keepi.Generators;
 
@@ -10,17 +9,15 @@ public class GetUserEndpointTests
     [Fact]
     public async Task HandleAsync_returns_expected_user()
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Success<GetUserUseCaseOutput, GetUserUseCaseError>(
-                new(
-                    Id: 42,
-                    Name: "John Doe",
-                    EmailAddress: "johndoe@example.com",
-                    EntriesPermission: UserPermission.ReadAndModify,
-                    ExportsPermission: UserPermission.ReadAndModify,
-                    ProjectsPermission: UserPermission.ReadAndModify,
-                    UsersPermission: UserPermission.ReadAndModify
-                )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
+            new(
+                Id: 42,
+                Name: "John Doe",
+                EmailAddress: "johndoe@example.com",
+                EntriesPermission: UserPermission.ReadAndModify,
+                ExportsPermission: UserPermission.ReadAndModify,
+                ProjectsPermission: UserPermission.ReadAndModify,
+                UsersPermission: UserPermission.ReadAndModify
             )
         );
 
@@ -50,17 +47,15 @@ public class GetUserEndpointTests
         GetUserResponsePermission expectedPermission
     )
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Success<GetUserUseCaseOutput, GetUserUseCaseError>(
-                new(
-                    Id: 42,
-                    Name: "John Doe",
-                    EmailAddress: "johndoe@example.com",
-                    EntriesPermission: permissionInput,
-                    ExportsPermission: UserPermission.None,
-                    ProjectsPermission: UserPermission.None,
-                    UsersPermission: UserPermission.None
-                )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
+            new(
+                Id: 42,
+                Name: "John Doe",
+                EmailAddress: "johndoe@example.com",
+                EntriesPermission: permissionInput,
+                ExportsPermission: UserPermission.None,
+                ProjectsPermission: UserPermission.None,
+                UsersPermission: UserPermission.None
             )
         );
 
@@ -77,17 +72,15 @@ public class GetUserEndpointTests
         GetUserResponsePermission expectedPermission
     )
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Success<GetUserUseCaseOutput, GetUserUseCaseError>(
-                new(
-                    Id: 42,
-                    Name: "John Doe",
-                    EmailAddress: "johndoe@example.com",
-                    EntriesPermission: UserPermission.None,
-                    ExportsPermission: permissionInput,
-                    ProjectsPermission: UserPermission.None,
-                    UsersPermission: UserPermission.None
-                )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
+            new(
+                Id: 42,
+                Name: "John Doe",
+                EmailAddress: "johndoe@example.com",
+                EntriesPermission: UserPermission.None,
+                ExportsPermission: permissionInput,
+                ProjectsPermission: UserPermission.None,
+                UsersPermission: UserPermission.None
             )
         );
 
@@ -104,17 +97,15 @@ public class GetUserEndpointTests
         GetUserResponsePermission expectedPermission
     )
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Success<GetUserUseCaseOutput, GetUserUseCaseError>(
-                new(
-                    Id: 42,
-                    Name: "John Doe",
-                    EmailAddress: "johndoe@example.com",
-                    EntriesPermission: UserPermission.None,
-                    ExportsPermission: UserPermission.None,
-                    ProjectsPermission: permissionInput,
-                    UsersPermission: UserPermission.None
-                )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
+            new(
+                Id: 42,
+                Name: "John Doe",
+                EmailAddress: "johndoe@example.com",
+                EntriesPermission: UserPermission.None,
+                ExportsPermission: UserPermission.None,
+                ProjectsPermission: permissionInput,
+                UsersPermission: UserPermission.None
             )
         );
 
@@ -131,17 +122,15 @@ public class GetUserEndpointTests
         GetUserResponsePermission expectedPermission
     )
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Success<GetUserUseCaseOutput, GetUserUseCaseError>(
-                new(
-                    Id: 42,
-                    Name: "John Doe",
-                    EmailAddress: "johndoe@example.com",
-                    EntriesPermission: UserPermission.None,
-                    ExportsPermission: UserPermission.None,
-                    ProjectsPermission: UserPermission.None,
-                    UsersPermission: permissionInput
-                )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
+            new(
+                Id: 42,
+                Name: "John Doe",
+                EmailAddress: "johndoe@example.com",
+                EntriesPermission: UserPermission.None,
+                ExportsPermission: UserPermission.None,
+                ProjectsPermission: UserPermission.None,
+                UsersPermission: permissionInput
             )
         );
 
@@ -164,10 +153,8 @@ public class GetUserEndpointTests
     [Fact]
     public async Task HandleAsync_returns_401_for_unauthenticated_user()
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Failure<GetUserUseCaseOutput, GetUserUseCaseError>(
-                GetUserUseCaseError.UnauthenticatedUser
-            )
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseError(
+            GetUserUseCaseError.UnauthenticatedUser
         );
 
         var endpoint = context.BuildTarget();
@@ -179,8 +166,8 @@ public class GetUserEndpointTests
     [Fact]
     public async Task HandleAsync_returns_500_for_unknown_error()
     {
-        var context = new GetUserEndpointTestContext().WithGetUserUseCaseCall(
-            Result.Failure<GetUserUseCaseOutput, GetUserUseCaseError>(GetUserUseCaseError.Unknown)
+        var context = new GetUserEndpointTestContext().WithGetUserUseCaseError(
+            GetUserUseCaseError.Unknown
         );
 
         var endpoint = context.BuildTarget();

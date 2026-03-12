@@ -11,8 +11,8 @@ public class DeleteProjectUseCaseTests
     public async Task Execute_returns_success()
     {
         var context = new DeleteProjectUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithSuccessfulDeleteProject();
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithDeleteProjectSuccess();
 
         var useCase = context.BuildTarget();
 
@@ -36,8 +36,8 @@ public class DeleteProjectUseCaseTests
     )
     {
         var context = new DeleteProjectUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithDeleteProjectFailure(repositoryError);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithDeleteProjectError(repositoryError);
 
         var useCase = context.BuildTarget();
 
@@ -85,8 +85,8 @@ public class DeleteProjectUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission projectsPermission)
     {
-        var context = new DeleteProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new DeleteProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithProjectsPermission(projectsPermission)
                 .Build()
@@ -100,42 +100,5 @@ public class DeleteProjectUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(DeleteProjectUseCase))]
-internal partial class DeleteProjectUseCaseTestContext
-{
-    public DeleteProjectUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public DeleteProjectUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public DeleteProjectUseCaseTestContext WithSuccessfulDeleteProject()
-    {
-        DeleteProjectMock
-            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<DeleteProjectError>());
-
-        return this;
-    }
-
-    public DeleteProjectUseCaseTestContext WithDeleteProjectFailure(DeleteProjectError error)
-    {
-        DeleteProjectMock
-            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure(error));
-
-        return this;
-    }
-}
+[GenerateTestContext(TargetType = typeof(DeleteProjectUseCase), GenerateWithCallMethods = true)]
+internal partial class DeleteProjectUseCaseTestContext { }

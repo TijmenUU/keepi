@@ -11,7 +11,7 @@ public class ExportUserEntriesUseCaseTests
     public async Task Execute_returns_expected_entries()
     {
         var context = new ExportUserEntriesUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
                     Id: 1,
@@ -99,7 +99,7 @@ public class ExportUserEntriesUseCaseTests
     public async Task Execute_returns_expected_entries_for_single_day_export()
     {
         var context = new ExportUserEntriesUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
                     Id: 1,
@@ -160,7 +160,7 @@ public class ExportUserEntriesUseCaseTests
     public async Task Execute_returns_error_for_start_date_greater_than_stop_date()
     {
         var context = new ExportUserEntriesUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
                     Id: 1,
@@ -234,8 +234,8 @@ public class ExportUserEntriesUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new ExportUserEntriesUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new ExportUserEntriesUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithExportsPermission(UserPermission.None)
                 .Build()
@@ -253,35 +253,10 @@ public class ExportUserEntriesUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(ExportUserEntriesUseCase))]
+[GenerateTestContext(TargetType = typeof(ExportUserEntriesUseCase), GenerateWithCallMethods = true)]
 internal partial class ExportUserEntriesUseCaseTestContext
 {
-    public ExportUserEntriesUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public ExportUserEntriesUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public ExportUserEntriesUseCaseTestContext WithExportEntries(params ExportUserEntry[] entries)
-    {
-        GetExportUserEntriesMock
-            .Setup(x =>
-                x.Execute(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>())
-            )
-            .Returns(entries.ToAsyncEnumerable());
-
-        return this;
-    }
+    public ExportUserEntriesUseCaseTestContext WithExportEntries(
+        params ExportUserEntry[] entries
+    ) => WithGetExportUserEntriesCall(entries.ToAsyncEnumerable());
 }

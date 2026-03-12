@@ -11,8 +11,8 @@ public class GetUserProjectsUseCaseTests
     public async Task Execute_returns_success_output()
     {
         var context = new GetUserProjectsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserProjectsSuccessResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUserProjectsSuccess(
                 new(
                     Projects:
                     [
@@ -83,8 +83,8 @@ public class GetUserProjectsUseCaseTests
     public async Task Execute_returns_success_with_default_customization()
     {
         var context = new GetUserProjectsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserProjectsSuccessResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUserProjectsSuccess(
                 new(
                     Projects:
                     [
@@ -128,8 +128,8 @@ public class GetUserProjectsUseCaseTests
     public async Task Execute_returns_unknown_get_user_projects_error()
     {
         var context = new GetUserProjectsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserProjectsFailureResult(GetUserProjectsError.Unknown);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUserProjectsError(GetUserProjectsError.Unknown);
 
         var result = await context.BuildTarget().Execute(cancellationToken: CancellationToken.None);
 
@@ -164,8 +164,8 @@ public class GetUserProjectsUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new GetUserProjectsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new GetUserProjectsUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(UserPermission.None)
                 .Build()
@@ -177,46 +177,5 @@ public class GetUserProjectsUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetUserProjectsUseCase))]
-internal partial class GetUserProjectsUseCaseTestContext
-{
-    public GetUserProjectsUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public GetUserProjectsUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public GetUserProjectsUseCaseTestContext WithGetUserProjectsSuccessResult(
-        GetUserProjectResult result
-    )
-    {
-        GetUserProjectsMock
-            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<GetUserProjectResult, GetUserProjectsError>(result));
-
-        return this;
-    }
-
-    public GetUserProjectsUseCaseTestContext WithGetUserProjectsFailureResult(
-        GetUserProjectsError result
-    )
-    {
-        GetUserProjectsMock
-            .Setup(x => x.Execute(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<GetUserProjectResult, GetUserProjectsError>(result));
-
-        return this;
-    }
-}
+[GenerateTestContext(TargetType = typeof(GetUserProjectsUseCase), GenerateWithCallMethods = true)]
+internal partial class GetUserProjectsUseCaseTestContext { }

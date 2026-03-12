@@ -11,8 +11,8 @@ public class GetUserEntriesForWeekUseCaseTests
     public async Task Execute_stores_expected_entities()
     {
         var context = new GetUserEntriesForWeekUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserEntriesForDatesSuccessResult(
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUserEntriesForDatesSuccess(
                 new GetUserEntriesForDatesResultEntry(
                     Id: 1,
                     InvoiceItemId: 101,
@@ -120,8 +120,8 @@ public class GetUserEntriesForWeekUseCaseTests
     public async Task Execute_returns_unknown_get_user_entries_error()
     {
         var context = new GetUserEntriesForWeekUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserEntriesForDatesFailureResult(GetUserEntriesForDatesError.Unknown);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithGetUserEntriesForDatesError(GetUserEntriesForDatesError.Unknown);
 
         var result = await context
             .BuildTarget()
@@ -163,8 +163,8 @@ public class GetUserEntriesForWeekUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unauthorized_user()
     {
-        var context = new GetUserEntriesForWeekUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new GetUserEntriesForWeekUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithEntriesPermission(UserPermission.None)
                 .Build()
@@ -179,56 +179,13 @@ public class GetUserEntriesForWeekUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetUserEntriesForWeekUseCase))]
+[GenerateTestContext(
+    TargetType = typeof(GetUserEntriesForWeekUseCase),
+    GenerateWithCallMethods = true
+)]
 internal partial class GetUserEntriesForWeekUseCaseTestContext
 {
-    public GetUserEntriesForWeekUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public GetUserEntriesForWeekUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesSuccessResult(
+    public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesSuccess(
         params GetUserEntriesForDatesResultEntry[] entities
-    )
-    {
-        GetUserEntriesForDatesMock
-            .Setup(x =>
-                x.Execute(It.IsAny<int>(), It.IsAny<DateOnly[]>(), It.IsAny<CancellationToken>())
-            )
-            .ReturnsAsync(
-                Result.Success<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
-                    new(Entries: entities)
-                )
-            );
-
-        return this;
-    }
-
-    public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesFailureResult(
-        GetUserEntriesForDatesError result
-    )
-    {
-        GetUserEntriesForDatesMock
-            .Setup(x =>
-                x.Execute(It.IsAny<int>(), It.IsAny<DateOnly[]>(), It.IsAny<CancellationToken>())
-            )
-            .ReturnsAsync(
-                Result.Failure<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(result)
-            );
-
-        return this;
-    }
+    ) => WithGetUserEntriesForDatesSuccess((GetUserEntriesForDatesResult)new(Entries: entities));
 }

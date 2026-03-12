@@ -49,7 +49,7 @@ public class UpdateUserPermissionsUseCaseTests
     )
     {
         var context = new UpdateUserPermissionsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithUpdateUserPermissionsSuccess();
 
         var result = await context
@@ -119,11 +119,8 @@ public class UpdateUserPermissionsUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission usersPermission)
     {
-        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
-                .AsAdministratorBob()
-                .WithUsersPermission(usersPermission)
-                .Build()
+        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.AsAdministratorBob().WithUsersPermission(usersPermission).Build()
         );
 
         var result = await context
@@ -143,8 +140,8 @@ public class UpdateUserPermissionsUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_user_that_modifies_their_own_permissions()
     {
-        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -164,8 +161,8 @@ public class UpdateUserPermissionsUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_unsupported_permission_combination()
     {
-        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateUserPermissionsUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -196,8 +193,8 @@ public class UpdateUserPermissionsUseCaseTests
     )
     {
         var context = new UpdateUserPermissionsUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUpdateUserPermissionsFailure(repositoryError);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUpdateUserPermissionsError(repositoryError);
 
         var result = await context
             .BuildTarget()
@@ -214,50 +211,8 @@ public class UpdateUserPermissionsUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(UpdateUserPermissionsUseCase))]
-internal partial class UpdateUserPermissionsUseCaseTestContext
-{
-    public UpdateUserPermissionsUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public UpdateUserPermissionsUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public UpdateUserPermissionsUseCaseTestContext WithUpdateUserPermissionsSuccess() =>
-        WithUpdateUserPermissionsResult(Result.Success<UpdateUserPermissionsError>());
-
-    public UpdateUserPermissionsUseCaseTestContext WithUpdateUserPermissionsFailure(
-        UpdateUserPermissionsError error
-    ) => WithUpdateUserPermissionsResult(Result.Failure(error));
-
-    private UpdateUserPermissionsUseCaseTestContext WithUpdateUserPermissionsResult(
-        IMaybeErrorResult<UpdateUserPermissionsError> result
-    )
-    {
-        UpdateUserPermissionsMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<int>(),
-                    It.IsAny<UserPermission>(),
-                    It.IsAny<UserPermission>(),
-                    It.IsAny<UserPermission>(),
-                    It.IsAny<UserPermission>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(result);
-        return this;
-    }
-}
+[GenerateTestContext(
+    TargetType = typeof(UpdateUserPermissionsUseCase),
+    GenerateWithCallMethods = true
+)]
+internal partial class UpdateUserPermissionsUseCaseTestContext { }

@@ -11,8 +11,8 @@ public class UpdateProjectUseCaseTests
     public async Task Execute_returns_created_project_ID()
     {
         var context = new UpdateProjectUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUpdateProjectSuccessResult();
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUpdateProjectSuccess();
 
         var result = await context
             .BuildTarget()
@@ -53,8 +53,8 @@ public class UpdateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_project_name(string projectName)
     {
-        var context = new UpdateProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -75,8 +75,8 @@ public class UpdateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_user_ids()
     {
-        var context = new UpdateProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -100,8 +100,8 @@ public class UpdateProjectUseCaseTests
     [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
     public async Task Execute_returns_error_for_invalid_invoice_item_name(string invoiceItemName)
     {
-        var context = new UpdateProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -122,8 +122,8 @@ public class UpdateProjectUseCaseTests
     [Fact]
     public async Task Execute_returns_error_for_duplicate_invoice_item_names()
     {
-        var context = new UpdateProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder.CreateAdministratorBob()
+        var context = new UpdateProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder.CreateAdministratorBob()
         );
 
         var result = await context
@@ -155,8 +155,8 @@ public class UpdateProjectUseCaseTests
     )
     {
         var context = new UpdateProjectUseCaseTestContext()
-            .WithResolvedUser(user: ResolvedUserBuilder.CreateAdministratorBob())
-            .WithUpdateProjectFailureResult(updateError);
+            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
+            .WithUpdateProjectError(updateError);
 
         var result = await context
             .BuildTarget()
@@ -209,8 +209,8 @@ public class UpdateProjectUseCaseTests
     [InlineData(UserPermission.Read)]
     public async Task Execute_returns_error_for_unauthorized_user(UserPermission projectsPermission)
     {
-        var context = new UpdateProjectUseCaseTestContext().WithResolvedUser(
-            user: ResolvedUserBuilder
+        var context = new UpdateProjectUseCaseTestContext().WithResolveUserSuccess(
+            ResolvedUserBuilder
                 .AsAdministratorBob()
                 .WithProjectsPermission(projectsPermission)
                 .Build()
@@ -231,60 +231,5 @@ public class UpdateProjectUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(UpdateProjectUseCase))]
-internal partial class UpdateProjectUseCaseTestContext
-{
-    public UpdateProjectUseCaseTestContext WithResolvedUser(ResolvedUser user)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success<ResolvedUser, ResolveUserError>(user));
-
-        return this;
-    }
-
-    public UpdateProjectUseCaseTestContext WithResolveUserError(ResolveUserError error)
-    {
-        ResolveUserMock
-            .Setup(x => x.Execute(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<ResolvedUser, ResolveUserError>(error));
-
-        return this;
-    }
-
-    public UpdateProjectUseCaseTestContext WithUpdateProjectSuccessResult()
-    {
-        UpdateProjectMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int[]>(),
-                    It.IsAny<(int?, string)[]>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(Result.Success<UpdateProjectError>());
-
-        return this;
-    }
-
-    public UpdateProjectUseCaseTestContext WithUpdateProjectFailureResult(UpdateProjectError result)
-    {
-        UpdateProjectMock
-            .Setup(x =>
-                x.Execute(
-                    It.IsAny<int>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int[]>(),
-                    It.IsAny<(int?, string)[]>(),
-                    It.IsAny<CancellationToken>()
-                )
-            )
-            .ReturnsAsync(Result.Failure(result));
-
-        return this;
-    }
-}
+[GenerateTestContext(TargetType = typeof(UpdateProjectUseCase), GenerateWithCallMethods = true)]
+internal partial class UpdateProjectUseCaseTestContext { }
