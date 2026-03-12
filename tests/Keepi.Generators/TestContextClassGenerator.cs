@@ -272,7 +272,7 @@ namespace Keepi.Generators
                     )
                 );
 
-                var methods = Array.Empty<TestContextTargetDependencyMethod>();
+                var methods = Array.Empty<ITestContextTargetDependencyMethod>();
                 if (gatherMethods)
                 {
                     methods = GetTestContextTargetDependencyMethods(type: parameter.Type);
@@ -291,7 +291,7 @@ namespace Keepi.Generators
             return results.ToArray();
         }
 
-        private static TestContextTargetDependencyMethod[] GetTestContextTargetDependencyMethods(
+        private static ITestContextTargetDependencyMethod[] GetTestContextTargetDependencyMethods(
             ITypeSymbol type
         )
         {
@@ -303,20 +303,20 @@ namespace Keepi.Generators
 
             Debug.Assert(!type.IsStatic);
 
-            var methods = new List<TestContextTargetDependencyMethod>();
+            var methods = new List<ITestContextTargetDependencyMethod>();
             foreach (var member in type.GetMembers())
             {
                 if (
                     member.Kind != SymbolKind.Method
                     || !IsPublicOrInternal(accessibility: member.DeclaredAccessibility)
+                    || member is not IMethodSymbol memberSymbol
+                    || !MethodIsSupportedToBeMocked(memberSymbol.MethodKind)
                 )
                 {
                     continue;
                 }
 
-                methods.Add(
-                    item: GetTestContextTargetDependencyMethod(member: member as IMethodSymbol)
-                );
+                methods.Add(item: GetTestContextTargetDependencyMethod(member: memberSymbol));
             }
 
             return methods.ToArray();
@@ -325,11 +325,49 @@ namespace Keepi.Generators
         private static bool IsPublicOrInternal(Accessibility accessibility) =>
             accessibility == Accessibility.Public || accessibility == Accessibility.Internal;
 
-        private static TestContextTargetDependencyMethod GetTestContextTargetDependencyMethod(
+        private static bool MethodIsSupportedToBeMocked(MethodKind kind) =>
+            kind switch
+            {
+                MethodKind.Ordinary or MethodKind.PropertyGet or MethodKind.PropertySet => true,
+                _ => false,
+            };
+
+        private static ITestContextTargetDependencyMethod GetTestContextTargetDependencyMethod(
             IMethodSymbol member
         )
         {
             Debug.Assert(member != null);
+
+            var returnTypeFullName = member.ReturnsVoid
+                ? "void"
+                : member.ReturnType.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                    )
+                );
+
+            if (member.MethodKind == MethodKind.PropertyGet)
+            {
+                return new TestContextTargetDependencyGetter(
+                    name: member.AssociatedSymbol.Name,
+                    returnTypeFullName: returnTypeFullName
+                );
+            }
+            else if (member.MethodKind == MethodKind.PropertySet)
+            {
+                return new TestContextTargetDependencySetter(
+                    name: member.AssociatedSymbol.Name,
+                    returnTypeFullName: returnTypeFullName
+                );
+            }
+
+            if (member.MethodKind != MethodKind.Ordinary)
+            {
+                throw new NotSupportedException(
+                    $"Method of kind {member.MethodKind} are not supported"
+                );
+            }
 
             var parameterTypes = new List<string>();
             foreach (var parameter in member.Parameters)
@@ -344,16 +382,8 @@ namespace Keepi.Generators
                 );
             }
 
-            var returnTypeFullName = member.ReturnsVoid
-                ? "void"
-                : member.ReturnType.ToDisplayString(
-                    new SymbolDisplayFormat(
-                        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
-                    )
-                );
-
             var useAsyncReturn = false;
+            ITypeSymbol unwrappedTaskType = member.ReturnType;
             if (
                 member.ReturnType is INamedTypeSymbol returnNamedTypeSymbol
                 && returnNamedTypeSymbol.IsGenericType
@@ -363,14 +393,74 @@ namespace Keepi.Generators
                 Debug.Assert(returnNamedTypeSymbol.TypeArguments.Length == 1);
 
                 useAsyncReturn = true;
-                returnTypeFullName = returnNamedTypeSymbol
-                    .TypeArguments[0]
-                    .ToDisplayString(
-                        new SymbolDisplayFormat(
-                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
-                        )
+                unwrappedTaskType = returnNamedTypeSymbol.TypeArguments[0];
+
+                returnTypeFullName = unwrappedTaskType.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                    )
+                );
+            }
+
+            if (
+                unwrappedTaskType is INamedTypeSymbol unwrappedTaskSymbol
+                && unwrappedTaskSymbol.IsGenericType
+                && unwrappedTaskSymbol.ContainingNamespace.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                    )
+                ) == "Keepi.Core"
+                && unwrappedTaskSymbol.Name.EndsWith("Result")
+            )
+            {
+                if (unwrappedTaskSymbol.Name == "IMaybeErrorResult")
+                {
+                    Debug.Assert(unwrappedTaskSymbol.TypeArguments.Length == 1);
+
+                    return new TestContextTargetDependencyResultMethod(
+                        name: member.Name,
+                        parameterTypeFullNames: parameterTypes.ToArray(),
+                        returnTypeFullName: returnTypeFullName,
+                        resultErrorTypeFullName: unwrappedTaskSymbol
+                            .TypeArguments[0]
+                            .ToDisplayString(
+                                new SymbolDisplayFormat(
+                                    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                                )
+                            ),
+                        resultSuccessTypeFullName: null,
+                        useAsyncReturn: useAsyncReturn
                     );
+                }
+                else if (unwrappedTaskType.Name == "IValueOrErrorResult")
+                {
+                    Debug.Assert(unwrappedTaskSymbol.TypeArguments.Length == 2);
+
+                    return new TestContextTargetDependencyResultMethod(
+                        name: member.Name,
+                        parameterTypeFullNames: parameterTypes.ToArray(),
+                        returnTypeFullName: returnTypeFullName,
+                        resultErrorTypeFullName: unwrappedTaskSymbol
+                            .TypeArguments[1]
+                            .ToDisplayString(
+                                new SymbolDisplayFormat(
+                                    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                                )
+                            ),
+                        resultSuccessTypeFullName: unwrappedTaskSymbol
+                            .TypeArguments[0]
+                            .ToDisplayString(
+                                new SymbolDisplayFormat(
+                                    genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
+                                )
+                            ),
+                        useAsyncReturn: useAsyncReturn
+                    );
+                }
             }
 
             return new TestContextTargetDependencyMethod(

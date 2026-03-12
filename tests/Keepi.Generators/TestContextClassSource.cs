@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace Keepi.Generators;
@@ -15,6 +16,8 @@ internal sealed class TestContextClassSource
     {
         var sourceBuilder = new StringBuilder();
         sourceBuilder.AppendLine("using Moq;");
+        sourceBuilder.AppendLine("using System.Threading.Tasks;");
+
         if (!string.IsNullOrWhiteSpace(@namespace))
         {
             sourceBuilder.AppendLine($"namespace {@namespace};");
@@ -146,48 +149,250 @@ internal sealed class TestContextClassSource
 
         foreach (var method in dependency.Methods)
         {
-            if (dependency.Methods.Length > 1)
-            {
-                sourceBuilder.AppendLine(
-                    $"    public {testContextClassName} With{dependency.ShortName}{method.Name}Call()"
+            GenerateWithCallMethodsMockSetup(
+                method: method,
+                dependency: dependency,
+                testContextClassName: testContextClassName,
+                sourceBuilder: sourceBuilder
+            );
+        }
+    }
+
+    private static void GenerateWithCallMethodsMockSetup(
+        ITestContextTargetDependencyMethod method,
+        TestContextTargetDependency dependency,
+        string testContextClassName,
+        StringBuilder sourceBuilder
+    )
+    {
+        switch (method.Kind)
+        {
+            case TestContextTargetDependencyMethodKind.Getter:
+                GenerateWithGetterMockSetup(
+                    method: method as TestContextTargetDependencyGetter,
+                    dependency: dependency,
+                    testContextClassName: testContextClassName,
+                    sourceBuilder: sourceBuilder
                 );
+                break;
+
+            case TestContextTargetDependencyMethodKind.Setter:
+                // TODO ? What can be generated for this?
+                break;
+
+            case TestContextTargetDependencyMethodKind.Method:
+            case TestContextTargetDependencyMethodKind.AsyncMethod:
+                GenerateWithMethodMockSetup(
+                    method: method as TestContextTargetDependencyMethod,
+                    dependency: dependency,
+                    testContextClassName: testContextClassName,
+                    sourceBuilder: sourceBuilder
+                );
+                break;
+
+            case TestContextTargetDependencyMethodKind.ResultMethod:
+            case TestContextTargetDependencyMethodKind.AsyncResultMethod:
+                GenerateWithResultMethodMockSetup(
+                    method: method as TestContextTargetDependencyResultMethod,
+                    dependency: dependency,
+                    testContextClassName: testContextClassName,
+                    sourceBuilder: sourceBuilder
+                );
+                break;
+
+            default:
+                throw new NotImplementedException(
+                    $"Missing implementation for method mock kind {method.Kind}"
+                );
+        }
+    }
+
+    private static void GenerateWithGetterMockSetup(
+        TestContextTargetDependencyGetter method,
+        TestContextTargetDependency dependency,
+        string testContextClassName,
+        StringBuilder sourceBuilder
+    )
+    {
+        sourceBuilder.AppendLine(
+            $"    public {testContextClassName} With{dependency.ShortName}{method.Name}Get({method.ReturnTypeFullName} result)"
+        );
+
+        sourceBuilder.AppendLine("    {");
+        sourceBuilder.AppendLine(
+            $"        {dependency.MockName}.Setup(x => x.{method.Name}).Returns(result);"
+        );
+        sourceBuilder.AppendLine("        return this;");
+        sourceBuilder.AppendLine("    }");
+    }
+
+    private static void GenerateWithMethodMockSetup(
+        TestContextTargetDependencyMethod method,
+        TestContextTargetDependency dependency,
+        string testContextClassName,
+        StringBuilder sourceBuilder
+    )
+    {
+        string withMethodName =
+            dependency.Methods.Length == 1
+                ? $"With{dependency.ShortName}Call"
+                : $"With{dependency.ShortName}{method.Name}Call";
+
+        bool returnsValue =
+            method.ReturnTypeFullName != "void"
+            && method.ReturnTypeFullName != "System.Threading.Tasks.Task";
+        if (returnsValue)
+        {
+            sourceBuilder.AppendLine(
+                $"    public {testContextClassName} {withMethodName}({method.ReturnTypeFullName} returnValue)"
+            );
+        }
+        else
+        {
+            sourceBuilder.AppendLine($"    public {testContextClassName} {withMethodName}()");
+        }
+
+        sourceBuilder.AppendLine("    {");
+
+        sourceBuilder.Append($"        {dependency.MockName}.Setup(x => x.{method.Name}(");
+        for (var i = 0; i < method.ParameterTypeFullNames.Length; ++i)
+        {
+            if (i > 0)
+            {
+                sourceBuilder.Append(", ");
+            }
+            sourceBuilder.Append($"It.IsAny<{method.ParameterTypeFullNames[i]}>()");
+        }
+        sourceBuilder.Append("))");
+
+        if (returnsValue)
+        {
+            if (method.Kind == TestContextTargetDependencyMethodKind.AsyncMethod)
+            {
+                sourceBuilder.Append(".ReturnsAsync(returnValue)");
             }
             else
             {
-                sourceBuilder.AppendLine(
-                    $"    public {testContextClassName} With{dependency.ShortName}Call({method.ReturnTypeFullName} result)"
-                );
+                sourceBuilder.Append(".Returns(returnValue)");
             }
-
-            sourceBuilder.AppendLine("    {");
-
-            sourceBuilder.Append($"        {dependency.MockName}.Setup(x => x.{method.Name}(");
-            for (var i = 0; i < method.ParameterTypeFullNames.Length; ++i)
-            {
-                if (i > 0)
-                {
-                    sourceBuilder.Append(", ");
-                }
-                sourceBuilder.Append($"It.IsAny<{method.ParameterTypeFullNames[i]}>()");
-            }
-            sourceBuilder.Append("))");
-
-            if (method.ReturnTypeFullName != "void")
-            {
-                if (method.UseAsyncReturn)
-                {
-                    sourceBuilder.Append($".ReturnsAsync(result)");
-                }
-                else
-                {
-                    sourceBuilder.Append($".Returns(result)");
-                }
-            }
-            sourceBuilder.AppendLine(";");
-
-            sourceBuilder.AppendLine("        return this;");
-            sourceBuilder.AppendLine("    }");
         }
+        else if (method.Kind == TestContextTargetDependencyMethodKind.AsyncMethod)
+        {
+            sourceBuilder.Append(".Returns(Task.CompletedTask)");
+        }
+        sourceBuilder.AppendLine(";");
+
+        sourceBuilder.AppendLine("        return this;");
+        sourceBuilder.AppendLine("    }");
+    }
+
+    private static void GenerateWithResultMethodMockSetup(
+        TestContextTargetDependencyResultMethod method,
+        TestContextTargetDependency dependency,
+        string testContextClassName,
+        StringBuilder sourceBuilder
+    )
+    {
+        if (method.ResultSuccessTypeFullName == null)
+        {
+            GenerateWithResultMethodMockSetup(
+                method: method,
+                suffix: "Success",
+                returnValueParameterName: null,
+                returnValueTypeFullName: null,
+                resultGenericDefinition: $"Keepi.Core.Result.Success<{method.ResultErrorTypeFullName}>",
+                dependency: dependency,
+                testContextClassName: testContextClassName,
+                sourceBuilder: sourceBuilder
+            );
+
+            GenerateWithResultMethodMockSetup(
+                method: method,
+                suffix: "Error",
+                returnValueParameterName: "error",
+                returnValueTypeFullName: method.ResultErrorTypeFullName,
+                resultGenericDefinition: $"Keepi.Core.Result.Failure<{method.ResultErrorTypeFullName}>",
+                dependency: dependency,
+                testContextClassName: testContextClassName,
+                sourceBuilder: sourceBuilder
+            );
+        }
+        else
+        {
+            GenerateWithResultMethodMockSetup(
+                method: method,
+                suffix: "Success",
+                returnValueParameterName: "result",
+                returnValueTypeFullName: method.ResultSuccessTypeFullName,
+                resultGenericDefinition: $"Keepi.Core.Result.Success<{method.ResultSuccessTypeFullName},{method.ResultErrorTypeFullName}>",
+                dependency: dependency,
+                testContextClassName: testContextClassName,
+                sourceBuilder: sourceBuilder
+            );
+
+            GenerateWithResultMethodMockSetup(
+                method: method,
+                suffix: "Error",
+                returnValueParameterName: "error",
+                returnValueTypeFullName: method.ResultErrorTypeFullName,
+                resultGenericDefinition: $"Keepi.Core.Result.Failure<{method.ResultSuccessTypeFullName},{method.ResultErrorTypeFullName}>",
+                dependency: dependency,
+                testContextClassName: testContextClassName,
+                sourceBuilder: sourceBuilder
+            );
+        }
+    }
+
+    private static void GenerateWithResultMethodMockSetup(
+        TestContextTargetDependencyResultMethod method,
+        string suffix,
+        string returnValueParameterName,
+        string returnValueTypeFullName,
+        string resultGenericDefinition,
+        TestContextTargetDependency dependency,
+        string testContextClassName,
+        StringBuilder sourceBuilder
+    )
+    {
+        string withMethodName =
+            dependency.Methods.Length == 1
+                ? $"With{dependency.ShortName}{suffix}"
+                : $"With{dependency.ShortName}{method.Name}{suffix}";
+
+        Debug.Assert(returnValueTypeFullName != "void");
+        Debug.Assert(returnValueTypeFullName != "System.Threading.Tasks.Task");
+
+        sourceBuilder.AppendLine(
+            $"    public {testContextClassName} {withMethodName}({returnValueTypeFullName} {returnValueParameterName})"
+        );
+        sourceBuilder.AppendLine("    {");
+
+        sourceBuilder.Append($"        {dependency.MockName}.Setup(x => x.{method.Name}(");
+        for (var i = 0; i < method.ParameterTypeFullNames.Length; ++i)
+        {
+            if (i > 0)
+            {
+                sourceBuilder.Append(", ");
+            }
+            sourceBuilder.Append($"It.IsAny<{method.ParameterTypeFullNames[i]}>()");
+        }
+        sourceBuilder.Append("))");
+
+        if (method.Kind == TestContextTargetDependencyMethodKind.AsyncResultMethod)
+        {
+            sourceBuilder.AppendLine(
+                $".ReturnsAsync({resultGenericDefinition}({returnValueParameterName}));"
+            );
+        }
+        else
+        {
+            sourceBuilder.AppendLine(
+                $".Returns({resultGenericDefinition}({returnValueParameterName}));"
+            );
+        }
+
+        sourceBuilder.AppendLine("        return this;");
+        sourceBuilder.AppendLine("    }");
     }
 
     private TestContextClassSource(string name, string content)
