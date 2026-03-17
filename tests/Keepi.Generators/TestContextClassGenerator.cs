@@ -28,9 +28,10 @@ namespace Keepi.Generators
 #endif
 
             var classDeclarations = context
-                .SyntaxProvider.CreateSyntaxProvider(
+                .SyntaxProvider.ForAttributeWithMetadataName(
+                    fullyQualifiedMetadataName: GenerateTestContextAttribute.FullName,
                     predicate: IsApplicableNode,
-                    transform: TransformToClassDeclaration
+                    transform: TransformToTestContextClassDeclaration
                 )
                 .Where(IsNotNull);
 
@@ -45,47 +46,49 @@ namespace Keepi.Generators
             CancellationToken cancellationToken
         ) => node is ClassDeclarationSyntax c && c.AttributeLists.Count > 0;
 
-        private static bool IsNotNull(ClassDeclarationSyntax c) => c != null;
+        private static bool IsNotNull(TestContextClassDeclaration c) => c != null;
 
-        private static ClassDeclarationSyntax TransformToClassDeclaration(
-            GeneratorSyntaxContext context,
+        private static TestContextClassDeclaration TransformToTestContextClassDeclaration(
+            GeneratorAttributeSyntaxContext context,
             CancellationToken cancellationToken
         )
         {
-            if (context.Node is not ClassDeclarationSyntax classNode)
+            if (context.TargetNode is not ClassDeclarationSyntax classNode)
             {
                 return null;
             }
 
-            foreach (var list in classNode.AttributeLists)
-            {
-                foreach (var attribute in list.Attributes)
-                {
-                    if (
-                        context.SemanticModel.GetSymbolInfo(attribute).Symbol
-                        is not IMethodSymbol attributeSymbol
-                    )
-                    {
-                        continue;
-                    }
+            return new TestContextClassDeclaration(
+                classDeclarationSyntax: classNode,
+                attributeData: context.Attributes.First(a =>
+                    a.AttributeClass.Name == nameof(GenerateTestContextAttribute)
+                )
+            );
+        }
 
-                    var attributeContainingTypeSymbol = attributeSymbol.ContainingType;
-                    if (
-                        attributeContainingTypeSymbol.ToDisplayString()
-                        == GenerateTestContextAttribute.FullName
-                    )
-                    {
-                        return classNode;
-                    }
-                }
+        private sealed class TestContextClassDeclaration
+        {
+            public TestContextClassDeclaration(
+                ClassDeclarationSyntax classDeclarationSyntax,
+                AttributeData attributeData
+            )
+            {
+                Debug.Assert(
+                    attributeData.AttributeClass.Name
+                        == nameof(Generators.GenerateTestContextAttribute)
+                );
+
+                ClassDeclarationSyntax = classDeclarationSyntax;
+                GenerateTestContextAttribute = attributeData;
             }
 
-            return null;
+            public ClassDeclarationSyntax ClassDeclarationSyntax { get; }
+            public AttributeData GenerateTestContextAttribute { get; }
         }
 
         private static void GeneratedTestContexts(
             SourceProductionContext context,
-            (Compilation, ImmutableArray<ClassDeclarationSyntax>) values
+            (Compilation, ImmutableArray<TestContextClassDeclaration>) values
         )
         {
             var classes = values.Item2;
@@ -97,7 +100,7 @@ namespace Keepi.Generators
             foreach (var @class in classes.Distinct())
             {
                 GeneratedTestContext(
-                    testContextClass: @class,
+                    testContextClassDeclaration: @class,
                     compilation: values.Item1,
                     context: context
                 );
@@ -105,19 +108,19 @@ namespace Keepi.Generators
         }
 
         private static void GeneratedTestContext(
-            ClassDeclarationSyntax testContextClass,
+            TestContextClassDeclaration testContextClassDeclaration,
             Compilation compilation,
             SourceProductionContext context
         )
         {
             var testContextClassSemanticModel = compilation.GetSemanticModel(
-                testContextClass.SyntaxTree
+                testContextClassDeclaration.ClassDeclarationSyntax.SyntaxTree
             );
             var testContextClassSymbol = testContextClassSemanticModel.GetDeclaredSymbol(
-                declaration: testContextClass
+                declaration: testContextClassDeclaration.ClassDeclarationSyntax
             );
             var generateTestContextAttribute = GetGenerateTestContextAttributeOrNull(
-                attributes: testContextClassSymbol.GetAttributes()
+                attribute: testContextClassDeclaration.GenerateTestContextAttribute
             );
             if (generateTestContextAttribute == null)
             {
@@ -132,52 +135,39 @@ namespace Keepi.Generators
         }
 
         private static GenerateTestContextAttributeData GetGenerateTestContextAttributeOrNull(
-            ImmutableArray<AttributeData> attributes
+            AttributeData attribute
         )
         {
-            foreach (var attribute in attributes)
+            INamedTypeSymbol targetType = null;
+            bool generateWithMethods = false;
+            bool verifyLogging = false;
+            foreach (var argument in attribute.NamedArguments)
             {
-                if (
-                    attribute.AttributeClass.ToDisplayString()
-                    != GenerateTestContextAttribute.FullName
-                )
+                switch (argument.Key)
                 {
-                    continue;
+                    case nameof(GenerateTestContextAttribute.TargetType):
+                        targetType = argument.Value.Value as INamedTypeSymbol;
+                        break;
+
+                    case nameof(GenerateTestContextAttribute.GenerateWithMethods):
+                        generateWithMethods = ParseBool(argument.Value.Value);
+                        break;
+
+                    case nameof(GenerateTestContextAttribute.VerifyLogging):
+                        verifyLogging = ParseBool(argument.Value.Value);
+                        break;
                 }
-
-                INamedTypeSymbol targetType = null;
-                bool generateWithMethods = false;
-                bool verifyLogging = false;
-                foreach (var argument in attribute.NamedArguments)
-                {
-                    switch (argument.Key)
-                    {
-                        case nameof(GenerateTestContextAttribute.TargetType):
-                            targetType = argument.Value.Value as INamedTypeSymbol;
-                            break;
-
-                        case nameof(GenerateTestContextAttribute.GenerateWithMethods):
-                            generateWithMethods = ParseBool(argument.Value.Value);
-                            break;
-
-                        case nameof(GenerateTestContextAttribute.VerifyLogging):
-                            verifyLogging = ParseBool(argument.Value.Value);
-                            break;
-                    }
-                }
-                if (targetType == null)
-                {
-                    return null;
-                }
-
-                return new GenerateTestContextAttributeData(
-                    targetType: targetType,
-                    generateWithMethods: generateWithMethods,
-                    verifyLogging: verifyLogging
-                );
+            }
+            if (targetType == null)
+            {
+                return null;
             }
 
-            return null;
+            return new GenerateTestContextAttributeData(
+                targetType: targetType,
+                generateWithMethods: generateWithMethods,
+                verifyLogging: verifyLogging
+            );
         }
 
         private static bool ParseBool(object typedConstant) =>
