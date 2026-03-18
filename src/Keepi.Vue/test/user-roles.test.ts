@@ -1,4 +1,4 @@
-import { getUserRole, isAdmin, isUser } from '@/user-roles'
+import { getUserRole, getUserRoleLabel, isAdmin, isUser } from '@/user-roles'
 import { describe, expect, test } from 'vitest'
 
 describe.concurrent('user-roles', () => {
@@ -106,5 +106,11 @@ describe.concurrent('user-roles', () => {
         usersPermission: 'read',
       }),
     ).toEqual('none')
+  })
+
+  test('getUserRoleLabel', () => {
+    expect(getUserRoleLabel('admin')).toEqual('Beheerder')
+    expect(getUserRoleLabel('user')).toEqual('Gebruiker')
+    expect(getUserRoleLabel('none')).toEqual('Gedeactiveerd')
   })
 })

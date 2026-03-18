@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient, { type IGetAllUsersResponse } from '@/api-client'
+import ApiClient from '@/api-client'
 import { handleApiError } from '@/error'
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
@@ -11,23 +11,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { isAdmin } from '@/user-roles'
+import { getUserRole, getUserRoleLabel } from '@/user-roles'
 import { getUserContext } from '@/user-context'
 import KeepiEditUserDialog from '@/components/KeepiEditUserDialog.vue'
+import type { KeepiUser } from '@/types'
 
 const apiClient = new ApiClient()
 const userContext = getUserContext()
 
-const users = ref<IGetAllUsersResponse['users']>(await getAllUsers(apiClient))
+const users = ref<KeepiUser[]>(await getAllUsers(apiClient))
 
 const reloadUsers = async () => {
   users.value = await getAllUsers(apiClient)
 }
 
-async function getAllUsers(apiClient: ApiClient) {
+async function getAllUsers(apiClient: ApiClient): Promise<KeepiUser[]> {
   return await apiClient.getAllUsers().match(
     (result) => {
-      return result.users
+      return result.users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        emailAddress: u.emailAddress,
+        role: getUserRole(u),
+      }))
     },
     (error) => {
       handleApiError(error)
@@ -36,7 +42,7 @@ async function getAllUsers(apiClient: ApiClient) {
   )
 }
 
-const userToEdit = ref<IGetAllUsersResponse['users'][0] | null>(null)
+const userToEdit = ref<KeepiUser | null>(null)
 const editDialogOpen = ref(false)
 
 const onEditUser = (id: number) => {
@@ -76,7 +82,7 @@ const onEditUser = (id: number) => {
           <TableCell class="hidden sm:block">{{ user.emailAddress }}</TableCell>
 
           <TableCell>
-            {{ isAdmin(user) ? 'Beheerder' : 'Gebruiker' }}
+            {{ getUserRoleLabel(user.role) }}
           </TableCell>
 
           <TableCell>

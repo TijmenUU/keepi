@@ -34,4 +34,7 @@ export type InvoiceItem = {
   projectName: string
 }
 
-export type UserRole = 'admin' | 'user' | 'none'
+export const userRoles: string[] = ['admin', 'user', 'none']
+export type UserRole = (typeof userRoles)[number]
+
+export type KeepiUser = { id: number; name: string; emailAddress: string; role: UserRole }

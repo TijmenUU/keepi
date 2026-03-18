@@ -43,3 +43,20 @@ export function getUserRole(user: {
   }
   return 'none'
 }
+
+export function getUserRoleLabel(role: UserRole): string {
+  switch (role) {
+    case 'admin':
+      return 'Beheerder'
+
+    case 'user':
+      return 'Gebruiker'
+
+    case 'none':
+      return 'Gedeactiveerd'
+
+    default:
+      console.error(`Missing role to label mapping for role ${role}`)
+      return role
+  }
+}

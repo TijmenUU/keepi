@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { IGetAllUsersResponse, IUpdateUserPermissionsRequest } from '@/api-client'
+import type { IUpdateUserPermissionsRequest } from '@/api-client'
 import ApiClient from '@/api-client'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,9 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { getUserRole } from '@/user-roles'
+import { getUserRoleLabel } from '@/user-roles'
 import { handleApiError } from '@/error'
-import type { UserRole } from '@/types'
+import { userRoles, type KeepiUser, type UserRole } from '@/types'
 import { nextTick, ref } from 'vue'
 import {
   Select,
@@ -25,7 +25,7 @@ import {
 import Label from '@/components/ui/label/Label.vue'
 
 const props = defineProps<{
-  editingUser: IGetAllUsersResponse['users'][0]
+  editingUser: KeepiUser
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -37,17 +37,16 @@ const emits = defineEmits<{
 const apiClient = new ApiClient()
 
 const disableUserInteraction = ref(false)
-const selectedRole = ref(getUserRole(props.editingUser))
-const roleOptions = [
-  { value: 'admin', label: 'Beheerder' },
-  { value: 'user', label: 'Gebruiker' },
-  { value: 'none', label: 'Gedeactiveerd' },
-]
+const selectedRole = ref(props.editingUser.role)
+const roleOptions = userRoles.map((role) => ({
+  value: role,
+  label: getUserRoleLabel(role),
+}))
 
 const onOpen = (ev: Event) => {
   ev.preventDefault()
 
-  selectedRole.value = getUserRole(props.editingUser)
+  selectedRole.value = props.editingUser.role
 
   nextTick(() => {
     const element = document.getElementById('user-role')
