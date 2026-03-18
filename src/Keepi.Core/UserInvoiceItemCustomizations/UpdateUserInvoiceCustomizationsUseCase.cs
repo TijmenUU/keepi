@@ -1,3 +1,4 @@
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Users;
 
 namespace Keepi.Core.UserInvoiceItemCustomizations;
@@ -24,8 +25,8 @@ public record UpdateUserInvoiceCustomizationsUseCaseInput(
 );
 
 public record UpdateUserInvoiceCustomizationsUseCaseInputInvoiceItem(
-    int InvoiceItemId,
-    int Ordinal,
+    InvoiceItemId InvoiceItemId,
+    UserInvoiceITemCustomizationOrdinal Ordinal,
     Color? Color
 );
 

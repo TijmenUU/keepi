@@ -18,7 +18,12 @@ internal sealed class UpdateUserPermissionsEndpoint(
         CancellationToken cancellationToken
     )
     {
-        var userId = Route<int>(paramName: "UserId");
+        var routeUserId = Route<int>(paramName: "UserId");
+        if (!UserId.TryFrom(value: routeUserId, out var userId))
+        {
+            await Send.ErrorsAsync();
+            return;
+        }
 
         if (TryGetValidatedModel(request, out var validatedRequest))
         {

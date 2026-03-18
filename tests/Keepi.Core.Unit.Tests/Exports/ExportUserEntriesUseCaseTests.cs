@@ -1,4 +1,7 @@
+using Keepi.Core.Entries;
 using Keepi.Core.Exports;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 using Keepi.Generators;
@@ -14,28 +17,28 @@ public class ExportUserEntriesUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
-                    Id: 1,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(1),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 22),
-                    ProjectId: 5,
-                    ProjectName: "Ontwikkeling",
-                    InvoiceItemId: 2,
-                    InvoiceItemName: "Dev",
-                    Minutes: 60,
-                    Remark: "Project Flyby"
+                    ProjectId: ProjectId.From(5),
+                    ProjectName: ProjectName.From("Ontwikkeling"),
+                    InvoiceItemId: InvoiceItemId.From(2),
+                    InvoiceItemName: InvoiceItemName.From("Dev"),
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 ),
                 new ExportUserEntry(
-                    Id: 3,
-                    UserId: 11,
-                    UserName: "Boris",
+                    Id: UserEntryId.From(3),
+                    UserId: UserId.From(11),
+                    UserName: UserName.From("Boris"),
                     Date: new DateOnly(2025, 6, 23),
-                    ProjectId: 6,
-                    ProjectName: "Intern",
-                    InvoiceItemId: 4,
-                    InvoiceItemName: "Administratie",
-                    Minutes: 45,
-                    Remark: "ISO controle"
+                    ProjectId: ProjectId.From(6),
+                    ProjectName: ProjectName.From("Intern"),
+                    InvoiceItemId: InvoiceItemId.From(4),
+                    InvoiceItemName: InvoiceItemName.From("Administratie"),
+                    Minutes: UserEntryMinutes.From(45),
+                    Remark: UserEntryRemark.From("ISO controle")
                 )
             );
 
@@ -56,31 +59,31 @@ public class ExportUserEntriesUseCaseTests
         entries[0]
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
-                    Id: 1,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(1),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 22),
-                    ProjectId: 5,
-                    ProjectName: "Ontwikkeling",
-                    InvoiceItemId: 2,
-                    InvoiceItemName: "Dev",
-                    Minutes: 60,
-                    Remark: "Project Flyby"
+                    ProjectId: ProjectId.From(5),
+                    ProjectName: ProjectName.From("Ontwikkeling"),
+                    InvoiceItemId: InvoiceItemId.From(2),
+                    InvoiceItemName: InvoiceItemName.From("Dev"),
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 )
             );
         entries[1]
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
-                    Id: 3,
-                    UserId: 11,
-                    UserName: "Boris",
+                    Id: UserEntryId.From(3),
+                    UserId: UserId.From(11),
+                    UserName: UserName.From("Boris"),
                     Date: new DateOnly(2025, 6, 23),
-                    ProjectId: 6,
-                    ProjectName: "Intern",
-                    InvoiceItemId: 4,
-                    InvoiceItemName: "Administratie",
-                    Minutes: 45,
-                    Remark: "ISO controle"
+                    ProjectId: ProjectId.From(6),
+                    ProjectName: ProjectName.From("Intern"),
+                    InvoiceItemId: InvoiceItemId.From(4),
+                    InvoiceItemName: InvoiceItemName.From("Administratie"),
+                    Minutes: UserEntryMinutes.From(45),
+                    Remark: UserEntryRemark.From("ISO controle")
                 )
             );
 
@@ -102,16 +105,16 @@ public class ExportUserEntriesUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
-                    Id: 1,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(1),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 22),
-                    ProjectId: 5,
-                    ProjectName: "Ontwikkeling",
-                    InvoiceItemId: 2,
-                    InvoiceItemName: "Dev",
-                    Minutes: 60,
-                    Remark: "Project Flyby"
+                    ProjectId: ProjectId.From(5),
+                    ProjectName: ProjectName.From("Ontwikkeling"),
+                    InvoiceItemId: InvoiceItemId.From(2),
+                    InvoiceItemName: InvoiceItemName.From("Dev"),
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 )
             );
 
@@ -132,16 +135,16 @@ public class ExportUserEntriesUseCaseTests
         entries[0]
             .ShouldBeEquivalentTo(
                 new ExportUserEntry(
-                    Id: 1,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(1),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 22),
-                    ProjectId: 5,
-                    ProjectName: "Ontwikkeling",
-                    InvoiceItemId: 2,
-                    InvoiceItemName: "Dev",
-                    Minutes: 60,
-                    Remark: "Project Flyby"
+                    ProjectId: ProjectId.From(5),
+                    ProjectName: ProjectName.From("Ontwikkeling"),
+                    InvoiceItemId: InvoiceItemId.From(2),
+                    InvoiceItemName: InvoiceItemName.From("Dev"),
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 )
             );
 
@@ -163,28 +166,28 @@ public class ExportUserEntriesUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithExportEntries(
                 new ExportUserEntry(
-                    Id: 1,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(1),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 22),
-                    ProjectId: 5,
-                    ProjectName: "Ontwikkeling",
-                    InvoiceItemId: 2,
-                    InvoiceItemName: "Dev",
-                    Minutes: 60,
-                    Remark: "Project Flyby"
+                    ProjectId: ProjectId.From(5),
+                    ProjectName: ProjectName.From("Ontwikkeling"),
+                    InvoiceItemId: InvoiceItemId.From(2),
+                    InvoiceItemName: InvoiceItemName.From("Dev"),
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 ),
                 new ExportUserEntry(
-                    Id: 3,
-                    UserId: 10,
-                    UserName: "Jaap",
+                    Id: UserEntryId.From(3),
+                    UserId: UserId.From(10),
+                    UserName: UserName.From("Jaap"),
                     Date: new DateOnly(2025, 6, 23),
-                    ProjectId: 6,
-                    ProjectName: "Intern",
-                    InvoiceItemId: 4,
-                    InvoiceItemName: "Administratie",
-                    Minutes: 45,
-                    Remark: "ISO controle"
+                    ProjectId: ProjectId.From(6),
+                    ProjectName: ProjectName.From("Intern"),
+                    InvoiceItemId: InvoiceItemId.From(4),
+                    InvoiceItemName: InvoiceItemName.From("Administratie"),
+                    Minutes: UserEntryMinutes.From(45),
+                    Remark: UserEntryRemark.From("ISO controle")
                 )
             );
 

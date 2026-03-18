@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.UserInvoiceItemCustomizations;
 
 namespace Keepi.Api.UserInvoiceItemCustomizations.UpdateAll;
@@ -71,19 +72,27 @@ public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
                 return false;
             }
 
+            if (
+                !InvoiceItemId.TryFrom(value: item.Id.Value, out var invoiceItemId)
+                || !UserInvoiceITemCustomizationOrdinal.TryFrom(
+                    value: item.Ordinal.Value,
+                    out var ordinal
+                )
+            )
+            {
+                validatedRequest = [];
+                return false;
+            }
+
             if (item.Color == null)
             {
-                result.Add(
-                    new(InvoiceItemId: item.Id.Value, Ordinal: item.Ordinal.Value, Color: null)
-                );
+                result.Add(new(InvoiceItemId: invoiceItemId, Ordinal: ordinal, Color: null));
             }
             else
             {
                 if (Core.Color.TryParseHexString(item.Color, out var color))
                 {
-                    result.Add(
-                        new(InvoiceItemId: item.Id.Value, Ordinal: item.Ordinal.Value, Color: color)
-                    );
+                    result.Add(new(InvoiceItemId: invoiceItemId, Ordinal: ordinal, Color: color));
                 }
                 else
                 {

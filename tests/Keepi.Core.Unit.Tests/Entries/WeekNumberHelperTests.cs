@@ -7,7 +7,7 @@ public class WeekNumberHelperTests
     [Fact]
     public void WeekNumberToDates_returns_expected_result_for_normal_week()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: 13);
+        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: WeekNumber.From(13));
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -25,7 +25,7 @@ public class WeekNumberHelperTests
     [Fact]
     public void WeekNumberToDates_returns_expected_result_for_first_week_of_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: 1);
+        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: WeekNumber.From(1));
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -41,9 +41,9 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_last_week_of_year()
+    public void WeekNumberToDates_returns_expected_result_for_last_week_of_52_week_long_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: 52);
+        var dates = WeekNumberHelper.WeekNumberToDates(year: 2025, number: WeekNumber.From(52));
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -59,9 +59,27 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
+    public void WeekNumberToDates_returns_expected_result_for_last_week_of_53_week_long_year()
+    {
+        var dates = WeekNumberHelper.WeekNumberToDates(year: 2009, number: WeekNumber.From(53));
+        dates.ShouldBeEquivalentTo(
+            new[]
+            {
+                new DateOnly(year: 2009, month: 12, day: 28),
+                new DateOnly(year: 2009, month: 12, day: 29),
+                new DateOnly(year: 2009, month: 12, day: 30),
+                new DateOnly(year: 2009, month: 12, day: 31),
+                new DateOnly(year: 2010, month: 1, day: 1),
+                new DateOnly(year: 2010, month: 1, day: 2),
+                new DateOnly(year: 2010, month: 1, day: 3),
+            }
+        );
+    }
+
+    [Fact]
     public void WeekNumberToDates_returns_expected_result_for_week_of_leap_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(year: 2024, number: 9);
+        var dates = WeekNumberHelper.WeekNumberToDates(year: 2024, number: WeekNumber.From(9));
         dates.ShouldBeEquivalentTo(
             new[]
             {

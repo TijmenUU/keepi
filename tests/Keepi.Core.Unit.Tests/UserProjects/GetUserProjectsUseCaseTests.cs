@@ -1,4 +1,7 @@
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
+using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
 using Keepi.Generators;
@@ -17,22 +20,39 @@ public class GetUserProjectsUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                         new(
-                            Id: 2,
-                            Name: "Intern",
+                            Id: ProjectId.From(2),
+                            Name: ProjectName.From("Intern"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 20, Name: "Administratie")]
+                            InvoiceItems:
+                            [
+                                new(
+                                    Id: InvoiceItemId.From(20),
+                                    Name: InvoiceItemName.From("Administratie")
+                                ),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
-                        new(InvoiceItemId: 10, Ordinal: 981, Color: Color.FromUint32(0xFF0000u)),
-                        new(InvoiceItemId: 20, Ordinal: 982, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
+                            Color: Color.FromUint32(0xFF0000u)
+                        ),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 )
             );
@@ -45,28 +65,34 @@ public class GetUserProjectsUseCaseTests
                 Projects:
                 [
                     new GetUserProjectsUseCaseOutputProject(
-                        Id: 1,
-                        Name: "Algemeen",
+                        Id: ProjectId.From(1),
+                        Name: ProjectName.From("Algemeen"),
                         Enabled: true,
                         InvoiceItems:
                         [
                             new(
-                                Id: 10,
-                                Name: "Dev",
-                                Customization: new(Ordinal: 981, Color: Color.FromUint32(0xFF0000u))
+                                Id: InvoiceItemId.From(10),
+                                Name: InvoiceItemName.From("Dev"),
+                                Customization: new(
+                                    Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
+                                    Color: Color.FromUint32(0xFF0000u)
+                                )
                             ),
                         ]
                     ),
                     new GetUserProjectsUseCaseOutputProject(
-                        Id: 2,
-                        Name: "Intern",
+                        Id: ProjectId.From(2),
+                        Name: ProjectName.From("Intern"),
                         Enabled: true,
                         InvoiceItems:
                         [
                             new(
-                                Id: 20,
-                                Name: "Administratie",
-                                Customization: new(Ordinal: 982, Color: Color.FromUint32(0xFF00u))
+                                Id: InvoiceItemId.From(20),
+                                Name: InvoiceItemName.From("Administratie"),
+                                Customization: new(
+                                    Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
+                                    Color: Color.FromUint32(0xFF00u)
+                                )
                             ),
                         ]
                     ),
@@ -75,7 +101,9 @@ public class GetUserProjectsUseCaseTests
         );
 
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
-        context.GetUserProjectsMock.Verify(x => x.Execute(42, It.IsAny<CancellationToken>()));
+        context.GetUserProjectsMock.Verify(x =>
+            x.Execute(UserId.From(42), It.IsAny<CancellationToken>())
+        );
         context.VerifyNoOtherCalls();
     }
 
@@ -89,10 +117,13 @@ public class GetUserProjectsUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                     ],
                     Customizations: []
@@ -107,15 +138,18 @@ public class GetUserProjectsUseCaseTests
                 Projects:
                 [
                     new GetUserProjectsUseCaseOutputProject(
-                        Id: 1,
-                        Name: "Algemeen",
+                        Id: ProjectId.From(1),
+                        Name: ProjectName.From("Algemeen"),
                         Enabled: true,
                         InvoiceItems:
                         [
                             new(
-                                Id: 10,
-                                Name: "Dev",
-                                Customization: new(Ordinal: int.MaxValue, Color: null)
+                                Id: InvoiceItemId.From(10),
+                                Name: InvoiceItemName.From("Dev"),
+                                Customization: new(
+                                    Ordinal: UserInvoiceITemCustomizationOrdinal.From(int.MaxValue),
+                                    Color: null
+                                )
                             ),
                         ]
                     ),

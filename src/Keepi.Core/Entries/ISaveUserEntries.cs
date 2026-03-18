@@ -1,3 +1,6 @@
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Entries;
 
 public interface ISaveUserEntries
@@ -13,11 +16,11 @@ public enum SaveUserEntriesError
     Unknown,
 }
 
-public sealed record SaveUserEntriesInput(int UserId, SaveUserEntriesInputEntry[] Entries);
+public sealed record SaveUserEntriesInput(UserId UserId, SaveUserEntriesInputEntry[] Entries);
 
 public sealed record SaveUserEntriesInputEntry(
-    int InvoiceItemId,
+    InvoiceItemId InvoiceItemId,
     DateOnly Date,
-    int Minutes,
-    string? Remark
+    UserEntryMinutes Minutes,
+    UserEntryRemark? Remark
 );

@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
 using Keepi.Api.UserEntries.GetWeek;
+using Keepi.Core;
 using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 
 namespace Keepi.Api.UserEntries.UpdateWeek;
 
@@ -27,7 +29,12 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
         }
 
         var year = Route<int>(paramName: "Year");
-        var weekNumber = Route<int>(paramName: "WeekNumber");
+        var routeWeekNumber = Route<int>(paramName: "WeekNumber");
+        if (!WeekNumber.TryFrom(value: routeWeekNumber, out var weekNumber))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
 
         var result = await updateWeekUserEntriesUseCase.Execute(
             year: year,
@@ -116,29 +123,46 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
                     return false;
                 }
 
-                if (entry.InvoiceItemId == null)
+                if (
+                    entry.InvoiceItemId == null
+                    || !InvoiceItemId.TryFrom(
+                        value: entry.InvoiceItemId.Value,
+                        out var invoiceItemId
+                    )
+                )
                 {
                     validated = null;
                     return false;
                 }
 
-                if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
+                if (
+                    entry.Minutes == null
+                    || !UserEntryMinutes.TryFrom(value: entry.Minutes.Value, out var minutes)
+                )
                 {
                     validated = null;
                     return false;
                 }
 
-                if (!UserEntryEntity.IsValidRemark(entry.Remark))
+                UserEntryRemark? remark = null;
+                if (entry.Remark != null)
                 {
-                    validated = null;
-                    return false;
+                    if (UserEntryRemark.TryFrom(value: entry.Remark, out var validatedRemark))
+                    {
+                        remark = validatedRemark;
+                    }
+                    else
+                    {
+                        validated = null;
+                        return false;
+                    }
                 }
 
                 validatedEntries.Add(
                     new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                        InvoiceItemId: entry.InvoiceItemId.Value,
-                        Minutes: entry.Minutes.Value,
-                        Remark: entry.Remark
+                        InvoiceItemId: invoiceItemId,
+                        Minutes: minutes,
+                        Remark: remark
                     )
                 );
             }

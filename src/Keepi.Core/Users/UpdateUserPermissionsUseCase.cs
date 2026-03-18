@@ -3,7 +3,7 @@ namespace Keepi.Core.Users;
 public interface IUpdateUserPermissionsUseCase
 {
     Task<IMaybeErrorResult<UpdateUserPermissionsUseCaseError>> Execute(
-        int userId,
+        UserId userId,
         UserPermission entriesPermission,
         UserPermission exportsPermission,
         UserPermission projectsPermission,
@@ -28,7 +28,7 @@ internal sealed class UpdateUserPermissionsUseCase(
 ) : IUpdateUserPermissionsUseCase
 {
     public async Task<IMaybeErrorResult<UpdateUserPermissionsUseCaseError>> Execute(
-        int userId,
+        UserId userId,
         UserPermission entriesPermission,
         UserPermission exportsPermission,
         UserPermission projectsPermission,

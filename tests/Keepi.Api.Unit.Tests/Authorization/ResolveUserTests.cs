@@ -40,9 +40,9 @@ public class ResolveUserTests
 
         successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
-                Id: 42,
-                Name: "Bob52",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob52"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 EntriesPermission: UserPermission.ReadAndModify,
                 ExportsPermission: UserPermission.ReadAndModify,
                 ProjectsPermission: UserPermission.ReadAndModify,
@@ -53,9 +53,9 @@ public class ResolveUserTests
         context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob52",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob52"),
                 UserIdentityProvider.GitHub,
                 It.IsAny<CancellationToken>()
             )
@@ -94,9 +94,9 @@ public class ResolveUserTests
 
         successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
-                Id: 42,
-                Name: "Bob52",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob52"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 EntriesPermission: UserPermission.ReadAndModify,
                 ExportsPermission: UserPermission.ReadAndModify,
                 ProjectsPermission: UserPermission.ReadAndModify,
@@ -107,9 +107,9 @@ public class ResolveUserTests
         context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob52",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob52"),
                 UserIdentityProvider.GitHub,
                 It.IsAny<CancellationToken>()
             )
@@ -187,9 +187,9 @@ public class ResolveUserTests
 
         successResult.ShouldBeEquivalentTo(
             new ResolvedUser(
-                Id: 42,
-                Name: "Bob52",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob52"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 EntriesPermission: entriesPermission,
                 ExportsPermission: exportsPermission,
                 ProjectsPermission: projectsPermission,
@@ -200,9 +200,9 @@ public class ResolveUserTests
         context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob52",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob52"),
                 UserIdentityProvider.GitHub,
                 It.IsAny<CancellationToken>()
             )
@@ -327,9 +327,9 @@ public class ResolveUserTests
         context.HttpContextAccessorMock.Verify(x => x.HttpContext);
         context.GetOrRegisterNewUserUseCaseMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob52",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob52"),
                 UserIdentityProvider.GitHub,
                 It.IsAny<CancellationToken>()
             )
@@ -406,9 +406,9 @@ internal partial class ResolveUserTestContext
         WithGetOrRegisterNewUserUseCaseSuccess(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new(
-                    Id: id,
-                    Name: name,
-                    EmailAddress: emailAddress,
+                    Id: UserId.From(id),
+                    Name: UserName.From(name),
+                    EmailAddress: EmailAddress.From(emailAddress),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: entriesPermission,
                     ExportsPermission: exportsPermission,

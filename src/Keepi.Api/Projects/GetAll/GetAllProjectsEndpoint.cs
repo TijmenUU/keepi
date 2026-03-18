@@ -25,14 +25,14 @@ public sealed class GetAllProjectsEndpoint(IGetAllProjectsUseCase getAllProjects
                             .Projects.OrderBy(p => !p.Enabled)
                             .ThenBy(p => p.Name)
                             .Select(p => new GetAllProjectsResponseProject(
-                                Id: p.Id,
-                                Name: p.Name,
+                                Id: p.Id.Value,
+                                Name: p.Name.Value,
                                 Enabled: p.Enabled,
                                 Users:
                                 [
                                     .. p.Users.Select(u => new GetAllProjectsResponseProjectUser(
-                                        Id: u.Id,
-                                        Name: u.Name
+                                        Id: u.Id.Value,
+                                        Name: u.Name.Value
                                     )),
                                 ],
                                 InvoiceItems:
@@ -40,8 +40,8 @@ public sealed class GetAllProjectsEndpoint(IGetAllProjectsUseCase getAllProjects
                                     .. p
                                         .InvoiceItems.OrderBy(i => i.Name)
                                         .Select(i => new GetAllProjectsResponseProjectInvoiceItem(
-                                            Id: i.Id,
-                                            Name: i.Name
+                                            Id: i.Id.Value,
+                                            Name: i.Name.Value
                                         )),
                                 ]
                             )),

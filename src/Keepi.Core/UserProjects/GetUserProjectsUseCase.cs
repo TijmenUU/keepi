@@ -1,3 +1,7 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
+using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.Users;
 
 namespace Keepi.Core.UserProjects;
@@ -19,20 +23,20 @@ public enum GetUserProjectsUseCaseError
 public sealed record GetUserProjectsUseCaseOutput(GetUserProjectsUseCaseOutputProject[] Projects);
 
 public sealed record GetUserProjectsUseCaseOutputProject(
-    int Id,
-    string Name,
+    ProjectId Id,
+    ProjectName Name,
     bool Enabled,
     GetUserProjectsUseCaseOutputProjectInvoiceItem[] InvoiceItems
 );
 
 public sealed record GetUserProjectsUseCaseOutputProjectInvoiceItem(
-    int Id,
-    string Name,
+    InvoiceItemId Id,
+    InvoiceItemName Name,
     GetUserProjectsUseCaseOutputProjectInvoiceItemCustomization Customization
 );
 
 public sealed record GetUserProjectsUseCaseOutputProjectInvoiceItemCustomization(
-    int Ordinal,
+    UserInvoiceITemCustomizationOrdinal Ordinal,
     Color? Color
 );
 
@@ -86,7 +90,7 @@ internal class GetUserProjectsUseCase(IResolveUser resolveUser, IGetUserProjects
                     successResult.Customizations.FirstOrDefault(c => c.InvoiceItemId == item.Id)
                     ?? new GetUserProjectResultInvoiceItemCustomization(
                         InvoiceItemId: item.Id,
-                        Ordinal: int.MaxValue,
+                        Ordinal: UserInvoiceITemCustomizationOrdinal.From(value: int.MaxValue),
                         Color: null
                     );
                 invoiceItems.Add(

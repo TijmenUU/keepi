@@ -19,9 +19,9 @@ internal sealed class UserRepository(
         IUserWithPermissionsExists
 {
     async Task<IValueOrErrorResult<bool, GetUserExistsError>> IGetUserExists.Execute(
-        string externalId,
+        UserExternalId externalId,
         Core.Users.UserIdentityProvider userIdentityProvider,
-        string emailAddress,
+        EmailAddress emailAddress,
         CancellationToken cancellationToken
     )
     {
@@ -30,8 +30,11 @@ internal sealed class UserRepository(
             var databaseIdentityProvider = ToDatabaseEnum(userIdentityProvider);
             var result = await databaseContext
                 .Users.Where(u =>
-                    u.EmailAddress == emailAddress
-                    || (u.IdentityOrigin == databaseIdentityProvider && u.ExternalId == externalId)
+                    u.EmailAddress == emailAddress.Value
+                    || (
+                        u.IdentityOrigin == databaseIdentityProvider
+                        && u.ExternalId == externalId.Value
+                    )
                 )
                 .AnyAsync(cancellationToken: cancellationToken);
 
@@ -45,9 +48,9 @@ internal sealed class UserRepository(
     }
 
     async Task<IMaybeErrorResult<SaveNewUserError>> ISaveNewUser.Execute(
-        string externalId,
-        string emailAddress,
-        string name,
+        UserExternalId externalId,
+        EmailAddress emailAddress,
+        UserName name,
         Core.Users.UserIdentityProvider userIdentityProvider,
         Core.Users.UserPermission entriesPermission,
         Core.Users.UserPermission exportsPermission,
@@ -61,9 +64,9 @@ internal sealed class UserRepository(
             databaseContext.Add(
                 new UserEntity
                 {
-                    ExternalId = externalId,
-                    EmailAddress = emailAddress,
-                    Name = name,
+                    ExternalId = externalId.Value,
+                    EmailAddress = emailAddress.Value,
+                    Name = name.Value,
                     IdentityOrigin = ToDatabaseEnum(userIdentityProvider),
                     EntriesPermission = ToDatabaseEnum(entriesPermission),
                     ExportsPermission = ToDatabaseEnum(exportsPermission),
@@ -104,16 +107,16 @@ internal sealed class UserRepository(
     }
 
     async Task<IMaybeErrorResult<UpdateUserIdentityError>> IUpdateUserIdentity.Execute(
-        int userId,
-        string emailAddress,
-        string name,
+        UserId userId,
+        EmailAddress emailAddress,
+        UserName name,
         CancellationToken cancellationToken
     )
     {
         try
         {
             var entity = await databaseContext.Users.SingleOrDefaultAsync(
-                u => u.Id == userId,
+                u => u.Id == userId.Value,
                 cancellationToken: cancellationToken
             );
             if (entity == null)
@@ -121,8 +124,8 @@ internal sealed class UserRepository(
                 return Result.Failure(UpdateUserIdentityError.UnknownUserId);
             }
 
-            entity.EmailAddress = emailAddress;
-            entity.Name = name;
+            entity.EmailAddress = emailAddress.Value;
+            entity.Name = name.Value;
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);
 
             return Result.Success<UpdateUserIdentityError>();
@@ -142,7 +145,7 @@ internal sealed class UserRepository(
     }
 
     async Task<IValueOrErrorResult<GetUserResult, GetUserError>> IGetUser.Execute(
-        string externalId,
+        UserExternalId externalId,
         Core.Users.UserIdentityProvider identityProvider,
         CancellationToken cancellationToken
     )
@@ -154,7 +157,7 @@ internal sealed class UserRepository(
                 .Users.AsNoTracking()
                 .FirstOrDefaultAsync(
                     predicate: u =>
-                        u.ExternalId == externalId && u.IdentityOrigin == identityOrigin,
+                        u.ExternalId == externalId.Value && u.IdentityOrigin == identityOrigin,
                     cancellationToken: cancellationToken
                 );
 
@@ -165,9 +168,9 @@ internal sealed class UserRepository(
 
             return Result.Success<GetUserResult, GetUserError>(
                 new GetUserResult(
-                    Id: user.Id,
-                    EmailAddress: user.EmailAddress,
-                    Name: user.Name,
+                    Id: UserId.From(user.Id),
+                    EmailAddress: EmailAddress.From(user.EmailAddress),
+                    Name: UserName.From(user.Name),
                     IdentityOrigin: ToResultEnum(user.IdentityOrigin),
                     EntriesPermission: ToResultEnum(user.EntriesPermission),
                     ExportsPermission: ToResultEnum(user.ExportsPermission),
@@ -184,7 +187,7 @@ internal sealed class UserRepository(
     }
 
     async Task<IMaybeErrorResult<UpdateUserPermissionsError>> IUpdateUserPermissions.Execute(
-        int userId,
+        UserId userId,
         Core.Users.UserPermission entriesPermission,
         Core.Users.UserPermission exportsPermission,
         Core.Users.UserPermission projectsPermission,
@@ -195,7 +198,7 @@ internal sealed class UserRepository(
         try
         {
             var entity = await databaseContext.Users.SingleOrDefaultAsync(
-                u => u.Id == userId,
+                u => u.Id == userId.Value,
                 cancellationToken: cancellationToken
             );
             if (entity == null)
@@ -298,9 +301,9 @@ internal sealed class UserRepository(
                         )
                     )
                         .Select(u => new GetUsersResultUser(
-                            Id: u.Id,
-                            Name: u.Name,
-                            EmailAddress: u.EmailAddress,
+                            Id: UserId.From(u.Id),
+                            Name: UserName.From(u.Name),
+                            EmailAddress: EmailAddress.From(u.EmailAddress),
                             IdentityOrigin: ToResultEnum(u.IdentityOrigin),
                             EntriesPermission: ToResultEnum(u.EntriesPermission),
                             ExportsPermission: ToResultEnum(u.ExportsPermission),

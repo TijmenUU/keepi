@@ -44,12 +44,12 @@ public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase expor
                 );
                 await outputStream.WriteRecordsAsync(
                     records: successResult.Select(e => new ExportRecord(
-                        UserName: e.UserName,
+                        UserName: e.UserName.Value,
                         Date: e.Date,
-                        ProjectName: e.ProjectName,
-                        InvoiceItemName: e.InvoiceItemName,
-                        Minutes: e.Minutes,
-                        Remark: e.Remark
+                        ProjectName: e.ProjectName.Value,
+                        InvoiceItemName: e.InvoiceItemName.Value,
+                        Minutes: e.Minutes.Value,
+                        Remark: e.Remark?.Value
                     )),
                     cancellationToken: cancellationToken
                 );
@@ -114,6 +114,6 @@ public sealed class GetUserEntriesExportEndpoint(IExportUserEntriesUseCase expor
         [property: Name("Project")] string ProjectName,
         [property: Name("Post")] string InvoiceItemName,
         [property: Name("Minuten")] int Minutes,
-        [property: Name("Opmerking")] string Remark
+        [property: Name("Opmerking")] string? Remark
     );
 }

@@ -1,3 +1,4 @@
+using Keepi.Core.Entries;
 using Keepi.Core.InvoiceItems;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
@@ -7,11 +8,11 @@ namespace Keepi.Core.Projects;
 public interface IUpdateProjectUseCase
 {
     Task<IMaybeErrorResult<UpdateProjectUseCaseError>> Execute(
-        int id,
-        string name,
+        ProjectId id,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        (int? Id, string Name)[] invoiceItems,
+        UserId[] userIds,
+        (InvoiceItemId? Id, InvoiceItemName Name)[] invoiceItems,
         CancellationToken cancellationToken
     );
 }
@@ -22,12 +23,9 @@ public enum UpdateProjectUseCaseError
     UnauthenticatedUser,
     UnauthorizedUser,
     UnknownProjectId,
-    InvalidProjectName,
     DuplicateProjectName,
-    InvalidActiveDateRange,
     UnknownUserId,
     DuplicateUserIds,
-    InvalidInvoiceItemName,
     DuplicateInvoiceItemIds,
     DuplicateInvoiceItemNames,
 }
@@ -39,11 +37,11 @@ internal sealed class UpdateProjectUseCase(
 ) : IUpdateProjectUseCase
 {
     public async Task<IMaybeErrorResult<UpdateProjectUseCaseError>> Execute(
-        int id,
-        string name,
+        ProjectId id,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        (int? Id, string Name)[] invoiceItems,
+        UserId[] userIds,
+        (InvoiceItemId? Id, InvoiceItemName Name)[] invoiceItems,
         CancellationToken cancellationToken
     )
     {
@@ -63,24 +61,14 @@ internal sealed class UpdateProjectUseCase(
             return Result.Failure(UpdateProjectUseCaseError.UnauthorizedUser);
         }
 
-        if (!ProjectEntity.IsValidName(name))
-        {
-            return Result.Failure(UpdateProjectUseCaseError.InvalidProjectName);
-        }
-
-        if (!ProjectEntity.HasUniqueUserIds(userIds))
+        if (userIds.Distinct().Count() != userIds.Length)
         {
             return Result.Failure(UpdateProjectUseCaseError.DuplicateUserIds);
         }
 
-        if (invoiceItems.Any(i => !InvoiceItemEntity.IsValidName(i.Name)))
-        {
-            return Result.Failure(UpdateProjectUseCaseError.InvalidInvoiceItemName);
-        }
-
         var nonNullInvoiceItemIds = invoiceItems
             .Where(i => i.Id.HasValue)
-            .Select(i => i.Id ?? 0)
+            .Select(i => i.Id?.Value ?? 0)
             .ToArray();
         if (nonNullInvoiceItemIds.Distinct().Count() != nonNullInvoiceItemIds.Length)
         {

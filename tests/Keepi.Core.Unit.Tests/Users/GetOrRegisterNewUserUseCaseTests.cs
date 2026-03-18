@@ -10,9 +10,9 @@ public class GetOrRegisterNewUserUseCaseTests
     {
         var context = new GetOrRegisterNewUserUseCaseTestContext().WithGetUserSuccess(
             new GetUserResult(
-                Id: 42,
-                Name: "Bob",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 IdentityOrigin: UserIdentityProvider.GitHub,
                 EntriesPermission: UserPermission.ReadAndModify,
                 ExportsPermission: UserPermission.ReadAndModify,
@@ -23,9 +23,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -34,9 +34,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -48,7 +48,11 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.VerifyNoOtherCalls();
     }
@@ -60,9 +64,9 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -71,15 +75,15 @@ public class GetOrRegisterNewUserUseCaseTests
                 )
             )
             .WithUserWithPermissionsExistsSuccess(result: false)
-            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
+            .WithGetFirstAdminUserEmailAddressSuccess(result: EmailAddress.From("bob@example.com"))
             .WithSaveNewUserSuccess();
 
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -88,9 +92,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -102,10 +106,18 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -119,9 +131,9 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob"),
                 UserIdentityProvider.GitHub,
                 UserPermission.ReadAndModify,
                 UserPermission.ReadAndModify,
@@ -140,9 +152,9 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.None,
@@ -156,9 +168,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -167,9 +179,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.None,
@@ -181,10 +193,18 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -197,9 +217,9 @@ public class GetOrRegisterNewUserUseCaseTests
         );
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob"),
                 UserIdentityProvider.GitHub,
                 UserPermission.ReadAndModify,
                 UserPermission.None,
@@ -222,9 +242,9 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.None,
@@ -239,9 +259,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -250,9 +270,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.None,
@@ -264,10 +284,18 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -281,9 +309,9 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob"),
                 UserIdentityProvider.GitHub,
                 UserPermission.ReadAndModify,
                 UserPermission.None,
@@ -301,9 +329,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithGetUserSuccess(
                 new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -315,9 +343,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bobby",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bobby"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -326,9 +354,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bobby",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bobby"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -340,10 +368,19 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UpdateUserIdentityMock.Verify(x =>
-            x.Execute(42, "bob@example.com", "Bobby", It.IsAny<CancellationToken>())
+            x.Execute(
+                UserId.From(42),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bobby"),
+                It.IsAny<CancellationToken>()
+            )
         );
         context.VerifyNoOtherCalls();
     }
@@ -354,9 +391,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithGetUserSuccess(
                 new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -368,9 +405,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bobby@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bobby@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -379,9 +416,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bobby@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bobby@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -393,10 +430,19 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UpdateUserIdentityMock.Verify(x =>
-            x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
+            x.Execute(
+                UserId.From(42),
+                EmailAddress.From("bobby@example.com"),
+                UserName.From("Bob"),
+                It.IsAny<CancellationToken>()
+            )
         );
         context.VerifyNoOtherCalls();
     }
@@ -407,9 +453,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var context = new GetOrRegisterNewUserUseCaseTestContext()
             .WithGetUserSuccess(
                 new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -421,9 +467,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bobby@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bobby@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -432,9 +478,9 @@ public class GetOrRegisterNewUserUseCaseTests
         successResult.ShouldBeEquivalentTo(
             new GetOrRegisterNewUserUseCaseOutput(
                 User: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -446,10 +492,19 @@ public class GetOrRegisterNewUserUseCaseTests
         );
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UpdateUserIdentityMock.Verify(x =>
-            x.Execute(42, "bobby@example.com", "Bob", It.IsAny<CancellationToken>())
+            x.Execute(
+                UserId.From(42),
+                EmailAddress.From("bobby@example.com"),
+                UserName.From("Bob"),
+                It.IsAny<CancellationToken>()
+            )
         );
         context.LoggerMock.VerifyWarningLog(
             expectedMessage: "Failed to update GitHub user github-33 due to DuplicateUser error"
@@ -467,9 +522,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -478,7 +533,11 @@ public class GetOrRegisterNewUserUseCaseTests
         errorResult.ShouldBe(GetOrRegisterNewUserUseCaseError.Unknown);
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.VerifyNoOtherCalls();
     }
@@ -492,9 +551,9 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -503,15 +562,15 @@ public class GetOrRegisterNewUserUseCaseTests
                 )
             )
             .WithUserWithPermissionsExistsSuccess(result: false)
-            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
+            .WithGetFirstAdminUserEmailAddressSuccess(result: EmailAddress.From("bob@example.com"))
             .WithSaveNewUserError(error);
 
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -520,7 +579,11 @@ public class GetOrRegisterNewUserUseCaseTests
         errorResult.ShouldBe(GetOrRegisterNewUserUseCaseError.RegistrationFailed);
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -534,9 +597,9 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob"),
                 UserIdentityProvider.GitHub,
                 UserPermission.ReadAndModify,
                 UserPermission.ReadAndModify,
@@ -561,15 +624,15 @@ public class GetOrRegisterNewUserUseCaseTests
                 secondError: secondGetUserErrror
             )
             .WithUserWithPermissionsExistsSuccess(result: false)
-            .WithGetFirstAdminUserEmailAddressSuccess(result: "bob@example.com")
+            .WithGetFirstAdminUserEmailAddressSuccess(result: EmailAddress.From("bob@example.com"))
             .WithSaveNewUserSuccess();
 
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -578,10 +641,18 @@ public class GetOrRegisterNewUserUseCaseTests
         errorResult.ShouldBe(GetOrRegisterNewUserUseCaseError.Unknown);
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -595,9 +666,9 @@ public class GetOrRegisterNewUserUseCaseTests
         context.GetFirstAdminUserEmailAddressMock.Verify(x => x.Execute());
         context.SaveNewUserMock.Verify(x =>
             x.Execute(
-                "github-33",
-                "bob@example.com",
-                "Bob",
+                UserExternalId.From("github-33"),
+                EmailAddress.From("bob@example.com"),
+                UserName.From("Bob"),
                 UserIdentityProvider.GitHub,
                 UserPermission.ReadAndModify,
                 UserPermission.ReadAndModify,
@@ -616,9 +687,9 @@ public class GetOrRegisterNewUserUseCaseTests
             .WithFirstGetUserErrorAndSecondWithResult(
                 error: GetUserError.DoesNotExist,
                 result: new GetUserResult(
-                    Id: 42,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(42),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -631,9 +702,9 @@ public class GetOrRegisterNewUserUseCaseTests
         var helper = context.BuildTarget();
 
         var result = await helper.Execute(
-            externalId: "github-33",
-            emailAddress: "bob@example.com",
-            name: "Bob",
+            externalId: UserExternalId.From("github-33"),
+            emailAddress: EmailAddress.From("bob@example.com"),
+            name: UserName.From("Bob"),
             identityProvider: UserIdentityProvider.GitHub,
             cancellationToken: CancellationToken.None
         );
@@ -642,10 +713,18 @@ public class GetOrRegisterNewUserUseCaseTests
         errorResult.ShouldBe(GetOrRegisterNewUserUseCaseError.RegistrationFailed);
 
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.GetUserMock.Verify(x =>
-            x.Execute("github-33", UserIdentityProvider.GitHub, It.IsAny<CancellationToken>())
+            x.Execute(
+                UserExternalId.From("github-33"),
+                UserIdentityProvider.GitHub,
+                It.IsAny<CancellationToken>()
+            )
         );
         context.UserWithPermissionsExistsMock.Verify(x =>
             x.Execute(
@@ -671,7 +750,7 @@ internal partial class GetOrRegisterNewUserUseCaseTestContext
         GetUserMock
             .SetupSequence(x =>
                 x.Execute(
-                    It.IsAny<string>(),
+                    It.IsAny<UserExternalId>(),
                     It.IsAny<UserIdentityProvider>(),
                     It.IsAny<CancellationToken>()
                 )
@@ -690,7 +769,7 @@ internal partial class GetOrRegisterNewUserUseCaseTestContext
         GetUserMock
             .SetupSequence(x =>
                 x.Execute(
-                    It.IsAny<string>(),
+                    It.IsAny<UserExternalId>(),
                     It.IsAny<UserIdentityProvider>(),
                     It.IsAny<CancellationToken>()
                 )

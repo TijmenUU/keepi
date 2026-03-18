@@ -1,9 +1,12 @@
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Entries;
 
 public interface IGetUserEntriesForDates
 {
     Task<IValueOrErrorResult<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>> Execute(
-        int userId,
+        UserId userId,
         DateOnly[] dates,
         CancellationToken cancellationToken
     );
@@ -18,9 +21,9 @@ public enum GetUserEntriesForDatesError
 public sealed record GetUserEntriesForDatesResult(GetUserEntriesForDatesResultEntry[] Entries);
 
 public sealed record GetUserEntriesForDatesResultEntry(
-    int Id,
-    int InvoiceItemId,
+    UserEntryId Id,
+    InvoiceItemId InvoiceItemId,
     DateOnly Date,
-    int Minutes,
-    string? Remark
+    UserEntryMinutes Minutes,
+    UserEntryRemark? Remark
 );

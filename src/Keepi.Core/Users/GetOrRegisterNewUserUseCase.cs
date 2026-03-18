@@ -7,9 +7,9 @@ public interface IGetOrRegisterNewUserUseCase
     Task<
         IValueOrErrorResult<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>
     > Execute(
-        string externalId,
-        string emailAddress,
-        string name,
+        UserExternalId externalId,
+        EmailAddress emailAddress,
+        UserName name,
         UserIdentityProvider identityProvider,
         CancellationToken cancellationToken
     );
@@ -35,9 +35,9 @@ internal sealed class GetOrRegisterNewUserUseCase(
     public async Task<
         IValueOrErrorResult<GetOrRegisterNewUserUseCaseOutput, GetOrRegisterNewUserUseCaseError>
     > Execute(
-        string externalId,
-        string emailAddress,
-        string name,
+        UserExternalId externalId,
+        EmailAddress emailAddress,
+        UserName name,
         UserIdentityProvider identityProvider,
         CancellationToken cancellationToken
     )
@@ -173,9 +173,9 @@ internal sealed class GetOrRegisterNewUserUseCase(
     }
 
     private async Task<IMaybeErrorResult<RegisterUserResult>> TryRegisterNewUser(
-        string externalId,
-        string emailAddress,
-        string name,
+        UserExternalId externalId,
+        EmailAddress emailAddress,
+        UserName name,
         UserIdentityProvider provider,
         CancellationToken cancellationToken
     )

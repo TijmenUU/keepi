@@ -14,9 +14,9 @@ public enum GetUserUseCaseError
 }
 
 public sealed record GetUserUseCaseOutput(
-    int Id,
-    string Name,
-    string EmailAddress,
+    UserId Id,
+    UserName Name,
+    EmailAddress EmailAddress,
     UserPermission EntriesPermission,
     UserPermission ExportsPermission,
     UserPermission ProjectsPermission,

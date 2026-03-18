@@ -1,3 +1,6 @@
+using Keepi.Core.Projects;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Entries;
 
 public interface IDeleteUserEntriesForDateRange
@@ -14,8 +17,8 @@ public enum DeleteUserEntriesForDateRangeError
 }
 
 public sealed record DeleteUserEntriesForDateRangeInput(
-    int UserId,
+    UserId UserId,
     DateOnly From,
     DateOnly ToInclusive,
-    int[] ProjectIds
+    ProjectId[] ProjectIds
 );

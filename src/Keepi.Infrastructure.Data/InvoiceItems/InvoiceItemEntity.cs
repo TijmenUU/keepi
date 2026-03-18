@@ -12,7 +12,7 @@ internal sealed class InvoiceItemEntity
 {
     public int Id { get; set; }
 
-    [Required, MaxLength(Core.InvoiceItems.InvoiceItemEntity.NameMaxLength)]
+    [Required, MaxLength(64)]
     public string Name { get; set; }
 
     public int ProjectId { get; set; }

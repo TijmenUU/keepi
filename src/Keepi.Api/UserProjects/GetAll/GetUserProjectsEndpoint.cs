@@ -25,8 +25,8 @@ public sealed class GetUserProjectsEndpoint(IGetUserProjectsUseCase getUserProje
                             .Projects.OrderBy(p => !p.Enabled)
                             .ThenBy(p => p.Name)
                             .Select(p => new GetUserProjectsResponseProject(
-                                Id: p.Id,
-                                Name: p.Name,
+                                Id: p.Id.Value,
+                                Name: p.Name.Value,
                                 Enabled: p.Enabled,
                                 InvoiceItems:
                                 [
@@ -34,9 +34,9 @@ public sealed class GetUserProjectsEndpoint(IGetUserProjectsUseCase getUserProje
                                         .InvoiceItems.OrderBy(i => i.Customization.Ordinal)
                                         .ThenBy(i => i.Name)
                                         .Select(i => new GetUserProjectsResponseProjectInvoiceItem(
-                                            Id: i.Id,
-                                            Name: i.Name,
-                                            Ordinal: i.Customization.Ordinal,
+                                            Id: i.Id.Value,
+                                            Name: i.Name.Value,
+                                            Ordinal: i.Customization.Ordinal.Value,
                                             Color: i.Customization.Color?.ToHexColorString()
                                         )),
                                 ]

@@ -13,7 +13,12 @@ internal sealed class DeleteProjectEndpoint(IDeleteProjectUseCase deleteProjectU
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
-        var projectId = Route<int>(paramName: "ProjectId");
+        var routeProjectId = Route<int>(paramName: "ProjectId");
+        if (!ProjectId.TryFrom(value: routeProjectId, out var projectId))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
 
         var result = await deleteProjectUseCase.Execute(
             projectId: projectId,

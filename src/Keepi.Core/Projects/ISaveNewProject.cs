@@ -1,12 +1,16 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Projects;
 
 public interface ISaveNewProject
 {
     Task<IValueOrErrorResult<int, SaveNewProjectError>> Execute(
-        string name,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        string[] invoiceItemNames,
+        UserId[] userIds,
+        InvoiceItemName[] invoiceItemNames,
         CancellationToken cancellationToken
     );
 }

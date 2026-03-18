@@ -17,13 +17,15 @@ public class DeleteProjectUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            projectId: 50,
+            projectId: ProjectId.From(50),
             cancellationToken: CancellationToken.None
         );
         result.TrySuccess(out _).ShouldBeTrue();
 
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
-        context.DeleteProjectMock.Verify(x => x.Execute(50, It.IsAny<CancellationToken>()));
+        context.DeleteProjectMock.Verify(x =>
+            x.Execute(ProjectId.From(50), It.IsAny<CancellationToken>())
+        );
         context.VerifyNoOtherCalls();
     }
 
@@ -42,7 +44,7 @@ public class DeleteProjectUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            projectId: 50,
+            projectId: ProjectId.From(50),
             cancellationToken: CancellationToken.None
         );
         result.TrySuccess(out var errorResult).ShouldBeFalse();
@@ -50,7 +52,9 @@ public class DeleteProjectUseCaseTests
         errorResult.ShouldBe(expectedError);
 
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
-        context.DeleteProjectMock.Verify(x => x.Execute(50, It.IsAny<CancellationToken>()));
+        context.DeleteProjectMock.Verify(x =>
+            x.Execute(ProjectId.From(50), It.IsAny<CancellationToken>())
+        );
         context.VerifyNoOtherCalls();
     }
 
@@ -73,7 +77,7 @@ public class DeleteProjectUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            projectId: 50,
+            projectId: ProjectId.From(50),
             cancellationToken: CancellationToken.None
         );
         result.TrySuccess(out var errorResult).ShouldBeFalse();
@@ -94,7 +98,7 @@ public class DeleteProjectUseCaseTests
 
         var result = await context
             .BuildTarget()
-            .Execute(projectId: 50, cancellationToken: CancellationToken.None);
+            .Execute(projectId: ProjectId.From(50), cancellationToken: CancellationToken.None);
         result.TrySuccess(out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(DeleteProjectUseCaseError.UnauthorizedUser);
     }

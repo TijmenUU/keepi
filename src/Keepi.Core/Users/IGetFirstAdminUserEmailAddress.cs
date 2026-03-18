@@ -2,7 +2,7 @@ namespace Keepi.Core.Users;
 
 public interface IGetFirstAdminUserEmailAddress
 {
-    public IValueOrErrorResult<string, GetFirstAdminUserEmailAddressError> Execute();
+    public IValueOrErrorResult<EmailAddress, GetFirstAdminUserEmailAddressError> Execute();
 }
 
 public enum GetFirstAdminUserEmailAddressError

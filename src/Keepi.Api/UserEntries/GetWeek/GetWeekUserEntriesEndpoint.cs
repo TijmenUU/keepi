@@ -1,4 +1,5 @@
 using FastEndpoints;
+using Keepi.Core;
 using Keepi.Core.Entries;
 
 namespace Keepi.Api.UserEntries.GetWeek;
@@ -14,9 +15,16 @@ public sealed class GetWeekUserEntriesEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
+        var routeWeekNumber = Route<int>(paramName: "WeekNumber");
+        if (!WeekNumber.TryFrom(value: routeWeekNumber, out var weekNumber))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
+
         var result = await getUserEntriesForWeekUseCase.Execute(
             year: Route<int>(paramName: "Year"),
-            weekNumber: Route<int>(paramName: "WeekNumber"),
+            weekNumber: weekNumber,
             cancellationToken: cancellationToken
         );
         if (result.TrySuccess(out var successResult, out var errorResult))
@@ -57,9 +65,9 @@ public sealed class GetWeekUserEntriesEndpoint(
             Entries:
             [
                 .. input.Entries.Select(e => new GetWeekUserEntriesResponseDayEntry(
-                    InvoiceItemId: e.InvoiceItemId,
-                    Minutes: e.Minutes,
-                    Remark: e.Remark
+                    InvoiceItemId: e.InvoiceItemId.Value,
+                    Minutes: e.Minutes.Value,
+                    Remark: e.Remark?.Value
                 )),
             ]
         );

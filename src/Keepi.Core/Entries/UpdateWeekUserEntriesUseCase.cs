@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,7 @@ public interface IUpdateWeekUserEntriesUseCase
 {
     Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
         int year,
-        int weekNumber,
+        WeekNumber weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
         CancellationToken cancellationToken
     );
@@ -22,8 +23,6 @@ public enum UpdateWeekUserEntriesUseCaseError
     UnauthorizedUser,
     UnknownUserInvoiceItem,
     InvalidUserInvoiceItem,
-    InvalidMinutes,
-    InvalidRemark,
 }
 
 internal sealed class UpdateWeekUserEntriesUseCase(
@@ -36,7 +35,7 @@ internal sealed class UpdateWeekUserEntriesUseCase(
 {
     public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
         int year,
-        int weekNumber,
+        WeekNumber weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
         CancellationToken cancellationToken
     )
@@ -103,16 +102,6 @@ internal sealed class UpdateWeekUserEntriesUseCase(
                 if (!userProject.Enabled)
                 {
                     return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidUserInvoiceItem);
-                }
-
-                if (!UserEntryEntity.IsValidMinutes(entry.Minutes))
-                {
-                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
-                }
-
-                if (!UserEntryEntity.IsValidRemark(entry.Remark))
-                {
-                    return Result.Failure(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
                 }
 
                 entries.Add(
@@ -183,7 +172,7 @@ public record UpdateWeekUserEntriesUseCaseInputDay(
 );
 
 public record UpdateWeekUserEntriesUseCaseInputDayEntry(
-    int InvoiceItemId,
-    int Minutes,
-    string? Remark
+    InvoiceItemId InvoiceItemId,
+    UserEntryMinutes Minutes,
+    UserEntryRemark? Remark
 );

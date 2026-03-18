@@ -1,3 +1,5 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
@@ -14,15 +16,23 @@ public class GetAllProjectsUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetProjectsSuccess(
                 new GetProjectsResultProject(
-                    Id: 1,
-                    Name: "Project 1",
+                    Id: ProjectId.From(1),
+                    Name: ProjectName.From("Project 1"),
                     Enabled: true,
-                    Users: [new(Id: 10, Name: "Henk"), new(Id: 11, Name: "Piet")],
-                    InvoiceItems: [new(Id: 20, Name: "Post 1"), new(Id: 21, Name: "Post 2")]
+                    Users:
+                    [
+                        new(Id: UserId.From(10), Name: UserName.From("Henk")),
+                        new(Id: UserId.From(11), Name: UserName.From("Piet")),
+                    ],
+                    InvoiceItems:
+                    [
+                        new(Id: InvoiceItemId.From(20), Name: InvoiceItemName.From("Post 1")),
+                        new(Id: InvoiceItemId.From(21), Name: InvoiceItemName.From("Post 2")),
+                    ]
                 ),
                 new GetProjectsResultProject(
-                    Id: 2,
-                    Name: "Project 2",
+                    Id: ProjectId.From(2),
+                    Name: ProjectName.From("Project 2"),
                     Enabled: false,
                     Users: [],
                     InvoiceItems: []
@@ -39,13 +49,27 @@ public class GetAllProjectsUseCaseTests
                 Projects:
                 [
                     new(
-                        Id: 1,
-                        Name: "Project 1",
+                        Id: ProjectId.From(1),
+                        Name: ProjectName.From("Project 1"),
                         Enabled: true,
-                        Users: [new(Id: 10, Name: "Henk"), new(Id: 11, Name: "Piet")],
-                        InvoiceItems: [new(Id: 20, Name: "Post 1"), new(Id: 21, Name: "Post 2")]
+                        Users:
+                        [
+                            new(Id: UserId.From(10), Name: UserName.From("Henk")),
+                            new(Id: UserId.From(11), Name: UserName.From("Piet")),
+                        ],
+                        InvoiceItems:
+                        [
+                            new(Id: InvoiceItemId.From(20), Name: InvoiceItemName.From("Post 1")),
+                            new(Id: InvoiceItemId.From(21), Name: InvoiceItemName.From("Post 2")),
+                        ]
                     ),
-                    new(Id: 2, Name: "Project 2", Enabled: false, Users: [], InvoiceItems: []),
+                    new(
+                        Id: ProjectId.From(2),
+                        Name: ProjectName.From("Project 2"),
+                        Enabled: false,
+                        Users: [],
+                        InvoiceItems: []
+                    ),
                 ]
             )
         );

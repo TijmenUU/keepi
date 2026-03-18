@@ -1,6 +1,8 @@
-using System.Text;
 using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
+using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.UserProjects;
 using Keepi.Core.Users;
 using Keepi.Generators;
@@ -19,28 +21,37 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                         new(
-                            Id: 2,
-                            Name: "Intern",
+                            Id: ProjectId.From(2),
+                            Name: ProjectName.From("Intern"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 20, Name: "Administratie")]
+                            InvoiceItems:
+                            [
+                                new(
+                                    Id: InvoiceItemId.From(20),
+                                    Name: InvoiceItemName.From("Administratie")
+                                ),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                         new(
-                            InvoiceItemId: 20,
-                            Ordinal: 982,
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -53,15 +64,15 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
-                            Remark: "Nieuwe feature"
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
+                            Remark: UserEntryRemark.From("Nieuwe feature")
                         ),
                     ]
                 ),
@@ -69,14 +80,14 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
-                            Remark: "Nieuwe feature"
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
+                            Remark: UserEntryRemark.From("Nieuwe feature")
                         ),
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 20,
-                            Minutes: 30,
-                            Remark: "Project Flyby"
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Minutes: UserEntryMinutes.From(30),
+                            Remark: UserEntryRemark.From("Project Flyby")
                         ),
                     ]
                 ),
@@ -84,8 +95,8 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 20,
-                            Minutes: 15,
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Minutes: UserEntryMinutes.From(15),
                             Remark: null
                         ),
                     ]
@@ -101,7 +112,9 @@ public class UpdateWeekUserEntriesUseCaseTests
         result.Succeeded.ShouldBeTrue();
 
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
-        context.GetUserProjectsMock.Verify(x => x.Execute(42, It.IsAny<CancellationToken>()));
+        context.GetUserProjectsMock.Verify(x =>
+            x.Execute(UserId.From(42), It.IsAny<CancellationToken>())
+        );
         context.DeleteUserEntriesForDateRangeMock.Verify(x =>
             x.Execute(
                 It.Is<DeleteUserEntriesForDateRangeInput>(i =>
@@ -123,15 +136,15 @@ public class UpdateWeekUserEntriesUseCaseTests
                     && i.Entries[0].InvoiceItemId == 10
                     && i.Entries[0].Date == new DateOnly(2025, 6, 16)
                     && i.Entries[0].Minutes == 60
-                    && i.Entries[0].Remark == "Nieuwe feature"
+                    && i.Entries[0].Remark == UserEntryRemark.From("Nieuwe feature")
                     && i.Entries[1].InvoiceItemId == 10
                     && i.Entries[1].Date == new DateOnly(2025, 6, 17)
                     && i.Entries[1].Minutes == 60
-                    && i.Entries[1].Remark == "Nieuwe feature"
+                    && i.Entries[1].Remark == UserEntryRemark.From("Nieuwe feature")
                     && i.Entries[2].InvoiceItemId == 20
                     && i.Entries[2].Date == new DateOnly(2025, 6, 17)
                     && i.Entries[2].Minutes == 30
-                    && i.Entries[2].Remark == "Project Flyby"
+                    && i.Entries[2].Remark == UserEntryRemark.From("Project Flyby")
                     && i.Entries[3].InvoiceItemId == 20
                     && i.Entries[3].Date == new DateOnly(2025, 6, 18)
                     && i.Entries[3].Minutes == 15
@@ -153,28 +166,37 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                         new(
-                            Id: 2,
-                            Name: "Intern",
+                            Id: ProjectId.From(2),
+                            Name: ProjectName.From("Intern"),
                             Enabled: false,
-                            InvoiceItems: [new(Id: 20, Name: "Administratie")]
+                            InvoiceItems:
+                            [
+                                new(
+                                    Id: InvoiceItemId.From(20),
+                                    Name: InvoiceItemName.From("Administratie")
+                                ),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                         new(
-                            InvoiceItemId: 20,
-                            Ordinal: 982,
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -187,15 +209,15 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
-                            Remark: "Nieuwe feature"
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
+                            Remark: UserEntryRemark.From("Nieuwe feature")
                         ),
                     ]
                 ),
@@ -231,17 +253,20 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -252,14 +277,14 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 20,
-                            Minutes: 60,
+                            InvoiceItemId: InvoiceItemId.From(20),
+                            Minutes: UserEntryMinutes.From(60),
                             Remark: null
                         ),
                     ]
@@ -290,17 +315,20 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: false,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -311,14 +339,14 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
                             Remark: null
                         ),
                     ]
@@ -340,126 +368,6 @@ public class UpdateWeekUserEntriesUseCaseTests
     }
 
     [Fact]
-    public async Task Execute_returns_error_for_invalid_minutes()
-    {
-        var context = new UpdateWeekUserEntriesUseCaseTestContext()
-            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserProjectsSuccess(
-                new(
-                    Projects:
-                    [
-                        new(
-                            Id: 1,
-                            Name: "Algemeen",
-                            Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
-                        ),
-                    ],
-                    Customizations:
-                    [
-                        new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
-                            Color: new(Red: 255, Green: 255, Blue: 255)
-                        ),
-                    ]
-                )
-            );
-
-        var useCase = context.BuildTarget();
-
-        var result = await useCase.Execute(
-            year: 2025,
-            weekNumber: 25,
-            input: new UpdateWeekUserEntriesUseCaseInput(
-                Monday: new UpdateWeekUserEntriesUseCaseInputDay(
-                    Entries:
-                    [
-                        new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: -45,
-                            Remark: null
-                        ),
-                    ]
-                ),
-                Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
-            ),
-            cancellationToken: CancellationToken.None
-        );
-
-        result.TrySuccess(out var errorResult).ShouldBeFalse();
-        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidMinutes);
-
-        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
-    }
-
-    [Fact]
-    public async Task Execute_returns_error_for_invalid_remark()
-    {
-        var context = new UpdateWeekUserEntriesUseCaseTestContext()
-            .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
-            .WithGetUserProjectsSuccess(
-                new(
-                    Projects:
-                    [
-                        new(
-                            Id: 1,
-                            Name: "Algemeen",
-                            Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
-                        ),
-                    ],
-                    Customizations:
-                    [
-                        new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
-                            Color: new(Red: 255, Green: 255, Blue: 255)
-                        ),
-                    ]
-                )
-            );
-
-        var useCase = context.BuildTarget();
-
-        var result = await useCase.Execute(
-            year: 2025,
-            weekNumber: 25,
-            input: new UpdateWeekUserEntriesUseCaseInput(
-                Monday: new UpdateWeekUserEntriesUseCaseInputDay(
-                    Entries:
-                    [
-                        new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
-                            Remark: new StringBuilder()
-                                .Append(value: 'a', repeatCount: 260)
-                                .ToString()
-                        ),
-                    ]
-                ),
-                Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Wednesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Thursday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Friday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Saturday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
-                Sunday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: [])
-            ),
-            cancellationToken: CancellationToken.None
-        );
-
-        result.TrySuccess(out var errorResult).ShouldBeFalse();
-        errorResult.ShouldBe(UpdateWeekUserEntriesUseCaseError.InvalidRemark);
-
-        context.DeleteUserEntriesForDateRangeMock.VerifyNoOtherCalls();
-    }
-
-    [Fact]
     public async Task Execute_returns_unknown_get_user_projects_error()
     {
         var context = new UpdateWeekUserEntriesUseCaseTestContext()
@@ -470,14 +378,14 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
                             Remark: null
                         ),
                     ]
@@ -506,17 +414,20 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -528,14 +439,14 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
                             Remark: null
                         ),
                     ]
@@ -564,17 +475,20 @@ public class UpdateWeekUserEntriesUseCaseTests
                     Projects:
                     [
                         new(
-                            Id: 1,
-                            Name: "Algemeen",
+                            Id: ProjectId.From(1),
+                            Name: ProjectName.From("Algemeen"),
                             Enabled: true,
-                            InvoiceItems: [new(Id: 10, Name: "Dev")]
+                            InvoiceItems:
+                            [
+                                new(Id: InvoiceItemId.From(10), Name: InvoiceItemName.From("Dev")),
+                            ]
                         ),
                     ],
                     Customizations:
                     [
                         new(
-                            InvoiceItemId: 10,
-                            Ordinal: 981,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
                     ]
@@ -587,14 +501,14 @@ public class UpdateWeekUserEntriesUseCaseTests
 
         var result = await useCase.Execute(
             year: 2025,
-            weekNumber: 25,
+            weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
                     Entries:
                     [
                         new UpdateWeekUserEntriesUseCaseInputDayEntry(
-                            InvoiceItemId: 10,
-                            Minutes: 60,
+                            InvoiceItemId: InvoiceItemId.From(10),
+                            Minutes: UserEntryMinutes.From(60),
                             Remark: null
                         ),
                     ]
@@ -638,7 +552,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .BuildTarget()
             .Execute(
                 year: 2025,
-                weekNumber: 25,
+                weekNumber: WeekNumber.From(25),
                 input: new UpdateWeekUserEntriesUseCaseInput(
                     Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
                     Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
@@ -671,7 +585,7 @@ public class UpdateWeekUserEntriesUseCaseTests
             .BuildTarget()
             .Execute(
                 year: 2025,
-                weekNumber: 25,
+                weekNumber: WeekNumber.From(25),
                 input: new UpdateWeekUserEntriesUseCaseInput(
                     Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
                     Tuesday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),

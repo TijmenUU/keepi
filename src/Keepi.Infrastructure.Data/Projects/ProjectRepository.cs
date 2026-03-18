@@ -1,9 +1,12 @@
 using System.Data;
 using EntityFramework.Exceptions.Common;
 using Keepi.Core;
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
 using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.UserProjects;
+using Keepi.Core.Users;
 using Keepi.Infrastructure.Data.InvoiceItems;
 using Keepi.Infrastructure.Data.UserInvoiceItemCustomizations;
 using Keepi.Infrastructure.Data.Users;
@@ -31,16 +34,19 @@ internal sealed class ProjectRepository(
         {
             var projects = await databaseContext
                 .Projects.Select(p => new GetProjectsResultProject(
-                    Id: p.Id,
-                    Name: p.Name,
+                    Id: ProjectId.From(p.Id),
+                    Name: ProjectName.From(p.Name),
                     Enabled: p.Enabled,
                     Users: p.Users.Select(u => new GetProjectsResultProjectUser(
-                            Id: u.Id,
-                            Name: u.Name
+                            Id: UserId.From(u.Id),
+                            Name: UserName.From(u.Name)
                         ))
                         .ToArray(),
                     InvoiceItems: p.InvoiceItems.Select(
-                            i => new GetProjectsResultProjectInvoiceItem(Id: i.Id, Name: i.Name)
+                            i => new GetProjectsResultProjectInvoiceItem(
+                                Id: InvoiceItemId.From(i.Id),
+                                Name: InvoiceItemName.From(i.Name)
+                            )
                         )
                         .ToArray()
                 ))
@@ -59,14 +65,14 @@ internal sealed class ProjectRepository(
     }
 
     async Task<IMaybeErrorResult<DeleteProjectError>> IDeleteProject.Execute(
-        int projectId,
+        ProjectId projectId,
         CancellationToken cancellationToken
     )
     {
         try
         {
             var deleteCount = await databaseContext
-                .Projects.Where(p => p.Id == projectId)
+                .Projects.Where(p => p.Id == projectId.Value)
                 .ExecuteDeleteAsync(cancellationToken: cancellationToken);
 
             if (deleteCount == 1)
@@ -94,10 +100,10 @@ internal sealed class ProjectRepository(
     }
 
     async Task<IValueOrErrorResult<int, SaveNewProjectError>> ISaveNewProject.Execute(
-        string name,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        string[] invoiceItemNames,
+        UserId[] userIds,
+        InvoiceItemName[] invoiceItemNames,
         CancellationToken cancellationToken
     )
     {
@@ -106,7 +112,7 @@ internal sealed class ProjectRepository(
             var users = new List<UserEntity>();
             foreach (var id in userIds)
             {
-                var entity = new UserEntity { Id = id };
+                var entity = new UserEntity { Id = id.Value };
                 databaseContext.Attach(entity);
 
                 users.Add(entity);
@@ -114,11 +120,11 @@ internal sealed class ProjectRepository(
 
             var project = new ProjectEntity
             {
-                Name = name,
+                Name = name.Value,
                 Enabled = enabled,
                 Users = users,
                 InvoiceItems = invoiceItemNames
-                    .Select(i => new InvoiceItemEntity { Name = i })
+                    .Select(i => new InvoiceItemEntity { Name = i.Value })
                     .ToList(),
             };
             databaseContext.Add(project);
@@ -148,11 +154,11 @@ internal sealed class ProjectRepository(
     }
 
     async Task<IMaybeErrorResult<UpdateProjectError>> IUpdateProject.Execute(
-        int id,
-        string name,
+        ProjectId id,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        (int? Id, string Name)[] invoiceItems,
+        UserId[] userIds,
+        (InvoiceItemId? Id, InvoiceItemName Name)[] invoiceItems,
         CancellationToken cancellationToken
     )
     {
@@ -165,32 +171,32 @@ internal sealed class ProjectRepository(
             var project = await databaseContext
                 .Projects.Include(p => p.ProjectUsers)
                 .Include(p => p.InvoiceItems)
-                .SingleOrDefaultAsync(p => p.Id == id, cancellationToken: cancellationToken);
+                .SingleOrDefaultAsync(p => p.Id == id.Value, cancellationToken: cancellationToken);
 
             if (project == null)
             {
                 return Result.Failure(UpdateProjectError.UnknownProjectId);
             }
 
-            project.Name = name;
+            project.Name = name.Value;
             project.Enabled = enabled;
 
             for (int i = project.ProjectUsers.Count - 1; i >= 0; --i)
             {
                 var projectUser = project.ProjectUsers[i];
-                if (!userIds.Contains(projectUser.UserId))
+                if (!userIds.Contains(UserId.From(projectUser.UserId)))
                 {
                     databaseContext.Remove(projectUser);
                     project.ProjectUsers.RemoveRange(index: i, count: 1);
 
                     await databaseContext
                         .UserEntries.Where(ue =>
-                            ue.UserId == projectUser.UserId && ue.InvoiceItem.ProjectId == id
+                            ue.UserId == projectUser.UserId && ue.InvoiceItem.ProjectId == id.Value
                         )
                         .ExecuteDeleteAsync(cancellationToken: cancellationToken);
                     await databaseContext
                         .UserInvoiceItemCustomizations.Where(c =>
-                            c.UserId == projectUser.UserId && c.InvoiceItem.ProjectId == id
+                            c.UserId == projectUser.UserId && c.InvoiceItem.ProjectId == id.Value
                         )
                         .ExecuteDeleteAsync(cancellationToken: cancellationToken);
                 }
@@ -203,14 +209,15 @@ internal sealed class ProjectRepository(
                 }
 
                 project.ProjectUsers.Add(
-                    new ProjectEntityUserEntity { ProjectId = id, UserId = userId }
+                    new ProjectEntityUserEntity { ProjectId = id.Value, UserId = userId.Value }
                 );
             }
 
             for (int i = project.InvoiceItems.Count - 1; i >= 0; --i)
             {
                 var invoiceItem = project.InvoiceItems[i];
-                if (!invoiceItems.Any(ii => ii.Id == invoiceItem.Id))
+                var invoiceItemId = InvoiceItemId.From(invoiceItem.Id);
+                if (!invoiceItems.Any(ii => ii.Id == invoiceItemId))
                 {
                     databaseContext.Remove(invoiceItem);
                     project.InvoiceItems.RemoveRange(index: i, count: 1);
@@ -227,14 +234,16 @@ internal sealed class ProjectRepository(
             {
                 if (invoiceItem.Id == null)
                 {
-                    project.InvoiceItems.Add(new InvoiceItemEntity { Name = invoiceItem.Name });
+                    project.InvoiceItems.Add(
+                        new InvoiceItemEntity { Name = invoiceItem.Name.Value }
+                    );
                 }
                 else
                 {
                     var existingInvoiceItem = project.InvoiceItems.Single(i =>
-                        i.Id == invoiceItem.Id
+                        i.Id == invoiceItem.Id.Value
                     );
-                    existingInvoiceItem.Name = invoiceItem.Name;
+                    existingInvoiceItem.Name = invoiceItem.Name.Value;
                 }
             }
 
@@ -265,7 +274,7 @@ internal sealed class ProjectRepository(
 
     async Task<
         IValueOrErrorResult<GetUserProjectResult, GetUserProjectsError>
-    > IGetUserProjects.Execute(int userId, CancellationToken cancellationToken)
+    > IGetUserProjects.Execute(UserId userId, CancellationToken cancellationToken)
     {
         try
         {
@@ -274,19 +283,18 @@ internal sealed class ProjectRepository(
                     .ThenInclude(p => p.InvoiceItems)
                 .Include(u => u.UserInvoiceItemCustomizations)
                 .AsNoTracking()
-                .Where(u => u.Id == userId)
-                .SingleAsync(u => u.Id == userId, cancellationToken: cancellationToken);
+                .SingleAsync(u => u.Id == userId.Value, cancellationToken: cancellationToken);
 
             return Result.Success<GetUserProjectResult, GetUserProjectsError>(
                 new(
                     Projects: user.Projects.Select(p => new GetUserProjectResultProject(
-                            Id: p.Id,
-                            Name: p.Name,
+                            Id: ProjectId.From(p.Id),
+                            Name: ProjectName.From(p.Name),
                             Enabled: p.Enabled,
                             InvoiceItems: p.InvoiceItems.Select(
                                     i => new GetUserProjectResultProjectInvoiceItem(
-                                        Id: i.Id,
-                                        Name: i.Name
+                                        Id: InvoiceItemId.From(i.Id),
+                                        Name: InvoiceItemName.From(i.Name)
                                     )
                                 )
                                 .ToArray()
@@ -294,8 +302,8 @@ internal sealed class ProjectRepository(
                         .ToArray(),
                     Customizations: user.UserInvoiceItemCustomizations.Select(
                             c => new GetUserProjectResultInvoiceItemCustomization(
-                                InvoiceItemId: c.InvoiceItemId,
-                                Ordinal: c.Ordinal,
+                                InvoiceItemId: InvoiceItemId.From(c.InvoiceItemId),
+                                Ordinal: UserInvoiceITemCustomizationOrdinal.From(c.Ordinal),
                                 Color: c.Color == null ? null : Color.FromUint32(c.Color.Value)
                             )
                         )
@@ -321,18 +329,18 @@ internal sealed class ProjectRepository(
     {
         try
         {
-            var invoiceItemIds = input.InvoiceItems.Select(i => i.InvoiceItemId).ToArray();
+            var invoiceItemIds = input.InvoiceItems.Select(i => i.InvoiceItemId.Value).ToArray();
             await databaseContext
-                .UserInvoiceItemCustomizations.Where(c => c.UserId == input.UserId)
+                .UserInvoiceItemCustomizations.Where(c => c.UserId == input.UserId.Value)
                 .Where(c => invoiceItemIds.Contains(c.InvoiceItemId))
                 .ExecuteDeleteAsync(cancellationToken: cancellationToken);
 
             databaseContext.AddRange(
                 input.InvoiceItems.Select(i => new UserInvoiceItemCustomizationEntity
                 {
-                    InvoiceItemId = i.InvoiceItemId,
-                    UserId = input.UserId,
-                    Ordinal = i.Ordinal,
+                    InvoiceItemId = i.InvoiceItemId.Value,
+                    UserId = input.UserId.Value,
+                    Ordinal = i.Ordinal.Value,
                     Color = i.Color == null ? null : Color.ToUint32(i.Color),
                 })
             );

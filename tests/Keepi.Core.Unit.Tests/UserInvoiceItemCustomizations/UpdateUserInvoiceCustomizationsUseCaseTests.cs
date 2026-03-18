@@ -1,3 +1,4 @@
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.UserInvoiceItemCustomizations;
 using Keepi.Core.Users;
@@ -21,11 +22,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(2),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None
@@ -77,11 +82,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 1, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None
@@ -107,11 +116,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(2),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None
@@ -137,11 +150,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(2),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None
@@ -185,11 +202,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(2),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None
@@ -218,11 +239,15 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     InvoiceItems:
                     [
                         new(
-                            InvoiceItemId: 1,
-                            Ordinal: 100,
+                            InvoiceItemId: InvoiceItemId.From(1),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
                             Color: new(Red: 255, Green: 255, Blue: 255)
                         ),
-                        new(InvoiceItemId: 2, Ordinal: 200, Color: Color.FromUint32(0xFF00u)),
+                        new(
+                            InvoiceItemId: InvoiceItemId.From(2),
+                            Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
+                            Color: Color.FromUint32(0xFF00u)
+                        ),
                     ]
                 ),
                 cancellationToken: CancellationToken.None

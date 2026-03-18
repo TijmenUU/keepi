@@ -1,3 +1,4 @@
+using Keepi.Core.Entries;
 using Keepi.Core.InvoiceItems;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
@@ -7,10 +8,10 @@ namespace Keepi.Core.Projects;
 public interface ICreateProjectUseCase
 {
     Task<IValueOrErrorResult<int, CreateProjectUseCaseError>> Execute(
-        string name,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        string[] invoiceItemNames,
+        UserId[] userIds,
+        InvoiceItemName[] invoiceItemNames,
         CancellationToken cancellationToken
     );
 }
@@ -20,12 +21,10 @@ public enum CreateProjectUseCaseError
     Unknown = 0,
     UnauthenticatedUser,
     UnauthorizedUser,
-    InvalidProjectName,
     DuplicateProjectName,
     InvalidActiveDateRange,
     UnknownUserId,
     DuplicateUserIds,
-    InvalidInvoiceItemName,
     DuplicateInvoiceItemNames,
 }
 
@@ -36,10 +35,10 @@ internal sealed class CreateProjectUseCase(
 ) : ICreateProjectUseCase
 {
     public async Task<IValueOrErrorResult<int, CreateProjectUseCaseError>> Execute(
-        string name,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        string[] invoiceItemNames,
+        UserId[] userIds,
+        InvoiceItemName[] invoiceItemNames,
         CancellationToken cancellationToken
     )
     {
@@ -64,28 +63,14 @@ internal sealed class CreateProjectUseCase(
             );
         }
 
-        if (!ProjectEntity.IsValidName(name))
-        {
-            return Result.Failure<int, CreateProjectUseCaseError>(
-                CreateProjectUseCaseError.InvalidProjectName
-            );
-        }
-
-        if (!ProjectEntity.HasUniqueUserIds(userIds))
+        if (userIds.Distinct().Count() != userIds.Length)
         {
             return Result.Failure<int, CreateProjectUseCaseError>(
                 CreateProjectUseCaseError.DuplicateUserIds
             );
         }
 
-        if (invoiceItemNames.Any(i => !InvoiceItemEntity.IsValidName(i)))
-        {
-            return Result.Failure<int, CreateProjectUseCaseError>(
-                CreateProjectUseCaseError.InvalidInvoiceItemName
-            );
-        }
-
-        if (!ProjectEntity.HasUniqueInvoiceItemNames(invoiceItemNames))
+        if (invoiceItemNames.Distinct().Count() != invoiceItemNames.Length)
         {
             return Result.Failure<int, CreateProjectUseCaseError>(
                 CreateProjectUseCaseError.DuplicateInvoiceItemNames

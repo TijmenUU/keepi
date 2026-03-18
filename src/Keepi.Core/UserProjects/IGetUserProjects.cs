@@ -1,9 +1,15 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
+using Keepi.Core.UserInvoiceItemCustomizations;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.UserProjects;
 
 public interface IGetUserProjects
 {
     Task<IValueOrErrorResult<GetUserProjectResult, GetUserProjectsError>> Execute(
-        int userId,
+        UserId userId,
         CancellationToken cancellationToken
     );
 }
@@ -19,16 +25,16 @@ public sealed record GetUserProjectResult(
 );
 
 public sealed record GetUserProjectResultProject(
-    int Id,
-    string Name,
+    ProjectId Id,
+    ProjectName Name,
     bool Enabled,
     GetUserProjectResultProjectInvoiceItem[] InvoiceItems
 );
 
-public sealed record GetUserProjectResultProjectInvoiceItem(int Id, string Name);
+public sealed record GetUserProjectResultProjectInvoiceItem(InvoiceItemId Id, InvoiceItemName Name);
 
 public sealed record GetUserProjectResultInvoiceItemCustomization(
-    int InvoiceItemId,
-    int Ordinal,
+    InvoiceItemId InvoiceItemId,
+    UserInvoiceITemCustomizationOrdinal Ordinal,
     Color? Color
 );

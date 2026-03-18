@@ -3,7 +3,7 @@ namespace Keepi.Core.Users;
 public interface IUpdateUserPermissions
 {
     Task<IMaybeErrorResult<UpdateUserPermissionsError>> Execute(
-        int userId,
+        UserId userId,
         UserPermission entriesPermission,
         UserPermission exportsPermission,
         UserPermission projectsPermission,

@@ -5,7 +5,7 @@ namespace Keepi.Core.Projects;
 public interface IDeleteProjectUseCase
 {
     Task<IMaybeErrorResult<DeleteProjectUseCaseError>> Execute(
-        int projectId,
+        ProjectId projectId,
         CancellationToken cancellationToken
     );
 }
@@ -22,7 +22,7 @@ internal sealed class DeleteProjectUseCase(IResolveUser resolveUser, IDeleteProj
     : IDeleteProjectUseCase
 {
     public async Task<IMaybeErrorResult<DeleteProjectUseCaseError>> Execute(
-        int projectId,
+        ProjectId projectId,
         CancellationToken cancellationToken
     )
     {

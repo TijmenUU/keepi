@@ -18,9 +18,9 @@ public sealed class GetUserEndpoint(IGetUserUseCase getUserUseCase)
         {
             await Send.OkAsync(
                 response: new GetUserResponse(
-                    Id: successResult.Id,
-                    Name: successResult.Name,
-                    EmailAddress: successResult.EmailAddress,
+                    Id: successResult.Id.Value,
+                    Name: successResult.Name.Value,
+                    EmailAddress: successResult.EmailAddress.Value,
                     EntriesPermission: MapToRequestEnum(successResult.EntriesPermission),
                     ExportsPermission: MapToRequestEnum(successResult.ExportsPermission),
                     ProjectsPermission: MapToRequestEnum(successResult.ProjectsPermission),

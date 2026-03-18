@@ -13,9 +13,9 @@ public class GetAllUsersUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetUsersSuccess(
                 new GetUsersResultUser(
-                    Id: 1,
-                    Name: "Bob",
-                    EmailAddress: "bob@example.com",
+                    Id: UserId.From(1),
+                    Name: UserName.From("Bob"),
+                    EmailAddress: EmailAddress.From("bob@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.None,
                     ExportsPermission: UserPermission.None,
@@ -23,9 +23,9 @@ public class GetAllUsersUseCaseTests
                     UsersPermission: UserPermission.None
                 ),
                 new GetUsersResultUser(
-                    Id: 2,
-                    Name: "Miro",
-                    EmailAddress: "miro@example.com",
+                    Id: UserId.From(2),
+                    Name: UserName.From("Miro"),
+                    EmailAddress: EmailAddress.From("miro@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: UserPermission.ReadAndModify,
                     ExportsPermission: UserPermission.ReadAndModify,
@@ -44,9 +44,9 @@ public class GetAllUsersUseCaseTests
                 Users:
                 [
                     new(
-                        Id: 1,
-                        Name: "Bob",
-                        EmailAddress: "bob@example.com",
+                        Id: UserId.From(1),
+                        Name: UserName.From("Bob"),
+                        EmailAddress: EmailAddress.From("bob@example.com"),
                         IdentityOrigin: UserIdentityProvider.GitHub,
                         EntriesPermission: UserPermission.None,
                         ExportsPermission: UserPermission.None,
@@ -54,9 +54,9 @@ public class GetAllUsersUseCaseTests
                         UsersPermission: UserPermission.None
                     ),
                     new(
-                        Id: 2,
-                        Name: "Miro",
-                        EmailAddress: "miro@example.com",
+                        Id: UserId.From(2),
+                        Name: UserName.From("Miro"),
+                        EmailAddress: EmailAddress.From("miro@example.com"),
                         IdentityOrigin: UserIdentityProvider.GitHub,
                         EntriesPermission: UserPermission.ReadAndModify,
                         ExportsPermission: UserPermission.ReadAndModify,
@@ -118,9 +118,9 @@ public class GetAllUsersUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetUsersSuccess(
                 new GetUsersResultUser(
-                    Id: 1,
-                    Name: "Bobby",
-                    EmailAddress: "bobby@example.com",
+                    Id: UserId.From(1),
+                    Name: UserName.From("Bobby"),
+                    EmailAddress: EmailAddress.From("bobby@example.com"),
                     IdentityOrigin: UserIdentityProvider.GitHub,
                     EntriesPermission: entriesPermission,
                     ExportsPermission: exportsPermission,
@@ -137,9 +137,9 @@ public class GetAllUsersUseCaseTests
                 Users:
                 [
                     new(
-                        Id: 1,
-                        Name: "Bobby",
-                        EmailAddress: "bobby@example.com",
+                        Id: UserId.From(1),
+                        Name: UserName.From("Bobby"),
+                        EmailAddress: EmailAddress.From("bobby@example.com"),
                         IdentityOrigin: UserIdentityProvider.GitHub,
                         EntriesPermission: entriesPermission,
                         ExportsPermission: exportsPermission,

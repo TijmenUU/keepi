@@ -18,9 +18,9 @@ public class GetUserUseCaseTests
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
             new GetUserUseCaseOutput(
-                Id: 42,
-                Name: "Bob",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 EntriesPermission: UserPermission.ReadAndModify,
                 ExportsPermission: UserPermission.ReadAndModify,
                 ProjectsPermission: UserPermission.ReadAndModify,
@@ -86,9 +86,9 @@ public class GetUserUseCaseTests
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
         successResult.ShouldBeEquivalentTo(
             new GetUserUseCaseOutput(
-                Id: 42,
-                Name: "Bob",
-                EmailAddress: "bob@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("Bob"),
+                EmailAddress: EmailAddress.From("bob@example.com"),
                 EntriesPermission: entriesPermission,
                 ExportsPermission: exportsPermission,
                 ProjectsPermission: projectsPermission,

@@ -1,13 +1,17 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Projects;
 
 public interface IUpdateProject
 {
     Task<IMaybeErrorResult<UpdateProjectError>> Execute(
-        int id,
-        string name,
+        ProjectId id,
+        ProjectName name,
         bool enabled,
-        int[] userIds,
-        (int? Id, string Name)[] invoiceItems,
+        UserId[] userIds,
+        (InvoiceItemId? Id, InvoiceItemName Name)[] invoiceItems,
         CancellationToken cancellationToken
     );
 }

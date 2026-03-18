@@ -1,3 +1,5 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
@@ -17,10 +19,10 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Planning"],
+                userIds: [UserId.From(42), UserId.From(43)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Planning")],
                 cancellationToken: CancellationToken.None
             );
 
@@ -30,38 +32,18 @@ public class CreateProjectUseCaseTests
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.SaveNewProjectMock.Verify(x =>
             x.Execute(
-                "Algemeen",
+                ProjectName.From("Algemeen"),
                 true,
-                It.Is<int[]>(u => u.Length == 2 && u[0] == 42 && u[1] == 43),
-                It.Is<string[]>(i => i.Length == 2 && i[0] == "Dev" && i[1] == "Planning"),
+                It.Is<UserId[]>(u =>
+                    u.Length == 2 && u[0] == UserId.From(42) && u[1] == UserId.From(43)
+                ),
+                It.Is<InvoiceItemName[]>(i =>
+                    i.Length == 2 && i[0].Value == "Dev" && i[1].Value == "Planning"
+                ),
                 It.IsAny<CancellationToken>()
             )
         );
         context.VerifyNoOtherCalls();
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
-    public async Task Execute_returns_error_for_invalid_project_name(string projectName)
-    {
-        var context = new CreateProjectUseCaseTestContext().WithResolveUserSuccess(
-            ResolvedUserBuilder.CreateAdministratorBob()
-        );
-
-        var result = await context
-            .BuildTarget()
-            .Execute(
-                name: projectName,
-                enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Planning"],
-                cancellationToken: CancellationToken.None
-            );
-
-        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
-        errorResult.ShouldBe(CreateProjectUseCaseError.InvalidProjectName);
     }
 
     [Fact]
@@ -74,39 +56,15 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 42],
-                invoiceItemNames: ["Dev", "Planning"],
+                userIds: [UserId.From(42), UserId.From(42)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Planning")],
                 cancellationToken: CancellationToken.None
             );
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(CreateProjectUseCaseError.DuplicateUserIds);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("12345678901234567890123456789012345678901234567890123456789012345")]
-    public async Task Execute_returns_error_for_invalid_invoice_item_name(string invoiceItemName)
-    {
-        var context = new CreateProjectUseCaseTestContext().WithResolveUserSuccess(
-            ResolvedUserBuilder.CreateAdministratorBob()
-        );
-
-        var result = await context
-            .BuildTarget()
-            .Execute(
-                name: "Algemeen",
-                enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", invoiceItemName],
-                cancellationToken: CancellationToken.None
-            );
-
-        result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
-        errorResult.ShouldBe(CreateProjectUseCaseError.InvalidInvoiceItemName);
     }
 
     [Fact]
@@ -119,10 +77,10 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Dev"],
+                userIds: [UserId.From(42), UserId.From(43)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Dev")],
                 cancellationToken: CancellationToken.None
             );
 
@@ -149,10 +107,10 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Planning"],
+                userIds: [UserId.From(42), UserId.From(43)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Planning")],
                 cancellationToken: CancellationToken.None
             );
 
@@ -179,10 +137,10 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Planning"],
+                userIds: [UserId.From(42), UserId.From(43)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Planning")],
                 cancellationToken: CancellationToken.None
             );
 
@@ -205,10 +163,10 @@ public class CreateProjectUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                name: "Algemeen",
+                name: ProjectName.From("Algemeen"),
                 enabled: true,
-                userIds: [42, 43],
-                invoiceItemNames: ["Dev", "Planning"],
+                userIds: [UserId.From(42), UserId.From(43)],
+                invoiceItemNames: [InvoiceItemName.From("Dev"), InvoiceItemName.From("Planning")],
                 cancellationToken: CancellationToken.None
             );
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();

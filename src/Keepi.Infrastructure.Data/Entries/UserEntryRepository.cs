@@ -2,6 +2,9 @@ using System.Diagnostics;
 using Keepi.Core;
 using Keepi.Core.Entries;
 using Keepi.Core.Exports;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
+using Keepi.Core.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -21,14 +24,16 @@ internal sealed class UserEntryRepository(
         {
             foreach (var entry in input.Entries)
             {
+                Debug.Assert(entry.Minutes.Value > 0);
+
                 databaseContext.Add(
                     new UserEntryEntity
                     {
-                        UserId = input.UserId,
-                        InvoiceItemId = entry.InvoiceItemId,
+                        UserId = input.UserId.Value,
+                        InvoiceItemId = entry.InvoiceItemId.Value,
                         Date = entry.Date,
-                        Minutes = entry.Minutes,
-                        Remark = entry.Remark,
+                        Minutes = entry.Minutes.Value,
+                        Remark = entry.Remark?.Value,
                     }
                 );
             }
@@ -56,10 +61,11 @@ internal sealed class UserEntryRepository(
     {
         try
         {
+            var projectIds = input.ProjectIds.Select(p => p.Value).ToArray();
             await databaseContext
-                .UserEntries.Where(ue => ue.UserId == input.UserId)
+                .UserEntries.Where(ue => ue.UserId == input.UserId.Value)
                 .Where(ue => ue.Date >= input.From && ue.Date <= input.ToInclusive)
-                .Where(ue => input.ProjectIds.Contains(ue.InvoiceItem.ProjectId))
+                .Where(ue => projectIds.Contains(ue.InvoiceItem.ProjectId))
                 .ExecuteDeleteAsync(cancellationToken: cancellationToken);
 
             return Result.Success<DeleteUserEntriesForDateRangeError>();
@@ -80,7 +86,7 @@ internal sealed class UserEntryRepository(
     async Task<
         IValueOrErrorResult<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>
     > IGetUserEntriesForDates.Execute(
-        int userId,
+        UserId userId,
         DateOnly[] dates,
         CancellationToken cancellationToken
     )
@@ -90,18 +96,18 @@ internal sealed class UserEntryRepository(
         {
             var entities = await databaseContext
                 .UserEntries.AsNoTracking()
-                .Where(ue => ue.UserId == userId && dates.Contains(ue.Date))
+                .Where(ue => ue.UserId == userId.Value && dates.Contains(ue.Date))
                 .ToArrayAsync(cancellationToken: cancellationToken);
 
             return Result.Success<GetUserEntriesForDatesResult, GetUserEntriesForDatesError>(
                 new(
                     entities
                         .Select(e => new GetUserEntriesForDatesResultEntry(
-                            Id: e.Id,
-                            InvoiceItemId: e.InvoiceItemId,
+                            Id: UserEntryId.From(e.Id),
+                            InvoiceItemId: InvoiceItemId.From(e.InvoiceItemId),
                             Date: e.Date,
-                            Minutes: e.Minutes,
-                            Remark: e.Remark
+                            Minutes: UserEntryMinutes.From(e.Minutes),
+                            Remark: e.Remark == null ? null : UserEntryRemark.From(e.Remark)
                         ))
                         .ToArray()
                 )
@@ -134,18 +140,31 @@ internal sealed class UserEntryRepository(
         return databaseContext
             .UserEntries.AsNoTracking()
             .Where(e => e.Date >= start && e.Date <= stop)
+            .Select(ue => new
+            {
+                Id = ue.Id,
+                UserId = ue.UserId,
+                UserName = ue.User.Name,
+                Date = ue.Date,
+                ProjectId = ue.InvoiceItem.Project.Id,
+                ProjectName = ue.InvoiceItem.Project.Name,
+                InvoiceItemId = ue.InvoiceItem.Id,
+                InvoiceItemName = ue.InvoiceItem.Name,
+                Minutes = ue.Minutes,
+                Remark = (string?)ue.Remark,
+            })
+            .AsAsyncEnumerable()
             .Select(ue => new ExportUserEntry(
-                ue.Id,
-                ue.UserId,
-                ue.User.Name,
+                UserEntryId.From(ue.Id),
+                UserId.From(ue.UserId),
+                UserName.From(ue.UserName),
                 ue.Date,
-                ue.InvoiceItem.Project.Id,
-                ue.InvoiceItem.Project.Name,
-                ue.InvoiceItem.Id,
-                ue.InvoiceItem.Name,
-                ue.Minutes,
-                ue.Remark
-            ))
-            .AsAsyncEnumerable();
+                ProjectId.From(ue.ProjectId),
+                ProjectName.From(ue.ProjectName),
+                InvoiceItemId.From(ue.InvoiceItemId),
+                InvoiceItemName.From(ue.InvoiceItemName),
+                UserEntryMinutes.From(ue.Minutes),
+                ue.Remark == null ? null : UserEntryRemark.From(ue.Remark)
+            ));
     }
 }

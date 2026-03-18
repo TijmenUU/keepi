@@ -1,3 +1,6 @@
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.UserInvoiceItemCustomizations;
 
 public interface IOverwriteUserInvoiceItemCustomizations
@@ -15,12 +18,12 @@ public enum OverwriteUserInvoiceItemCustomizationsError
 }
 
 public record OverwriteUserInvoiceItemCustomizationsInput(
-    int UserId,
+    UserId UserId,
     OverwriteUserInvoiceItemCustomizationsInputInvoiceItem[] InvoiceItems
 );
 
 public record OverwriteUserInvoiceItemCustomizationsInputInvoiceItem(
-    int InvoiceItemId,
-    int Ordinal,
+    InvoiceItemId InvoiceItemId,
+    UserInvoiceITemCustomizationOrdinal Ordinal,
     Color? Color
 );

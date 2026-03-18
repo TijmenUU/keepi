@@ -8,9 +8,9 @@ public interface IResolveUser
 }
 
 public sealed record ResolvedUser(
-    int Id,
-    string Name,
-    string EmailAddress,
+    UserId Id,
+    UserName Name,
+    EmailAddress EmailAddress,
     UserPermission EntriesPermission,
     UserPermission ExportsPermission,
     UserPermission ProjectsPermission,

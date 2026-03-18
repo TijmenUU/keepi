@@ -137,15 +137,18 @@ internal sealed class ResolveUser(
         var externalIdClaim = claimsPrincipal.Claims.FirstOrDefault(c =>
             c.Type == ClaimTypes.NameIdentifier
         );
-        string? userName = claimsPrincipal.Identity.Name;
-        string? emailAddress = claimsPrincipal
+        string? userNameClaim = claimsPrincipal.Identity.Name;
+        string? emailAddressClaim = claimsPrincipal
             .Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)
             ?.Value;
 
         if (
-            string.IsNullOrWhiteSpace(externalIdClaim?.Value)
-            || string.IsNullOrWhiteSpace(userName)
-            || string.IsNullOrWhiteSpace(emailAddress)
+            externalIdClaim == null
+            || userNameClaim == null
+            || emailAddressClaim == null
+            || !UserExternalId.TryFrom(value: externalIdClaim.Value, out var externalId)
+            || !UserName.TryFrom(value: userNameClaim, out var userName)
+            || !EmailAddress.TryFrom(value: emailAddressClaim, out var emailAddress)
         )
         {
             return Result.Failure<UserInfo, ResolveUserError>(ResolveUserError.MalformedUserClaims);
@@ -153,7 +156,7 @@ internal sealed class ResolveUser(
 
         return Result.Success<UserInfo, ResolveUserError>(
             new(
-                ExternalId: externalIdClaim.Value,
+                ExternalId: externalId,
                 Name: userName,
                 EmailAddress: emailAddress,
                 Origin: UserIdentityProvider.GitHub
@@ -162,9 +165,9 @@ internal sealed class ResolveUser(
     }
 
     private sealed record UserInfo(
-        string ExternalId,
-        string Name,
-        string EmailAddress,
+        UserExternalId ExternalId,
+        UserName Name,
+        EmailAddress EmailAddress,
         UserIdentityProvider Origin
     );
 }

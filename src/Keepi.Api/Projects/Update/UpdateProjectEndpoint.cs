@@ -1,6 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 
 namespace Keepi.Api.Projects.Update;
 
@@ -17,7 +20,12 @@ internal sealed class UpdateProjectEndpoint(IUpdateProjectUseCase updateProjectU
         CancellationToken cancellationToken
     )
     {
-        var projectId = Route<int>(paramName: "ProjectId");
+        var routeProjectId = Route<int>(paramName: "ProjectId");
+        if (!ProjectId.TryFrom(value: routeProjectId, out var projectId))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
 
         if (TryGetValidatedModel(request, out var validatedRequest))
         {
@@ -64,43 +72,87 @@ internal sealed class UpdateProjectEndpoint(IUpdateProjectUseCase updateProjectU
         [NotNullWhen(returnValue: true)] out ValidatedUpdateProjectRequest? validated
     )
     {
-        if (request.Name == null || request.Enabled == null)
-        {
-            validated = null;
-            return false;
-        }
-
-        if (request.UserIds == null || request.UserIds.Any(i => i == null))
-        {
-            validated = null;
-            return false;
-        }
-
         if (
-            request.InvoiceItems == null
-            || request.InvoiceItems.Any(i => i == null || string.IsNullOrEmpty(i.Name))
+            string.IsNullOrEmpty(request.Name)
+            || !ProjectName.TryFrom(value: request.Name, out var projectName)
         )
         {
             validated = null;
             return false;
         }
 
+        if (request.Enabled == null)
+        {
+            validated = null;
+            return false;
+        }
+
+        if (request.UserIds == null)
+        {
+            validated = null;
+            return false;
+        }
+        var userIds = new List<UserId>();
+        foreach (var id in request.UserIds)
+        {
+            if (id == null || !UserId.TryFrom(value: id.Value, out var userId))
+            {
+                validated = null;
+                return false;
+            }
+
+            userIds.Add(userId);
+        }
+
+        if (request.InvoiceItems == null)
+        {
+            validated = null;
+            return false;
+        }
+
+        var invoiceItems = new List<(InvoiceItemId?, InvoiceItemName)>();
+        foreach (var item in request.InvoiceItems)
+        {
+            if (
+                item == null
+                || item.Name == null
+                || !InvoiceItemName.TryFrom(value: item.Name, out var invoiceItemName)
+            )
+            {
+                validated = null;
+                return false;
+            }
+
+            InvoiceItemId? invoiceItemId = null;
+            if (item.Id != null)
+            {
+                if (InvoiceItemId.TryFrom(value: item.Id.Value, out var validatedInvoiceItemId))
+                {
+                    invoiceItemId = validatedInvoiceItemId;
+                }
+                else
+                {
+                    validated = null;
+                    return false;
+                }
+            }
+
+            invoiceItems.Add((invoiceItemId, invoiceItemName));
+        }
+
         validated = new ValidatedUpdateProjectRequest(
-            Name: request.Name,
+            Name: projectName,
             Enabled: request.Enabled.Value,
-            UserIds: request.UserIds?.Select(i => i ?? 0).ToArray() ?? [],
-            InvoiceItems: request
-                .InvoiceItems?.Select(i => (Id: i?.Id, Name: i?.Name ?? string.Empty))
-                .ToArray()
-                ?? []
+            UserIds: [.. userIds],
+            InvoiceItems: [.. invoiceItems]
         );
         return true;
     }
 
     record ValidatedUpdateProjectRequest(
-        string Name,
+        ProjectName Name,
         bool Enabled,
-        int[] UserIds,
-        (int? Id, string Name)[] InvoiceItems
+        UserId[] UserIds,
+        (InvoiceItemId? Id, InvoiceItemName Name)[] InvoiceItems
     );
 }

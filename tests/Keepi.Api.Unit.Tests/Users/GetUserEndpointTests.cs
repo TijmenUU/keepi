@@ -1,4 +1,5 @@
 using Keepi.Api.Users.Get;
+using Keepi.Core;
 using Keepi.Core.Users;
 using Keepi.Generators;
 
@@ -11,9 +12,9 @@ public class GetUserEndpointTests
     {
         var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
             new(
-                Id: 42,
-                Name: "John Doe",
-                EmailAddress: "johndoe@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("John Doe"),
+                EmailAddress: EmailAddress.From("johndoe@example.com"),
                 EntriesPermission: UserPermission.ReadAndModify,
                 ExportsPermission: UserPermission.ReadAndModify,
                 ProjectsPermission: UserPermission.ReadAndModify,
@@ -49,9 +50,9 @@ public class GetUserEndpointTests
     {
         var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
             new(
-                Id: 42,
-                Name: "John Doe",
-                EmailAddress: "johndoe@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("John Doe"),
+                EmailAddress: EmailAddress.From("johndoe@example.com"),
                 EntriesPermission: permissionInput,
                 ExportsPermission: UserPermission.None,
                 ProjectsPermission: UserPermission.None,
@@ -74,9 +75,9 @@ public class GetUserEndpointTests
     {
         var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
             new(
-                Id: 42,
-                Name: "John Doe",
-                EmailAddress: "johndoe@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("John Doe"),
+                EmailAddress: EmailAddress.From("johndoe@example.com"),
                 EntriesPermission: UserPermission.None,
                 ExportsPermission: permissionInput,
                 ProjectsPermission: UserPermission.None,
@@ -99,9 +100,9 @@ public class GetUserEndpointTests
     {
         var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
             new(
-                Id: 42,
-                Name: "John Doe",
-                EmailAddress: "johndoe@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("John Doe"),
+                EmailAddress: EmailAddress.From("johndoe@example.com"),
                 EntriesPermission: UserPermission.None,
                 ExportsPermission: UserPermission.None,
                 ProjectsPermission: permissionInput,
@@ -124,9 +125,9 @@ public class GetUserEndpointTests
     {
         var context = new GetUserEndpointTestContext().WithGetUserUseCaseSuccess(
             new(
-                Id: 42,
-                Name: "John Doe",
-                EmailAddress: "johndoe@example.com",
+                Id: UserId.From(42),
+                Name: UserName.From("John Doe"),
+                EmailAddress: EmailAddress.From("johndoe@example.com"),
                 EntriesPermission: UserPermission.None,
                 ExportsPermission: UserPermission.None,
                 ProjectsPermission: UserPermission.None,

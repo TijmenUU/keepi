@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;
 
@@ -8,7 +9,7 @@ public interface IGetUserEntriesForWeekUseCase
 {
     Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int year, int weekNumber, CancellationToken cancellationToken);
+    > Execute(int year, WeekNumber weekNumber, CancellationToken cancellationToken);
 }
 
 public enum GetUserEntriesForWeekUseCaseError
@@ -26,7 +27,7 @@ internal sealed class GetUserEntriesForWeekUseCase(
 {
     public async Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int year, int weekNumber, CancellationToken cancellationToken)
+    > Execute(int year, WeekNumber weekNumber, CancellationToken cancellationToken)
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
         if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
@@ -123,7 +124,7 @@ public record GetUserEntriesForWeekUseCaseOutputDay(
 );
 
 public record GetUserEntriesForWeekUseCaseOutputDayEntry(
-    int InvoiceItemId,
-    int Minutes,
-    string? Remark
+    InvoiceItemId InvoiceItemId,
+    UserEntryMinutes Minutes,
+    UserEntryRemark? Remark
 );

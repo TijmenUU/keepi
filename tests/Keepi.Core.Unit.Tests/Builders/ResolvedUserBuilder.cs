@@ -54,9 +54,9 @@ internal class ResolvedUserBuilder
 
     public ResolvedUser Build() =>
         new(
-            Id: id,
-            Name: name,
-            EmailAddress: emailAddress,
+            Id: UserId.From(id),
+            Name: UserName.From(name),
+            EmailAddress: EmailAddress.From(emailAddress),
             EntriesPermission: entriesPermission,
             ExportsPermission: exportsPermission,
             ProjectsPermission: projectsPermission,

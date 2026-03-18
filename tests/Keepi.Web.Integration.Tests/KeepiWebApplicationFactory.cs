@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Keepi.Core;
+using Keepi.Core.Users;
 using Keepi.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -184,8 +185,13 @@ internal class IntegrationTestAuthenticationHandler
 internal sealed class IntegrationTestGetFirstAdminUserEmailAddress(string emailAddress)
     : Core.Users.IGetFirstAdminUserEmailAddress
 {
-    public IValueOrErrorResult<string, Core.Users.GetFirstAdminUserEmailAddressError> Execute() =>
-        Result.Success<string, Core.Users.GetFirstAdminUserEmailAddressError>(emailAddress);
+    public IValueOrErrorResult<
+        EmailAddress,
+        Core.Users.GetFirstAdminUserEmailAddressError
+    > Execute() =>
+        Result.Success<EmailAddress, Core.Users.GetFirstAdminUserEmailAddressError>(
+            EmailAddress.From(emailAddress)
+        );
 }
 
 internal sealed class InitializeDatabaseHostedService(DatabaseContext databaseContext)
@@ -212,9 +218,9 @@ internal sealed class SetupInitialAdminUserHostedService(IServiceProvider servic
         var getOrRegisterNewUserUseCase =
             scope.ServiceProvider.GetRequiredService<Core.Users.IGetOrRegisterNewUserUseCase>();
         var result = await getOrRegisterNewUserUseCase.Execute(
-            externalId: adminSubjectClaim,
-            emailAddress: "admin@example.com",
-            name: adminName,
+            externalId: UserExternalId.From(adminSubjectClaim),
+            emailAddress: EmailAddress.From("admin@example.com"),
+            name: UserName.From(adminName),
             identityProvider: Core.Users.UserIdentityProvider.GitHub,
             cancellationToken: cancellationToken
         );

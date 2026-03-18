@@ -7,18 +7,18 @@ namespace Keepi.Api.Authorization;
 internal sealed class GetFirstAdminUserEmailAddress(IConfiguration configuration)
     : IGetFirstAdminUserEmailAddress
 {
-    public IValueOrErrorResult<string, GetFirstAdminUserEmailAddressError> Execute()
+    public IValueOrErrorResult<EmailAddress, GetFirstAdminUserEmailAddressError> Execute()
     {
         const string configurationKey = "Authentication:FirstAdminUserEmailAddress";
 
-        var emailAddress = configuration[configurationKey];
-        if (string.IsNullOrWhiteSpace(emailAddress))
+        var configurationValue = configuration[configurationKey];
+        if (!EmailAddress.TryFrom(value: configurationValue, out var emailAddress))
         {
-            return Result.Failure<string, GetFirstAdminUserEmailAddressError>(
+            return Result.Failure<EmailAddress, GetFirstAdminUserEmailAddressError>(
                 GetFirstAdminUserEmailAddressError.NotConfigured
             );
         }
 
-        return Result.Success<string, GetFirstAdminUserEmailAddressError>(emailAddress);
+        return Result.Success<EmailAddress, GetFirstAdminUserEmailAddressError>(emailAddress);
     }
 }

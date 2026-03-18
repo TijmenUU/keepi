@@ -1,6 +1,6 @@
 using Keepi.Api.Authorization;
+using Keepi.Core;
 using Keepi.Generators;
-using Microsoft.Extensions.Configuration;
 
 namespace Keepi.Api.Unit.Tests.Authorization;
 
@@ -16,7 +16,7 @@ public class GetFirstAdminUserEmailAddressTests
         var result = context.BuildTarget().Execute();
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
 
-        successResult.ShouldBe("reinhard@example.com");
+        successResult.ShouldBe(EmailAddress.From("reinhard@example.com"));
 
         context.ConfigurationMock.Verify(x =>
             x[GetFirstAdminUserEmailAddressTestContext.ConfigurationKey]

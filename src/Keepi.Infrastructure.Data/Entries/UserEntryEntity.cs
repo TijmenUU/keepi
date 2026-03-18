@@ -20,6 +20,6 @@ internal sealed class UserEntryEntity
     public DateOnly Date { get; set; }
     public int Minutes { get; set; }
 
-    [MaxLength(Core.Entries.UserEntryEntity.RemarkMaxLength)]
+    [MaxLength(256)]
     public string Remark { get; set; }
 }

@@ -1,3 +1,8 @@
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
+using Keepi.Core.Projects;
+using Keepi.Core.Users;
+
 namespace Keepi.Core.Exports;
 
 public interface IGetExportUserEntries
@@ -10,14 +15,14 @@ public interface IGetExportUserEntries
 }
 
 public record ExportUserEntry(
-    int Id,
-    int UserId,
-    string UserName,
+    UserEntryId Id,
+    UserId UserId,
+    UserName UserName,
     DateOnly Date,
-    int ProjectId,
-    string ProjectName,
-    int InvoiceItemId,
-    string InvoiceItemName,
-    int Minutes,
-    string Remark
+    ProjectId ProjectId,
+    ProjectName ProjectName,
+    InvoiceItemId InvoiceItemId,
+    InvoiceItemName InvoiceItemName,
+    UserEntryMinutes Minutes,
+    UserEntryRemark? Remark
 );

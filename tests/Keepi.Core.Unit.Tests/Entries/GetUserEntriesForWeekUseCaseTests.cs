@@ -1,4 +1,5 @@
 using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Unit.Tests.Builders;
 using Keepi.Core.Users;
 using Keepi.Generators;
@@ -14,38 +15,42 @@ public class GetUserEntriesForWeekUseCaseTests
             .WithResolveUserSuccess(ResolvedUserBuilder.CreateAdministratorBob())
             .WithGetUserEntriesForDatesSuccess(
                 new GetUserEntriesForDatesResultEntry(
-                    Id: 1,
-                    InvoiceItemId: 101,
+                    Id: UserEntryId.From(1),
+                    InvoiceItemId: InvoiceItemId.From(101),
                     Date: new DateOnly(2025, 6, 16),
-                    Minutes: 60,
-                    Remark: "Nieuwe feature"
+                    Minutes: UserEntryMinutes.From(60),
+                    Remark: UserEntryRemark.From("Nieuwe feature")
                 ),
                 new GetUserEntriesForDatesResultEntry(
-                    Id: 2,
-                    InvoiceItemId: 102,
+                    Id: UserEntryId.From(2),
+                    InvoiceItemId: InvoiceItemId.From(102),
                     Date: new DateOnly(2025, 6, 16),
-                    Minutes: 45,
-                    Remark: "Project Flyby"
+                    Minutes: UserEntryMinutes.From(45),
+                    Remark: UserEntryRemark.From("Project Flyby")
                 ),
                 new GetUserEntriesForDatesResultEntry(
-                    Id: 3,
-                    InvoiceItemId: 101,
+                    Id: UserEntryId.From(3),
+                    InvoiceItemId: InvoiceItemId.From(101),
                     Date: new DateOnly(2025, 6, 17),
-                    Minutes: 30,
+                    Minutes: UserEntryMinutes.From(30),
                     Remark: null
                 ),
                 new GetUserEntriesForDatesResultEntry(
-                    Id: 4,
-                    InvoiceItemId: 102,
+                    Id: UserEntryId.From(4),
+                    InvoiceItemId: InvoiceItemId.From(102),
                     Date: new DateOnly(2025, 6, 18),
-                    Minutes: 15,
+                    Minutes: UserEntryMinutes.From(15),
                     Remark: null
                 )
             );
 
         var result = await context
             .BuildTarget()
-            .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
+            .Execute(
+                year: 2025,
+                weekNumber: WeekNumber.From(25),
+                cancellationToken: CancellationToken.None
+            );
 
         result.TrySuccess(out var successResult, out _).ShouldBeTrue();
 
@@ -55,14 +60,14 @@ public class GetUserEntriesForWeekUseCaseTests
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            InvoiceItemId: 101,
-                            Minutes: 60,
-                            Remark: "Nieuwe feature"
+                            InvoiceItemId: InvoiceItemId.From(101),
+                            Minutes: UserEntryMinutes.From(60),
+                            Remark: UserEntryRemark.From("Nieuwe feature")
                         ),
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            InvoiceItemId: 102,
-                            Minutes: 45,
-                            Remark: "Project Flyby"
+                            InvoiceItemId: InvoiceItemId.From(102),
+                            Minutes: UserEntryMinutes.From(45),
+                            Remark: UserEntryRemark.From("Project Flyby")
                         ),
                     ]
                 ),
@@ -70,8 +75,8 @@ public class GetUserEntriesForWeekUseCaseTests
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            InvoiceItemId: 101,
-                            Minutes: 30,
+                            InvoiceItemId: InvoiceItemId.From(101),
+                            Minutes: UserEntryMinutes.From(30),
                             Remark: null
                         ),
                     ]
@@ -80,8 +85,8 @@ public class GetUserEntriesForWeekUseCaseTests
                     Entries:
                     [
                         new GetUserEntriesForWeekUseCaseOutputDayEntry(
-                            InvoiceItemId: 102,
-                            Minutes: 15,
+                            InvoiceItemId: InvoiceItemId.From(102),
+                            Minutes: UserEntryMinutes.From(15),
                             Remark: null
                         ),
                     ]
@@ -107,7 +112,7 @@ public class GetUserEntriesForWeekUseCaseTests
         ];
         context.GetUserEntriesForDatesMock.Verify(x =>
             x.Execute(
-                42,
+                UserId.From(42),
                 It.Is<DateOnly[]>(a => a.SequenceEqual(expectedDates)),
                 It.IsAny<CancellationToken>()
             )
@@ -125,7 +130,11 @@ public class GetUserEntriesForWeekUseCaseTests
 
         var result = await context
             .BuildTarget()
-            .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
+            .Execute(
+                year: 2025,
+                weekNumber: WeekNumber.From(25),
+                cancellationToken: CancellationToken.None
+            );
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(GetUserEntriesForWeekUseCaseError.Unknown);
@@ -154,7 +163,11 @@ public class GetUserEntriesForWeekUseCaseTests
 
         var result = await context
             .BuildTarget()
-            .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
+            .Execute(
+                year: 2025,
+                weekNumber: WeekNumber.From(25),
+                cancellationToken: CancellationToken.None
+            );
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(expectedError);
@@ -172,7 +185,11 @@ public class GetUserEntriesForWeekUseCaseTests
 
         var result = await context
             .BuildTarget()
-            .Execute(year: 2025, weekNumber: 25, cancellationToken: CancellationToken.None);
+            .Execute(
+                year: 2025,
+                weekNumber: WeekNumber.From(25),
+                cancellationToken: CancellationToken.None
+            );
 
         result.TrySuccess(out _, out var errorResult).ShouldBeFalse();
         errorResult.ShouldBe(GetUserEntriesForWeekUseCaseError.UnauthorizedUser);

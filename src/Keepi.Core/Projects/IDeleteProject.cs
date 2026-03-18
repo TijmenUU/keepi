@@ -3,7 +3,7 @@ namespace Keepi.Core.Projects;
 public interface IDeleteProject
 {
     Task<IMaybeErrorResult<DeleteProjectError>> Execute(
-        int projectId,
+        ProjectId projectId,
         CancellationToken cancellationToken
     );
 }

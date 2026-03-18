@@ -21,9 +21,9 @@ public sealed class GetAllUsersEndpoint(IGetAllUsersUseCase getAllUsersUseCase)
                 response: new GetAllUsersResponse(
                     Users: successResult
                         .Users.Select(u => new GetAllUsersResponseUser(
-                            Id: u.Id,
-                            Name: u.Name,
-                            EmailAddress: u.EmailAddress,
+                            Id: u.Id.Value,
+                            Name: u.Name.Value,
+                            EmailAddress: u.EmailAddress.Value,
                             EntriesPermission: MapToRequestEnum(u.EntriesPermission),
                             ExportsPermission: MapToRequestEnum(u.ExportsPermission),
                             ProjectsPermission: MapToRequestEnum(u.ProjectsPermission),

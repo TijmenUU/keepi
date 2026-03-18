@@ -1,6 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
+using Keepi.Core.Entries;
+using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
+using Keepi.Core.Users;
 
 namespace Keepi.Api.Projects.Create;
 
@@ -64,41 +67,69 @@ internal sealed class CreateProjectEndpoint(ICreateProjectUseCase createProjectU
         [NotNullWhen(returnValue: true)] out ValidatedCreateProjectRequest? validated
     )
     {
-        if (string.IsNullOrEmpty(request.Name) || request.Enabled == null)
-        {
-            validated = null;
-            return false;
-        }
-
-        if (request.UserIds == null || request.UserIds.Any(i => i == null))
-        {
-            validated = null;
-            return false;
-        }
-
         if (
-            request.InvoiceItemNames == null
-            || request.InvoiceItemNames.Any(i => i == null || string.IsNullOrEmpty(i))
+            string.IsNullOrEmpty(request.Name)
+            || !ProjectName.TryFrom(value: request.Name, out var projectName)
         )
         {
             validated = null;
             return false;
         }
 
+        if (request.Enabled == null)
+        {
+            validated = null;
+            return false;
+        }
+
+        if (request.UserIds == null)
+        {
+            validated = null;
+            return false;
+        }
+        var userIds = new List<UserId>();
+        foreach (var id in request.UserIds)
+        {
+            if (id == null || !UserId.TryFrom(value: id.Value, out var userId))
+            {
+                validated = null;
+                return false;
+            }
+
+            userIds.Add(userId);
+        }
+
+        if (request.InvoiceItemNames == null)
+        {
+            validated = null;
+            return false;
+        }
+
+        var invoiceItemNames = new List<InvoiceItemName>();
+        foreach (var name in request.InvoiceItemNames)
+        {
+            if (name == null || !InvoiceItemName.TryFrom(value: name, out var invoiceItemName))
+            {
+                validated = null;
+                return false;
+            }
+
+            invoiceItemNames.Add(invoiceItemName);
+        }
+
         validated = new ValidatedCreateProjectRequest(
-            Name: request.Name,
+            Name: projectName,
             Enabled: request.Enabled.Value,
-            UserIds: request.UserIds?.Select(i => i ?? 0).ToArray() ?? [],
-            InvoiceItemNames: request.InvoiceItemNames?.Select(i => i ?? string.Empty).ToArray()
-                ?? []
+            UserIds: [.. userIds],
+            InvoiceItemNames: [.. invoiceItemNames]
         );
         return true;
     }
 
     record ValidatedCreateProjectRequest(
-        string Name,
+        ProjectName Name,
         bool Enabled,
-        int[] UserIds,
-        string[] InvoiceItemNames
+        UserId[] UserIds,
+        InvoiceItemName[] InvoiceItemNames
     );
 }

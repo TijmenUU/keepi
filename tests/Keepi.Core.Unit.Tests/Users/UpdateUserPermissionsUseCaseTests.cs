@@ -55,7 +55,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 43,
+                userId: UserId.From(43),
                 entriesPermission: entriesPermission,
                 exportsPermission: exportsPermission,
                 projectsPermission: projectsPermission,
@@ -68,7 +68,7 @@ public class UpdateUserPermissionsUseCaseTests
         context.ResolveUserMock.Verify(x => x.Execute(It.IsAny<CancellationToken>()));
         context.UpdateUserPermissionsMock.Verify(x =>
             x.Execute(
-                43,
+                UserId.From(43),
                 entriesPermission,
                 exportsPermission,
                 projectsPermission,
@@ -103,7 +103,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 43,
+                userId: UserId.From(43),
                 entriesPermission: UserPermission.ReadAndModify,
                 exportsPermission: UserPermission.ReadAndModify,
                 projectsPermission: UserPermission.ReadAndModify,
@@ -126,7 +126,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 43,
+                userId: UserId.From(43),
                 entriesPermission: UserPermission.ReadAndModify,
                 exportsPermission: UserPermission.ReadAndModify,
                 projectsPermission: UserPermission.ReadAndModify,
@@ -147,7 +147,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 42,
+                userId: UserId.From(42),
                 entriesPermission: UserPermission.ReadAndModify,
                 exportsPermission: UserPermission.ReadAndModify,
                 projectsPermission: UserPermission.ReadAndModify,
@@ -168,7 +168,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 43,
+                userId: UserId.From(43),
                 entriesPermission: UserPermission.ReadAndModify,
                 exportsPermission: UserPermission.ReadAndModify,
                 projectsPermission: UserPermission.ReadAndModify,
@@ -199,7 +199,7 @@ public class UpdateUserPermissionsUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                userId: 43,
+                userId: UserId.From(43),
                 entriesPermission: UserPermission.ReadAndModify,
                 exportsPermission: UserPermission.ReadAndModify,
                 projectsPermission: UserPermission.ReadAndModify,

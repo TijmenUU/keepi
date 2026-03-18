@@ -15,9 +15,9 @@ public interface IGetUsers
 public sealed record GetUsersResult(GetUsersResultUser[] Users);
 
 public sealed record GetUsersResultUser(
-    int Id,
-    string Name,
-    string EmailAddress,
+    UserId Id,
+    UserName Name,
+    EmailAddress EmailAddress,
     UserIdentityProvider IdentityOrigin,
     UserPermission EntriesPermission,
     UserPermission ExportsPermission,
