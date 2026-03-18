@@ -9,6 +9,7 @@ Keepi is a practice project first and foremost. It was developed to get some pra
 - The TypeScript [neverthrow library](https://github.com/supermacro/neverthrow) to avoid exceptions and use the result pattern instead
 - [Shadcn](https://www.shadcn-vue.com/) to build a modern Vue frontend without reinventing the wheel
 - [Roslyn code generation](https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.md) to generate repetitive test context code for unit test projects
+- [Vogen](https://github.com/SteveDunn/Vogen/tree/main) (Value Object Generator) NuGet package to avoid primitive obsession in the business logic. This allows for easy type generation for things like email addresses, user names, identifiers, etcetera. Added bonus is that Vogen supports validation and sanitation, which Keepi uses to minimize garbage input to be allowed in.
 
 **Table of Contents**
 
