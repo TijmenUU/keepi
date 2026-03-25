@@ -63,7 +63,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -208,7 +208,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -276,7 +276,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -338,7 +338,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -377,7 +377,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -438,7 +438,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -500,7 +500,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var useCase = context.BuildTarget();
 
         var result = await useCase.Execute(
-            year: 2025,
+            year: Year.From(2025),
             weekNumber: WeekNumber.From(25),
             input: new UpdateWeekUserEntriesUseCaseInput(
                 Monday: new UpdateWeekUserEntriesUseCaseInputDay(
@@ -551,7 +551,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 input: new UpdateWeekUserEntriesUseCaseInput(
                     Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),
@@ -584,7 +584,7 @@ public class UpdateWeekUserEntriesUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 input: new UpdateWeekUserEntriesUseCaseInput(
                     Monday: new UpdateWeekUserEntriesUseCaseInputDay(Entries: []),

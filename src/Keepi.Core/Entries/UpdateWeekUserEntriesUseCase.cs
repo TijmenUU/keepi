@@ -9,7 +9,7 @@ namespace Keepi.Core.Entries;
 public interface IUpdateWeekUserEntriesUseCase
 {
     Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-        int year,
+        Year year,
         WeekNumber weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
         CancellationToken cancellationToken
@@ -34,7 +34,7 @@ internal sealed class UpdateWeekUserEntriesUseCase(
 ) : IUpdateWeekUserEntriesUseCase
 {
     public async Task<IMaybeErrorResult<UpdateWeekUserEntriesUseCaseError>> Execute(
-        int year,
+        Year year,
         WeekNumber weekNumber,
         UpdateWeekUserEntriesUseCaseInput input,
         CancellationToken cancellationToken

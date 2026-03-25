@@ -4,10 +4,10 @@ namespace Keepi.Core.Entries;
 
 internal static class WeekNumberHelper
 {
-    public static DateOnly[] WeekNumberToDates(int year, WeekNumber number)
+    public static DateOnly[] WeekNumberToDates(Year year, WeekNumber number)
     {
         var monday = DateOnly.FromDateTime(
-            ISOWeek.ToDateTime(year: year, week: number.Value, dayOfWeek: DayOfWeek.Monday)
+            ISOWeek.ToDateTime(year: year.Value, week: number.Value, dayOfWeek: DayOfWeek.Monday)
         );
         return
         [

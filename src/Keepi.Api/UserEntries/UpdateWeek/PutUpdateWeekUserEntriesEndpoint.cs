@@ -28,7 +28,13 @@ public sealed class PutUpdateWeekUserEntriesEndpoint(
             return;
         }
 
-        var year = Route<int>(paramName: "Year");
+        var routeYearNumber = Route<int>(paramName: "Year");
+        if (!Year.TryFrom(value: routeYearNumber, out var year))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
+
         var routeWeekNumber = Route<int>(paramName: "WeekNumber");
         if (!WeekNumber.TryFrom(value: routeWeekNumber, out var weekNumber))
         {

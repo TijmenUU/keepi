@@ -47,7 +47,7 @@ public class GetUserEntriesForWeekUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 cancellationToken: CancellationToken.None
             );
@@ -131,7 +131,7 @@ public class GetUserEntriesForWeekUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 cancellationToken: CancellationToken.None
             );
@@ -164,7 +164,7 @@ public class GetUserEntriesForWeekUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 cancellationToken: CancellationToken.None
             );
@@ -186,7 +186,7 @@ public class GetUserEntriesForWeekUseCaseTests
         var result = await context
             .BuildTarget()
             .Execute(
-                year: 2025,
+                year: Year.From(2025),
                 weekNumber: WeekNumber.From(25),
                 cancellationToken: CancellationToken.None
             );

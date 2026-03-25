@@ -15,6 +15,13 @@ public sealed class GetWeekUserEntriesEndpoint(
 
     public override async Task HandleAsync(CancellationToken cancellationToken)
     {
+        var routeYearNumber = Route<int>(paramName: "Year");
+        if (!Year.TryFrom(value: routeYearNumber, out var year))
+        {
+            await Send.ErrorsAsync(cancellation: cancellationToken);
+            return;
+        }
+
         var routeWeekNumber = Route<int>(paramName: "WeekNumber");
         if (!WeekNumber.TryFrom(value: routeWeekNumber, out var weekNumber))
         {
@@ -23,7 +30,7 @@ public sealed class GetWeekUserEntriesEndpoint(
         }
 
         var result = await getUserEntriesForWeekUseCase.Execute(
-            year: Route<int>(paramName: "Year"),
+            year: year,
             weekNumber: weekNumber,
             cancellationToken: cancellationToken
         );

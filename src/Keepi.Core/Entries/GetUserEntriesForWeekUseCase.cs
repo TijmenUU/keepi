@@ -9,7 +9,7 @@ public interface IGetUserEntriesForWeekUseCase
 {
     Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int year, WeekNumber weekNumber, CancellationToken cancellationToken);
+    > Execute(Year year, WeekNumber weekNumber, CancellationToken cancellationToken);
 }
 
 public enum GetUserEntriesForWeekUseCaseError
@@ -27,7 +27,7 @@ internal sealed class GetUserEntriesForWeekUseCase(
 {
     public async Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(int year, WeekNumber weekNumber, CancellationToken cancellationToken)
+    > Execute(Year year, WeekNumber weekNumber, CancellationToken cancellationToken)
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
         if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
