@@ -24,12 +24,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(2),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),
@@ -46,20 +46,10 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                     && i.InvoiceItems.Length == 2
                     && i.InvoiceItems[0].InvoiceItemId == 1
                     && i.InvoiceItems[0].Ordinal == 100
-                    && i.InvoiceItems[0].Color != null
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                    && i.InvoiceItems[0].Color.Red == 255
-                    && i.InvoiceItems[0].Color.Green == 255
-                    && i.InvoiceItems[0].Color.Blue == 255
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                    && i.InvoiceItems[0].Color == Color.From(0xFFFFFF)
                     && i.InvoiceItems[1].InvoiceItemId == 2
                     && i.InvoiceItems[1].Ordinal == 200
-                    && i.InvoiceItems[1].Color != null
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                    && i.InvoiceItems[1].Color.Red == 0
-                    && i.InvoiceItems[1].Color.Green == 255
-                    && i.InvoiceItems[1].Color.Blue == 0
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
+                    && i.InvoiceItems[1].Color == Color.From(0xFF00)
                 ),
                 It.IsAny<CancellationToken>()
             )
@@ -84,12 +74,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),
@@ -118,12 +108,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(2),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),
@@ -152,12 +142,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(2),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),
@@ -204,12 +194,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(2),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),
@@ -241,12 +231,12 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(1),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(100),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(2),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(200),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 ),

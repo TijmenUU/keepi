@@ -47,12 +47,12 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(20),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )
@@ -192,12 +192,12 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(20),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )
@@ -267,7 +267,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )
@@ -329,7 +329,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )
@@ -428,7 +428,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )
@@ -489,7 +489,7 @@ public class UpdateWeekUserEntriesUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: new(Red: 255, Green: 255, Blue: 255)
+                            Color: Color.From(0xFFFFFF)
                         ),
                     ]
                 )

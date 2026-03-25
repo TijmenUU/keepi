@@ -46,12 +46,12 @@ public class GetUserProjectsUseCaseTests
                         new(
                             InvoiceItemId: InvoiceItemId.From(10),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                            Color: Color.FromUint32(0xFF0000u)
+                            Color: Color.From(0xFF0000u)
                         ),
                         new(
                             InvoiceItemId: InvoiceItemId.From(20),
                             Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
-                            Color: Color.FromUint32(0xFF00u)
+                            Color: Color.From(0xFF00u)
                         ),
                     ]
                 )
@@ -75,7 +75,7 @@ public class GetUserProjectsUseCaseTests
                                 Name: InvoiceItemName.From("Dev"),
                                 Customization: new(
                                     Ordinal: UserInvoiceITemCustomizationOrdinal.From(981),
-                                    Color: Color.FromUint32(0xFF0000u)
+                                    Color: Color.From(0xFF0000u)
                                 )
                             ),
                         ]
@@ -91,7 +91,7 @@ public class GetUserProjectsUseCaseTests
                                 Name: InvoiceItemName.From("Administratie"),
                                 Customization: new(
                                     Ordinal: UserInvoiceITemCustomizationOrdinal.From(982),
-                                    Color: Color.FromUint32(0xFF00u)
+                                    Color: Color.From(0xFF00u)
                                 )
                             ),
                         ]

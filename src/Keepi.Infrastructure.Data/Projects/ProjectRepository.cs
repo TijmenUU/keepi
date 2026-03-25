@@ -304,7 +304,7 @@ internal sealed class ProjectRepository(
                             c => new GetUserProjectResultInvoiceItemCustomization(
                                 InvoiceItemId: InvoiceItemId.From(c.InvoiceItemId),
                                 Ordinal: UserInvoiceITemCustomizationOrdinal.From(c.Ordinal),
-                                Color: c.Color == null ? null : Color.FromUint32(c.Color.Value)
+                                Color: c.Color == null ? null : Color.From(c.Color.Value)
                             )
                         )
                         .ToArray()
@@ -341,7 +341,7 @@ internal sealed class ProjectRepository(
                     InvoiceItemId = i.InvoiceItemId.Value,
                     UserId = input.UserId.Value,
                     Ordinal = i.Ordinal.Value,
-                    Color = i.Color == null ? null : Color.ToUint32(i.Color),
+                    Color = i.Color?.Value,
                 })
             );
             await databaseContext.SaveChangesAsync(cancellationToken: cancellationToken);

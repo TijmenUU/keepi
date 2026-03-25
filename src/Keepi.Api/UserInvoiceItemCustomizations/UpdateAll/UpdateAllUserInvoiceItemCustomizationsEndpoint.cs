@@ -90,7 +90,7 @@ public sealed class UpdateAllUserInvoiceItemCustomizationsEndpoint(
             }
             else
             {
-                if (Core.Color.TryParseHexString(item.Color, out var color))
+                if (Core.Color.TryParseHexColorString(item.Color, out var color))
                 {
                     result.Add(new(InvoiceItemId: invoiceItemId, Ordinal: ordinal, Color: color));
                 }

@@ -1,56 +1,49 @@
 using System.Text.RegularExpressions;
+using Vogen;
 
 namespace Keepi.Core;
 
-public sealed record Color(byte Red, byte Green, byte Blue)
+[ValueObject<uint>]
+public readonly partial struct Color
 {
-    public static Color FromUint32(uint value)
+    [GeneratedRegex("^#[0-9A-Fa-f]{6}$", RegexOptions.IgnoreCase)]
+    private static partial Regex HexColorStringRegex();
+
+    public static Validation Validate(uint value)
     {
         if (value > 0xFFFFFF)
         {
-            throw new Exception(
+            return Validation.Invalid(
                 "The unsigned integer color value contains unexpected data in the 32-24 bit range"
             );
         }
 
-        return new Color(
-            Red: (byte)((value >> 16) & 0xFF),
-            Green: (byte)((value >> 8) & 0xFF),
-            Blue: (byte)(value & 0xFF)
-        );
+        return Validation.Ok;
     }
 
-    public static uint ToUint32(Color value)
+    public static Color FromBytes(byte red, byte green, byte blue)
     {
-        return ((uint)value.Red << 16) | ((uint)value.Green << 8) | value.Blue;
+        return From(value: ((uint)red << 16) + ((uint)green << 8) + (uint)blue);
     }
 
-    // The SYSLIB1045 solution requires the class to be declared as partial in
-    // order to generate the source for it. Seems overkill for a few nanoseconds
-    // of performance gains to trade readability for that.
-    private static readonly Regex HexColorStringRegex = new(
-        pattern: "^#[0-9A-Fa-f]{6}$",
-        options: RegexOptions.Compiled
-    );
-
-    public static bool TryParseHexString(string input, out Color color)
+    public static bool TryParseHexColorString(string input, out Color color)
     {
-        if (!HexColorStringRegex.IsMatch(input: input))
+        if (!HexColorStringRegex().IsMatch(input: input))
         {
-            color = new Color(Red: 0, Blue: 0, Green: 0);
+            color = From(value: 0);
             return false;
         }
 
-        color = new Color(
-            Red: byte.Parse(
+        color = FromBytes(
+            red: byte.Parse(
                 s: input.Substring(1, 2),
                 style: System.Globalization.NumberStyles.HexNumber
             ),
-            Green: byte.Parse(
+            green: byte.Parse(
                 s: input.Substring(3, 2),
                 style: System.Globalization.NumberStyles.HexNumber
             ),
-            Blue: byte.Parse(
+            blue: byte.Parse(
                 s: input.Substring(5, 2),
                 style: System.Globalization.NumberStyles.HexNumber
             )
@@ -58,5 +51,5 @@ public sealed record Color(byte Red, byte Green, byte Blue)
         return true;
     }
 
-    public string ToHexColorString() => $"#{ToUint32(this):x6}";
+    public string ToHexColorString() => $"#{Value:x6}";
 }
