@@ -183,9 +183,21 @@ namespace Keepi.Generators
             GenerateTestContextAttributeData attributeData
         )
         {
+            var diagnosticFeedbackProvider = new DiagnosticFeedbackProvider(
+                sourceProductionContext: context,
+                targetTypeName: attributeData.Target.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        genericsOptions: SymbolDisplayGenericsOptions.None,
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
+                    )
+                ),
+                testContextClassLocation: testContextClassSymbol.Locations.First()
+            );
+
             var sourceFile = GenerateSourceFile(
                 testContextClassSymbol: testContextClassSymbol,
-                attributeData: attributeData
+                attributeData: attributeData,
+                diagnosticFeedbackProvider: diagnosticFeedbackProvider
             );
 
             context.AddSource(hintName: sourceFile.Name, source: sourceFile.Content);
@@ -193,7 +205,8 @@ namespace Keepi.Generators
 
         private static TestContextClassSource GenerateSourceFile(
             ISymbol testContextClassSymbol,
-            GenerateTestContextAttributeData attributeData
+            GenerateTestContextAttributeData attributeData,
+            IDiagnosticFeedbackProvider diagnosticFeedbackProvider
         )
         {
             var testContextClassNamespace =
@@ -214,7 +227,8 @@ namespace Keepi.Generators
             var mocks = GetTestContextTargetDependencies(
                 target: attributeData.Target,
                 gatherMethods: attributeData.GenerateWithMethods,
-                verifyLogging: attributeData.VerifyLogging
+                verifyLogging: attributeData.VerifyLogging,
+                diagnosticFeedbackProvider: diagnosticFeedbackProvider
             );
 
             return TestContextClassSource.Create(
@@ -236,12 +250,13 @@ namespace Keepi.Generators
         private static TestContextTargetDependency[] GetTestContextTargetDependencies(
             INamedTypeSymbol target,
             bool gatherMethods,
-            bool verifyLogging
+            bool verifyLogging,
+            IDiagnosticFeedbackProvider diagnosticFeedbackProvider
         )
         {
             if (target.Constructors.Length != 1)
             {
-                // Unsupported
+                diagnosticFeedbackProvider.ReportMultipleConstructorsNotSupportedForTargetDiagnostic();
                 return [];
             }
 
