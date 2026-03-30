@@ -248,7 +248,7 @@ public class UpdateUserInvoiceCustomizationsUseCaseTests
 }
 
 [GenerateTestContext(
-    targetType: typeof(UpdateUserInvoiceCustomizationsUseCase),
+    target: typeof(UpdateUserInvoiceCustomizationsUseCase),
     GenerateWithMethods = true
 )]
 internal partial class UpdateUserInvoiceCustomizationsUseCaseTestContext { }

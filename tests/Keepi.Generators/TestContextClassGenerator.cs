@@ -144,9 +144,8 @@ namespace Keepi.Generators
                 return null;
             }
 
-            INamedTypeSymbol targetType =
-                attribute.ConstructorArguments[0].Value as INamedTypeSymbol;
-            if (targetType == null)
+            INamedTypeSymbol target = attribute.ConstructorArguments[0].Value as INamedTypeSymbol;
+            if (target == null)
             {
                 // Malformed constructor argument, should be reported by the C# compiler
                 return null;
@@ -169,7 +168,7 @@ namespace Keepi.Generators
             }
 
             return new GenerateTestContextAttributeData(
-                targetType: targetType,
+                target: target,
                 generateWithMethods: generateWithMethods,
                 verifyLogging: verifyLogging
             );
@@ -205,7 +204,7 @@ namespace Keepi.Generators
                     typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
                 )
             );
-            var targetClassFullName = attributeData.TargetType.ToDisplayString(
+            var targetClassFullName = attributeData.Target.ToDisplayString(
                 new SymbolDisplayFormat(
                     genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
                     typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces
@@ -213,7 +212,7 @@ namespace Keepi.Generators
             );
 
             var mocks = GetTestContextTargetDependencies(
-                targetType: attributeData.TargetType,
+                target: attributeData.Target,
                 gatherMethods: attributeData.GenerateWithMethods,
                 verifyLogging: attributeData.VerifyLogging
             );
@@ -223,31 +222,31 @@ namespace Keepi.Generators
                 className: testContextClassShortName,
                 targetFullName: targetClassFullName,
                 targetDependencies: mocks,
-                targetIsFastEndpoint: IsFastEndpoint(targetType: attributeData.TargetType)
+                targetIsFastEndpoint: IsFastEndpoint(target: attributeData.Target)
             );
         }
 
-        private static bool IsFastEndpoint(INamedTypeSymbol targetType)
+        private static bool IsFastEndpoint(INamedTypeSymbol target)
         {
-            return targetType.AllInterfaces.Any(i =>
+            return target.AllInterfaces.Any(i =>
                 i.ContainingNamespace.ToDisplayString() == "FastEndpoints" && i.Name == "IEndpoint"
             );
         }
 
         private static TestContextTargetDependency[] GetTestContextTargetDependencies(
-            INamedTypeSymbol targetType,
+            INamedTypeSymbol target,
             bool gatherMethods,
             bool verifyLogging
         )
         {
-            if (targetType.Constructors.Length != 1)
+            if (target.Constructors.Length != 1)
             {
                 // Unsupported
                 return [];
             }
 
             var results = new List<TestContextTargetDependency>();
-            foreach (var parameter in targetType.Constructors[0].Parameters)
+            foreach (var parameter in target.Constructors[0].Parameters)
             {
                 var shortName = parameter.Type.ToDisplayString(
                     new SymbolDisplayFormat(

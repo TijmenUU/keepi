@@ -602,5 +602,5 @@ public class UpdateWeekUserEntriesUseCaseTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(UpdateWeekUserEntriesUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(UpdateWeekUserEntriesUseCase), GenerateWithMethods = true)]
 internal partial class UpdateWeekUserEntriesUseCaseTestContext { }

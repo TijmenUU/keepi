@@ -739,7 +739,7 @@ public class GetOrRegisterNewUserUseCaseTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(GetOrRegisterNewUserUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(GetOrRegisterNewUserUseCase), GenerateWithMethods = true)]
 internal partial class GetOrRegisterNewUserUseCaseTestContext
 {
     public GetOrRegisterNewUserUseCaseTestContext WithFirstGetUserErrorAndSecondWithResult(

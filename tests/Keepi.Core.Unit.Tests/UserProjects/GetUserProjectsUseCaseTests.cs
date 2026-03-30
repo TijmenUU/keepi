@@ -211,5 +211,5 @@ public class GetUserProjectsUseCaseTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(GetUserProjectsUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(GetUserProjectsUseCase), GenerateWithMethods = true)]
 internal partial class GetUserProjectsUseCaseTestContext { }

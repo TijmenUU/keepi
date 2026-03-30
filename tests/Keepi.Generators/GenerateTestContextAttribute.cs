@@ -8,15 +8,15 @@ public sealed class GenerateTestContextAttribute : Attribute
 {
     public const string FullName = "Keepi.Generators.GenerateTestContextAttribute";
 
-    public GenerateTestContextAttribute(Type targetType)
+    public GenerateTestContextAttribute(Type target)
     {
-        TargetType = targetType;
+        Target = target;
     }
 
     /// <summary>
     /// The type the test context is generated for.
     /// </summary>
-    public Type TargetType { get; }
+    public Type Target { get; }
 
     /// <summary>
     /// Whether the WithX methods should be generated automatically. It will
@@ -43,17 +43,17 @@ public sealed class GenerateTestContextAttribute : Attribute
 internal sealed class GenerateTestContextAttributeData
 {
     public GenerateTestContextAttributeData(
-        INamedTypeSymbol targetType,
+        INamedTypeSymbol target,
         bool generateWithMethods,
         bool verifyLogging
     )
     {
-        TargetType = targetType ?? throw new ArgumentNullException(paramName: nameof(targetType));
+        Target = target ?? throw new ArgumentNullException(paramName: nameof(target));
         GenerateWithMethods = generateWithMethods;
         VerifyLogging = verifyLogging;
     }
 
-    public INamedTypeSymbol TargetType { get; }
+    public INamedTypeSymbol Target { get; }
     public bool GenerateWithMethods { get; }
     public bool VerifyLogging { get; }
 }

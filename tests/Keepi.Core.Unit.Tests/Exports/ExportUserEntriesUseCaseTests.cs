@@ -256,7 +256,7 @@ public class ExportUserEntriesUseCaseTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(ExportUserEntriesUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(ExportUserEntriesUseCase), GenerateWithMethods = true)]
 internal partial class ExportUserEntriesUseCaseTestContext
 {
     public ExportUserEntriesUseCaseTestContext WithExportEntries(

@@ -178,5 +178,5 @@ public class GetUserEndpointTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(GetUserEndpoint), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(GetUserEndpoint), GenerateWithMethods = true)]
 internal partial class GetUserEndpointTestContext { }

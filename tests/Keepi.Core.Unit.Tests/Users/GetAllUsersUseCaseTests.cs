@@ -209,7 +209,7 @@ public class GetAllUsersUseCaseTests
     }
 }
 
-[GenerateTestContext(targetType: typeof(GetAllUsersUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(target: typeof(GetAllUsersUseCase), GenerateWithMethods = true)]
 internal partial class GetAllUsersUseCaseTestContext
 {
     public GetAllUsersUseCaseTestContext WithGetUsersSuccess(params GetUsersResultUser[] users) =>
