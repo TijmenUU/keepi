@@ -138,17 +138,26 @@ namespace Keepi.Generators
             AttributeData attribute
         )
         {
-            INamedTypeSymbol targetType = null;
+            if (attribute.ConstructorArguments.Length != 1)
+            {
+                // Malformed constructor, should be reported by the C# compiler
+                return null;
+            }
+
+            INamedTypeSymbol targetType =
+                attribute.ConstructorArguments[0].Value as INamedTypeSymbol;
+            if (targetType == null)
+            {
+                // Malformed constructor argument, should be reported by the C# compiler
+                return null;
+            }
+
             bool generateWithMethods = false;
             bool verifyLogging = false;
             foreach (var argument in attribute.NamedArguments)
             {
                 switch (argument.Key)
                 {
-                    case nameof(GenerateTestContextAttribute.TargetType):
-                        targetType = argument.Value.Value as INamedTypeSymbol;
-                        break;
-
                     case nameof(GenerateTestContextAttribute.GenerateWithMethods):
                         generateWithMethods = ParseBool(argument.Value.Value);
                         break;
@@ -157,10 +166,6 @@ namespace Keepi.Generators
                         verifyLogging = ParseBool(argument.Value.Value);
                         break;
                 }
-            }
-            if (targetType == null)
-            {
-                return null;
             }
 
             return new GenerateTestContextAttributeData(

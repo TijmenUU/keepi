@@ -211,5 +211,5 @@ public class UpdateUserPermissionsUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(UpdateUserPermissionsUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(targetType: typeof(UpdateUserPermissionsUseCase), GenerateWithMethods = true)]
 internal partial class UpdateUserPermissionsUseCaseTestContext { }

@@ -196,7 +196,7 @@ public class GetUserEntriesForWeekUseCaseTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(GetUserEntriesForWeekUseCase), GenerateWithMethods = true)]
+[GenerateTestContext(targetType: typeof(GetUserEntriesForWeekUseCase), GenerateWithMethods = true)]
 internal partial class GetUserEntriesForWeekUseCaseTestContext
 {
     public GetUserEntriesForWeekUseCaseTestContext WithGetUserEntriesForDatesSuccess(

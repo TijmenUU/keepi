@@ -338,7 +338,7 @@ public class ResolveUserTests
     }
 }
 
-[GenerateTestContext(TargetType = typeof(ResolveUser), GenerateWithMethods = true)]
+[GenerateTestContext(targetType: typeof(ResolveUser), GenerateWithMethods = true)]
 internal partial class ResolveUserTestContext
 {
     public ResolveUserTestContext WithHttpContextIdentity(ClaimsIdentity identity) =>
