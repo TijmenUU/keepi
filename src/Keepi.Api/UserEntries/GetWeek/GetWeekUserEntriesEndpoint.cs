@@ -30,8 +30,7 @@ public sealed class GetWeekUserEntriesEndpoint(
         }
 
         var result = await getUserEntriesForWeekUseCase.Execute(
-            year: year,
-            weekNumber: weekNumber,
+            week: new(Year: year, Number: weekNumber),
             cancellationToken: cancellationToken
         );
         if (result.TrySuccess(out var successResult, out var errorResult))

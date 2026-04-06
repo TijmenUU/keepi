@@ -81,7 +81,7 @@ internal sealed class UpdateWeekUserEntriesUseCase(
         }
 
         List<SaveUserEntriesInputEntry> entries = [];
-        var dayDates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
+        var dayDates = new Week(Year: year, Number: weekNumber).ToDates();
 
         Debug.Assert(dayDates.Length == days.Length);
 
