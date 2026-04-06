@@ -4,6 +4,7 @@ using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Keepi.Infrastructure.OpenTelemetry;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.FluentUI.AspNetCore.Components;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
@@ -20,6 +21,11 @@ public partial class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+
+        builder
+            .Services.AddFluentUIComponents()
+            // Required by FluentUI according to https://www.fluentui-blazor.net/CodeSetup
+            .AddHttpClient();
 
         builder.Services.AddHttpContextAccessor();
 

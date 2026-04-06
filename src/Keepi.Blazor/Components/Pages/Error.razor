@@ -7,8 +7,11 @@
 
 <PageTitle>Error</PageTitle>
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<h1>
+    <FluentIcon Value="@(new Microsoft.FluentUI.AspNetCore.Components.Icons.Filled.Size20.ErrorCircle())" Color="@Color.Warning" />
+    Error
+</h1>
+<h2>An error occurred while processing your request.</h2>
 
 @if (ShowRequestId)
 {
