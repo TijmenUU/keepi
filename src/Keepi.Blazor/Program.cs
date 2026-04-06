@@ -1,5 +1,4 @@
 using AspNet.Security.OAuth.GitHub;
-using Keepi.Blazor.Components;
 using Keepi.Blazor.DependencyInjection;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
@@ -9,6 +8,8 @@ using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+
+namespace Keepi.Blazor;
 
 public partial class Program
 {
@@ -41,6 +42,7 @@ public partial class Program
                     .RequireAuthenticatedUser()
                     .Build();
         });
+        builder.Services.AddCascadingAuthenticationState();
         builder
             .Services.AddAuthentication(options =>
             {
@@ -50,32 +52,6 @@ public partial class Program
             {
                 options.LoginPath = "/signin";
                 options.LogoutPath = "/signout";
-
-                options.Events = new CookieAuthenticationEvents()
-                {
-                    OnRedirectToLogin = (ctx) =>
-                    {
-                        if (
-                            ctx.Request.Path.StartsWithSegments("/api")
-                            && ctx.Response.StatusCode == 200
-                        )
-                        {
-                            ctx.Response.StatusCode = 401;
-                        }
-                        return Task.CompletedTask;
-                    },
-                    OnRedirectToAccessDenied = (ctx) =>
-                    {
-                        if (
-                            ctx.Request.Path.StartsWithSegments("/api")
-                            && ctx.Response.StatusCode == 200
-                        )
-                        {
-                            ctx.Response.StatusCode = 403;
-                        }
-                        return Task.CompletedTask;
-                    },
-                };
             })
             // https://github.com/aspnet-contrib/AspNet.Security.OAuth.Providers
             .AddGitHub(options =>
@@ -93,6 +69,10 @@ public partial class Program
                 options.CallbackPath = "/signin-oidc-github";
                 options.Scope.Add("user:email");
             });
+        builder.Services.ConfigureApplicationCookie(options =>
+        {
+            options.EventsType = typeof(CookieAuthenticationEvents);
+        });
 
         builder.Services.Configure<OtlpExporterOptions>(
             builder.Configuration.GetSection("OpenTelemetry:Otlp")
@@ -165,7 +145,7 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+        app.MapRazorComponents<Components.App>().AddInteractiveServerRenderMode();
 
         app.Run();
     }
