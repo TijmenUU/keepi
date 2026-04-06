@@ -9,7 +9,7 @@ public interface IGetUserEntriesForWeekUseCase
 {
     Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(Year year, WeekNumber weekNumber, CancellationToken cancellationToken);
+    > Execute(Week week, CancellationToken cancellationToken);
 }
 
 public enum GetUserEntriesForWeekUseCaseError
@@ -27,7 +27,7 @@ internal sealed class GetUserEntriesForWeekUseCase(
 {
     public async Task<
         IValueOrErrorResult<GetUserEntriesForWeekUseCaseOutput, GetUserEntriesForWeekUseCaseError>
-    > Execute(Year year, WeekNumber weekNumber, CancellationToken cancellationToken)
+    > Execute(Week week, CancellationToken cancellationToken)
     {
         var userResult = await resolveUser.Execute(cancellationToken: cancellationToken);
         if (!userResult.TrySuccess(out var userSuccessResult, out var userErrorResult))
@@ -52,7 +52,7 @@ internal sealed class GetUserEntriesForWeekUseCase(
             >(GetUserEntriesForWeekUseCaseError.UnauthorizedUser);
         }
 
-        var dates = WeekNumberHelper.WeekNumberToDates(year: year, number: weekNumber);
+        var dates = week.ToDates();
         var getUserEntriesForDatesResult = await getUserEntriesForDates.Execute(
             userId: userSuccessResult.Id,
             dates: dates,
@@ -63,8 +63,8 @@ internal sealed class GetUserEntriesForWeekUseCase(
             logger.LogError(
                 "Unexpected error {Error} whilst trying to fetch user entries for week {WeekNumber} {Year} for user {UserId}",
                 errorResult,
-                weekNumber,
-                year,
+                week.Number.Value,
+                week.Year.Value,
                 userSuccessResult.Id
             );
             return Result.Failure<

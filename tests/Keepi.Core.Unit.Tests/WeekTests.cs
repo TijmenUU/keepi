@@ -1,16 +1,19 @@
-using Keepi.Core.Entries;
+namespace Keepi.Core.Unit.Tests;
 
-namespace Keepi.Core.Unit.Tests.Entries;
-
-public class WeekNumberHelperTests
+public class WeekTests
 {
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_normal_week()
+    public void Today_should_return_value()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(
-            year: Year.From(2025),
-            number: WeekNumber.From(13)
-        );
+        var today = Week.Today;
+        today.Number.Value.ShouldBeInRange(from: 1, to: 53);
+        today.Year.Value.ShouldBe(DateTime.Today.Year);
+    }
+
+    [Fact]
+    public void ToDates_returns_expected_result_for_normal_week()
+    {
+        var dates = new Week(Year: Year.From(2025), Number: WeekNumber.From(13)).ToDates();
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -26,12 +29,9 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_first_week_of_year()
+    public void ToDates_returns_expected_result_for_first_week_of_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(
-            year: Year.From(2025),
-            number: WeekNumber.From(1)
-        );
+        var dates = new Week(Year: Year.From(2025), Number: WeekNumber.From(1)).ToDates();
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -47,12 +47,9 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_last_week_of_52_week_long_year()
+    public void ToDates_returns_expected_result_for_last_week_of_52_week_long_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(
-            year: Year.From(2025),
-            number: WeekNumber.From(52)
-        );
+        var dates = new Week(Year: Year.From(2025), Number: WeekNumber.From(52)).ToDates();
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -68,12 +65,9 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_last_week_of_53_week_long_year()
+    public void ToDates_returns_expected_result_for_last_week_of_53_week_long_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(
-            year: Year.From(2009),
-            number: WeekNumber.From(53)
-        );
+        var dates = new Week(Year: Year.From(2009), Number: WeekNumber.From(53)).ToDates();
         dates.ShouldBeEquivalentTo(
             new[]
             {
@@ -89,12 +83,9 @@ public class WeekNumberHelperTests
     }
 
     [Fact]
-    public void WeekNumberToDates_returns_expected_result_for_week_of_leap_year()
+    public void ToDates_returns_expected_result_for_week_of_leap_year()
     {
-        var dates = WeekNumberHelper.WeekNumberToDates(
-            year: Year.From(2024),
-            number: WeekNumber.From(9)
-        );
+        var dates = new Week(Year: Year.From(2024), Number: WeekNumber.From(9)).ToDates();
         dates.ShouldBeEquivalentTo(
             new[]
             {
