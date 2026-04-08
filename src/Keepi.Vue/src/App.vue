@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import 'vue-sonner/style.css'
 import { onMounted, ref } from 'vue'
-import ApiClient from '@/api-client'
+import { useApiClient } from '@/api-client'
 import { router } from '@/router'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { clearUserContext, setUserContext } from '@/user-context'
@@ -31,7 +31,7 @@ const hasLoaded = ref(false)
 const showSideBar = ref(false)
 
 onMounted(async () => {
-  const apiClient = new ApiClient()
+  const apiClient = useApiClient()
   try {
     await apiClient.getUser().match(
       async (user) => {

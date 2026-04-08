@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient from '@/api-client'
+import { useApiClient, type IApiClient } from '@/api-client'
 import { handleApiError } from '@/error'
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { getUserContext } from '@/user-context'
 import KeepiEditUserDialog from '@/components/KeepiEditUserDialog.vue'
 import type { KeepiUser } from '@/types'
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const userContext = getUserContext()
 
 const users = ref<KeepiUser[]>(await getAllUsers(apiClient))
@@ -25,7 +25,7 @@ const reloadUsers = async () => {
   users.value = await getAllUsers(apiClient)
 }
 
-async function getAllUsers(apiClient: ApiClient): Promise<KeepiUser[]> {
+async function getAllUsers(apiClient: IApiClient): Promise<KeepiUser[]> {
   return await apiClient.getAllUsers().match(
     (result) => {
       return result.users.map((u) => ({

@@ -7,6 +7,7 @@ using Keepi.Api.Users.Get;
 using Keepi.Core.DependencyInjection;
 using Keepi.Infrastructure.Data.DependencyInjection;
 using Keepi.Infrastructure.OpenTelemetry;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
@@ -18,6 +19,8 @@ namespace Keepi.Web;
 public partial class Program
 {
     const string serviceName = "keepi.web";
+    const string apiRoutePrefix = "/api";
+    const string antiForgeryHeaderName = "X-CSRF-TOKEN";
 
     private static void Main(string[] args)
     {
@@ -36,6 +39,14 @@ public partial class Program
         }
 
         builder.Services.AddApiHelpers();
+
+        builder
+            .Services.AddAntiforgery(options =>
+            {
+                options.HeaderName = antiForgeryHeaderName;
+                options.SuppressReadingTokenFromFormBody = true;
+            })
+            .AddScoped<IAntiforgeryHelper, AntiForgeryHelper>();
 
         const string connectionStringName = "Keepi";
         builder.Services.AddRepositories(
@@ -69,7 +80,7 @@ public partial class Program
                     OnRedirectToLogin = (ctx) =>
                     {
                         if (
-                            ctx.Request.Path.StartsWithSegments("/api")
+                            ctx.Request.Path.StartsWithSegments(apiRoutePrefix)
                             && ctx.Response.StatusCode == 200
                         )
                         {
@@ -80,7 +91,7 @@ public partial class Program
                     OnRedirectToAccessDenied = (ctx) =>
                     {
                         if (
-                            ctx.Request.Path.StartsWithSegments("/api")
+                            ctx.Request.Path.StartsWithSegments(apiRoutePrefix)
                             && ctx.Response.StatusCode == 200
                         )
                         {
@@ -126,6 +137,22 @@ public partial class Program
         app.UseHttpsRedirection();
 
         app.MapGet(
+            "/antiforgerytoken",
+            (HttpContext context, IAntiforgery antiforgery) =>
+            {
+                var tokenSet = antiforgery.GetAndStoreTokens(httpContext: context);
+
+                return Results.Json(
+                    data: new
+                    {
+                        headerFieldName = tokenSet.HeaderName,
+                        token = tokenSet.RequestToken,
+                    }
+                );
+            }
+        );
+
+        app.MapGet(
             "/signin",
             (HttpRequest request) =>
             {
@@ -166,9 +193,36 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // A custom anti forgery solution is used to cover all API endpoints by
+        // default. The Fast-Endpoints global configurator for anti forgery does
+        // not seem to work properly (e.g. .UseAntiForgeryFe() and
+        // config.Endpoints.Configurator(ep => ...))
+        app.Use(
+            async (context, next) =>
+            {
+                var antiForgeryHelper =
+                    context.RequestServices.GetRequiredService<IAntiforgeryHelper>();
+                if (
+                    await antiForgeryHelper.IsValidRequest(
+                        context: context,
+                        apiBasePath: apiRoutePrefix
+                    )
+                )
+                {
+                    await next(context);
+                    return;
+                }
+
+                context.Response.Clear();
+                context.Response.StatusCode = 400;
+
+                return;
+            }
+        );
+
         app.UseFastEndpoints(config =>
         {
-            config.Endpoints.RoutePrefix = "api";
+            config.Endpoints.RoutePrefix = apiRoutePrefix.TrimStart('/');
             config.Serializer.Options.Converters.Add(
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
             );

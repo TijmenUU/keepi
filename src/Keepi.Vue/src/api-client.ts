@@ -1,8 +1,42 @@
 import { toShortIsoDate } from '@/date'
 import { ApiError } from '@/types'
-import { fromPromise, err, ok, ResultAsync } from 'neverthrow'
+import { fromPromise, err, ok, ResultAsync, okAsync } from 'neverthrow'
 
-export default class ApiClient {
+export interface IApiClient {
+  getUser(): ResultAsync<IGetUserResponse, ApiError>
+  updateAntiForgeryToken(): ResultAsync<void, ApiError>
+  getAllUsers(): ResultAsync<IGetAllUsersResponse, ApiError>
+  updateUserPermissions(
+    id: number,
+    value: IUpdateUserPermissionsRequest,
+  ): ResultAsync<void, ApiError>
+  createProject(value: ICreateProjectRequest): ResultAsync<ICreateProjectResponse, ApiError>
+  deleteProject(id: number): ResultAsync<void, ApiError>
+  getAllProjects(): ResultAsync<IGetAllProjectsResponse, ApiError>
+  updateProject(id: number, value: IUpdateProjectRequest): ResultAsync<void, ApiError>
+  getUserProjects(): ResultAsync<IGetUserProjectsResponse, ApiError>
+  getWeekUserEntries(
+    year: number,
+    weekNumber: number,
+  ): ResultAsync<IGetWeekUserEntriesResponse, ApiError>
+  updateWeekUserEntries(
+    year: number,
+    weekNumber: number,
+    value: IPutUpdateWeekUserEntriesRequest,
+  ): ResultAsync<void, ApiError>
+  getUserEntriesExport(
+    from: Date,
+    to: Date,
+  ): ResultAsync<{ blob: Blob; fileName: string }, ApiError>
+  updateAllUserInvoiceItemCustomizations(
+    value: IUpdateAllUserInvoiceItemCustomizationsRequest,
+  ): ResultAsync<void, ApiError>
+}
+
+class ApiClient implements IApiClient {
+  private antiForgeryHeaderName: string = ''
+  private antiForgeryToken: string = ''
+
   public getUser() {
     const options = this.getBaseRequestOptions({
       method: 'GET',
@@ -11,6 +45,41 @@ export default class ApiClient {
     return this.makeRequest('/user', options).andThen((result) => {
       return ApiClient.deserializeJson<IGetUserResponse>(result)
     })
+  }
+
+  public updateAntiForgeryToken(): ResultAsync<void, ApiError> {
+    if (this.antiForgeryToken === '' || this.antiForgeryHeaderName === '') {
+      return fromPromise(fetch('/antiforgerytoken'), (error) => {
+        console.error('Failed to retrieve anti forgery token', error)
+        return new ApiError('unknown')
+      }).andThen((response) => {
+        if (response.status === 200) {
+          return fromPromise(response.json(), (error) => {
+            console.error('Received malformed anti forgery response body', error)
+            return new ApiError('unknown')
+          }).andThen((model) => {
+            if (
+              model.headerFieldName != null &&
+              model.token != null &&
+              typeof model.headerFieldName === 'string' &&
+              typeof model.token === 'string'
+            ) {
+              this.antiForgeryHeaderName = model.headerFieldName
+              this.antiForgeryToken = model.token
+              return ok()
+            }
+
+            console.error('Received malformed anti forgery response model', model)
+            return err(new ApiError('unknown'))
+          })
+        }
+
+        console.error('Failed to retrieve anti forgery token', response.status)
+        return err(new ApiError('unknown'))
+      })
+    } else {
+      return okAsync()
+    }
   }
 
   public getAllUsers() {
@@ -91,9 +160,11 @@ export default class ApiClient {
       method: 'GET',
     })
 
-    return this.makeRequest(`/user/entries/year/${year}/week/${weekNumber}`, options, [
-      200,
-    ]).andThen((result) => {
+    return this.makeRequest(
+      `/user/entries/year/${year}/week/${weekNumber}`,
+      options,
+      [200],
+    ).andThen((result) => {
       return ApiClient.deserializeJson<IGetWeekUserEntriesResponse>(result)
     })
   }
@@ -108,9 +179,11 @@ export default class ApiClient {
       json: JSON.stringify(value),
     })
 
-    return this.makeRequest(`/user/entries/year/${year}/week/${weekNumber}`, options, [
-      201,
-    ]).andThen(() => {
+    return this.makeRequest(
+      `/user/entries/year/${year}/week/${weekNumber}`,
+      options,
+      [201],
+    ).andThen(() => {
       return ok()
     })
   }
@@ -178,26 +251,40 @@ export default class ApiClient {
   ): ResultAsync<Response, ApiError> {
     const path = subpath.startsWith('/') ? `/api${subpath}` : `/api/${subpath}`
 
-    return fromPromise(fetch(path, options), (error) => {
-      console.error(`Unexpected error whilst making fetch request to ${path}`, error)
-      return new ApiError('unknown')
-    }).andThen((result) => {
-      if (supportedResponseCodes != null && supportedResponseCodes.includes(result.status)) {
-        return ok(result)
-      } else if (result.status === 200) {
-        return ok(result)
+    let antiForgeryTokenPromise: ResultAsync<void, ApiError> = okAsync()
+    if (options?.method == null || options.method !== 'GET') {
+      antiForgeryTokenPromise = this.updateAntiForgeryToken()
+    }
+
+    return antiForgeryTokenPromise.andThen(() => {
+      if (this.antiForgeryToken != '') {
+        options ??= {}
+        const headers = new Headers(options.headers)
+        headers.set(this.antiForgeryHeaderName, this.antiForgeryToken)
+        options.headers = headers
       }
 
-      console.error(`Unexpected response status code ${result.status} for path ${path}`)
-      if (result.status === 400) {
-        return err(new ApiError('badrequest'))
-      } else if (result.status === 401) {
-        return err(new ApiError('unauthorized'))
-      } else if (result.status === 403) {
-        return err(new ApiError('forbidden'))
-      }
+      return fromPromise(fetch(path, options), (error) => {
+        console.error(`Unexpected error whilst making fetch request to ${path}`, error)
+        return new ApiError('unknown')
+      }).andThen((result) => {
+        if (supportedResponseCodes != null && supportedResponseCodes.includes(result.status)) {
+          return ok(result)
+        } else if (result.status === 200) {
+          return ok(result)
+        }
 
-      return err(new ApiError('unknown'))
+        console.error(`Unexpected response status code ${result.status} for path ${path}`)
+        if (result.status === 400) {
+          return err(new ApiError('badrequest'))
+        } else if (result.status === 401) {
+          return err(new ApiError('unauthorized'))
+        } else if (result.status === 403) {
+          return err(new ApiError('forbidden'))
+        }
+
+        return err(new ApiError('unknown'))
+      })
     })
   }
 
@@ -342,4 +429,10 @@ export interface IGetUserProjectsResponse {
       color: string | null
     }[]
   }[]
+}
+
+// Used as a singleton in order to use the anti forgery token properly
+const apiClient = new ApiClient()
+export function useApiClient(): IApiClient {
+  return apiClient
 }

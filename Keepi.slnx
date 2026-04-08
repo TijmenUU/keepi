@@ -12,5 +12,6 @@
     <Project Path="tests/Keepi.Generators.Unit.Tests/Keepi.Generators.Unit.Tests.csproj" />
     <Project Path="tests/Keepi.Generators/Keepi.Generators.csproj" />
     <Project Path="tests/Keepi.Web.Integration.Tests/Keepi.Web.Integration.Tests.csproj" />
+    <Project Path="tests/Keepi.Web.Unit.Tests/Keepi.Web.Unit.Tests.csproj" />
   </Folder>
 </Solution>

@@ -53,9 +53,11 @@ public class KeepiWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureTestServices(services =>
         {
-            services.AddSingleton<Core.Users.IGetFirstAdminUserEmailAddress>(
+            services.AddSingleton<IGetFirstAdminUserEmailAddress>(
                 new IntegrationTestGetFirstAdminUserEmailAddress(emailAddress: "admin@example.com")
             );
+
+            services.AddScoped<IAntiforgeryHelper, IntegrationTestAntiForgeryHelper>();
 
             services.AddHostedService<InitializeDatabaseHostedService>();
             services.AddHostedService<SetupInitialAdminUserHostedService>();
@@ -243,4 +245,10 @@ internal sealed class SetupInitialAdminUserHostedService(IServiceProvider servic
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+internal sealed class IntegrationTestAntiForgeryHelper : IAntiforgeryHelper
+{
+    public Task<bool> IsValidRequest(HttpContext context, string apiBasePath) =>
+        Task.FromResult(true);
 }

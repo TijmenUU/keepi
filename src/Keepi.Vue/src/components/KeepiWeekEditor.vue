@@ -16,7 +16,7 @@ import { getSortedInvoiceItems } from '@/invoice-items'
 import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'
 import { useNavigationChangeDialogConfirmation } from '@/dialog'
 import { StepForward, StepBack } from '@lucide/vue'
-import ApiClient from '@/api-client'
+import { useApiClient } from '@/api-client'
 import { handleApiError } from '@/error'
 import { useKeepiRegle } from '@/regle'
 import { withMessage } from '@regle/rules'
@@ -42,7 +42,7 @@ onMounted(() => {
   }
 })
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const currentWeek = getWeekNumber(new Date())
 const activeInvoiceItems = getSortedInvoiceItems(props.projects.filter((p) => p.enabled)).map(
   (i) => {

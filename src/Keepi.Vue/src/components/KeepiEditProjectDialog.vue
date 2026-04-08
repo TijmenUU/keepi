@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IGetAllProjectsResponse, IGetAllUsersResponse } from '@/api-client'
-import ApiClient from '@/api-client'
+import { useApiClient } from '@/api-client'
 import KeepiValidatedInput from '@/components/KeepiValidatedInput.vue'
 import { Button } from '@/components/ui/button'
 import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
@@ -40,7 +40,7 @@ const emits = defineEmits<{
   (e: 'project-updated'): void
 }>()
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 
 const users = await apiClient.getAllUsers().match(
   (response) => response.users,

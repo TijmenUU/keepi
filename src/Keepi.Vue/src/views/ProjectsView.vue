@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient, { type IGetAllProjectsResponse } from '@/api-client'
+import { type IApiClient, useApiClient, type IGetAllProjectsResponse } from '@/api-client'
 import KeepiCreateProjectDialog from '@/components/KeepiCreateProjectDialog.vue'
 import KeepiEditProjectDialog from '@/components/KeepiEditProjectDialog.vue'
 import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'
@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const isApplyingChanges = ref(false)
 const deleteDialogOpen = ref(false)
 const editDialogOpen = ref(false)
@@ -20,7 +20,7 @@ const reloadProjects = async () => {
   projects.value = await getAllProjects(apiClient)
 }
 
-async function getAllProjects(apiClient: ApiClient) {
+async function getAllProjects(apiClient: IApiClient) {
   return await apiClient.getAllProjects().match(
     (result) => {
       return result.projects

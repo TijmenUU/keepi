@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient, { type IGetWeekUserEntriesResponse } from '@/api-client'
+import { useApiClient, type IGetWeekUserEntriesResponse } from '@/api-client'
 import KeepiWeekEditor from '@/components/KeepiWeekEditor.vue'
 import { type DateRange, getDateOfIsoWeek, getWeekDaysForDate, getWeekNumber } from '@/date'
 import { router } from '@/router'
@@ -11,7 +11,7 @@ const props = defineProps<{
   weekNumber: string | null | undefined
 }>()
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const dateRange = computed<DateRange>(() => {
   if (props.year == null || props.weekNumber == null) {
     console.error(`Year weeknumber combination is not valid ${props.weekNumber} ${props.year}`)

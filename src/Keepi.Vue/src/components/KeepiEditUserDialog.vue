@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { IUpdateUserPermissionsRequest } from '@/api-client'
-import ApiClient from '@/api-client'
+import { useApiClient } from '@/api-client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,7 +34,7 @@ const emits = defineEmits<{
   (e: 'user-updated'): void
 }>()
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 
 const disableUserInteraction = ref(false)
 const selectedRole = ref(props.editingUser.role)

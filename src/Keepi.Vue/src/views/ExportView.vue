@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient from '@/api-client'
+import { useApiClient } from '@/api-client'
 import KeepiDatePicker from '@/components/KeepiDatePicker.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Label from '@/components/ui/label/Label.vue'
@@ -10,7 +10,7 @@ import { computed, ref } from 'vue'
 import { parseDate, type DateValue } from '@internationalized/date'
 import { useKeepiRegle } from '@/regle'
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const disableUserInteraction = ref(false)
 
 const currentWeek = getWeekDaysForDate(new Date())

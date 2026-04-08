@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ApiClient, { type IUpdateAllUserInvoiceItemCustomizationsRequest } from '@/api-client'
+import { useApiClient, type IUpdateAllUserInvoiceItemCustomizationsRequest } from '@/api-client'
 import { getSortedInvoiceItems } from '@/invoice-items'
 import { handleApiError } from '@/error'
 import { createSwapy, type Swapy } from 'swapy'
@@ -15,7 +15,7 @@ import { toast } from 'vue-sonner'
 import { useKeepiRegle } from '@/regle'
 import { required } from '@regle/rules'
 
-const apiClient = new ApiClient()
+const apiClient = useApiClient()
 const projects = await apiClient.getUserProjects().match(
   (success) => success.projects,
   (error) => {
