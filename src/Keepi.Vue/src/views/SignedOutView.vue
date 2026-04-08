@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import KeepiFatalError from '@/components/KeepiFatalError.vue'
-import { HatGlasses } from 'lucide-vue-next'
+import { HatGlasses } from '@lucide/vue'
 </script>
 
 <template>

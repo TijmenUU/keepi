@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { useNavigationChangeDialogConfirmation } from '@/dialog'
 import { requiredValidator } from '@/regle'
 import { FieldDescription, FieldGroup, FieldSet } from '@/components/ui/field'
-import { Grip } from 'lucide-vue-next'
+import { Grip } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 
 const apiClient = new ApiClient()

@@ -8,7 +8,7 @@ import {
   type DateValue,
 } from '@internationalized/date'
 
-import { CalendarIcon } from 'lucide-vue-next'
+import { CalendarIcon } from '@lucide/vue'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'

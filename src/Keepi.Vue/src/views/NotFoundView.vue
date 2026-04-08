@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FileQuestionMark } from 'lucide-vue-next'
+import { FileQuestionMark } from '@lucide/vue'
 import KeepiFatalError from '@/components/KeepiFatalError.vue'
 </script>
 

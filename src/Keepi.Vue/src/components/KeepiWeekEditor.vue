@@ -17,7 +17,7 @@ import Button from '@/components/ui/button/Button.vue'
 import { getSortedInvoiceItems } from '@/invoice-items'
 import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'
 import { useNavigationChangeDialogConfirmation } from '@/dialog'
-import { StepForward, StepBack } from 'lucide-vue-next'
+import { StepForward, StepBack } from '@lucide/vue'
 import ApiClient from '@/api-client'
 import { handleApiError } from '@/error'
 

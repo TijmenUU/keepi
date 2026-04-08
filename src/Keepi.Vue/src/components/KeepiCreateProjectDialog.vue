@@ -28,7 +28,7 @@ import { hasMaxLength, requiredValidator } from '@/regle'
 import { handleApiError } from '@/error'
 import { useRegle } from '@regle/core'
 import { withMessage } from '@regle/rules'
-import { Plus, Trash } from 'lucide-vue-next'
+import { Plus, Trash } from '@lucide/vue'
 import { nextTick, ref } from 'vue'
 
 const props = defineProps<{

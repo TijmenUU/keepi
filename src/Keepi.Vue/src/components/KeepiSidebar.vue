@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, Timer, ListChecks, Brush, Users } from 'lucide-vue-next'
+import { Download, Timer, ListChecks, Brush, Users } from '@lucide/vue'
 import {
   Sidebar,
   SidebarContent,

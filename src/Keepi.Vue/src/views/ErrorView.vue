@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import KeepiFatalError from '@/components/KeepiFatalError.vue'
-import { X } from 'lucide-vue-next'
+import { X } from '@lucide/vue'
 </script>
 
 <template>

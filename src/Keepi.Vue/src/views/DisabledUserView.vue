@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import KeepiFatalError from '@/components/KeepiFatalError.vue'
-import { ShieldX } from 'lucide-vue-next'
+import { ShieldX } from '@lucide/vue'
 </script>
 
 <template>
