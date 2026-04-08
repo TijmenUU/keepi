@@ -5,15 +5,15 @@ import { handleApiError } from '@/error'
 import { createSwapy, type Swapy } from 'swapy'
 import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import KeepiAlertDialog from '@/components/KeepiAlertDialog.vue'
-import { useRegle } from '@regle/core'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { useNavigationChangeDialogConfirmation } from '@/dialog'
-import { requiredValidator } from '@/regle'
 import { FieldDescription, FieldGroup, FieldSet } from '@/components/ui/field'
 import { Grip } from '@lucide/vue'
 import { toast } from 'vue-sonner'
+import { useKeepiRegle } from '@/regle'
+import { required } from '@regle/rules'
 
 const apiClient = new ApiClient()
 const projects = await apiClient.getUserProjects().match(
@@ -33,7 +33,7 @@ const colors = [
   '#a855f7', // purple
 ]
 
-const { r$ } = useRegle(
+const { r$ } = useKeepiRegle(
   {
     invoiceItems: getSortedInvoiceItems(projects).map((i) => {
       if (!colors.includes(i.color)) {
@@ -47,10 +47,10 @@ const { r$ } = useRegle(
     invoiceItems: {
       $each: {
         id: {
-          required: requiredValidator,
+          required,
         },
         color: {
-          required: requiredValidator,
+          required,
         },
       },
     },

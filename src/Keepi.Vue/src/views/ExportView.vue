@@ -4,12 +4,11 @@ import KeepiDatePicker from '@/components/KeepiDatePicker.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { getWeekDaysForDate, toShortIsoDate, tryParseIsoDate } from '@/date'
-import { requiredValidator } from '@/regle'
 import { handleApiError } from '@/error'
-import { useRegle } from '@regle/core'
-import { withMessage } from '@regle/rules'
+import { required, withMessage } from '@regle/rules'
 import { computed, ref } from 'vue'
-import { parseDate, type DateValue, } from '@internationalized/date'
+import { parseDate, type DateValue } from '@internationalized/date'
+import { useKeepiRegle } from '@/regle'
 
 const apiClient = new ApiClient()
 const disableUserInteraction = ref(false)
@@ -20,12 +19,12 @@ const formValues = ref({
   to: toShortIsoDate(currentWeek.dates[currentWeek.dates.length - 1]),
 })
 
-const { r$ } = useRegle(formValues, {
+const { r$ } = useKeepiRegle(formValues, {
   from: {
-    required: requiredValidator,
+    required,
   },
   to: {
-    required: requiredValidator,
+    required,
     isEqualOrAfterFrom: withMessage((value) => {
       if (value == null || typeof value !== 'string') {
         return true

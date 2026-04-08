@@ -1,20 +1,25 @@
 import { tryParseDutchDate } from '@/date'
-import { maxLength, required, withMessage } from '@regle/rules'
+import { createRule, defineRegleConfig, type Maybe } from '@regle/core'
+import { isFilled, maxLength, required, withMessage } from '@regle/rules'
 
-export const requiredValidator = withMessage(required, 'Dit veld is verplicht')
+const dutchDate = createRule({
+  validator(value: Maybe<string>) {
+    if (!isFilled(value)) {
+      return true
+    }
 
-export function isValidDate(value: unknown): boolean {
-  if (value == null || typeof value !== 'string' || value === '') {
-    return true
-  }
+    return tryParseDutchDate(value) != null
+  },
+  message: 'Geen geldige datum',
+})
 
-  return tryParseDutchDate(value) != null
-}
-
-export function isValidString(value: unknown): boolean {
-  return value !== null && typeof value === 'string'
-}
-
-export function hasMaxLength(length: number) {
-  return withMessage(maxLength, `Maximale aantal karakters is ${length}`)(length)
-}
+export const { useRegle: useKeepiRegle } = defineRegleConfig({
+  rules: () => ({
+    required: withMessage(required, 'Dit veld is verplicht'),
+    maxLength: withMessage(
+      maxLength,
+      ({ _$value, $params: [max] }) => `Maximale aantal karakters is ${max}`,
+    ),
+    dutchDate,
+  }),
+})

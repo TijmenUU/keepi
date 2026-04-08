@@ -9,8 +9,6 @@ import { getWeekNumber, toShortDutchDate, type DateRange } from '@/date'
 import { toHoursMinutesNotation, tryParseTimeNotation } from '@/hours-minutes'
 import { loggableDays, type InvoiceItem, type TimeTableEntry } from '@/types'
 import { computed, onMounted, ref } from 'vue'
-import { useRegle } from '@regle/core'
-import { withMessage } from '@regle/rules'
 import KeepiWeekEditorDayLabel from '@/components/KeepiWeekEditorDayLabel.vue'
 import KeepiValidatedInput from '@/components/KeepiValidatedInput.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -20,6 +18,8 @@ import { useNavigationChangeDialogConfirmation } from '@/dialog'
 import { StepForward, StepBack } from '@lucide/vue'
 import ApiClient from '@/api-client'
 import { handleApiError } from '@/error'
+import { useKeepiRegle } from '@/regle'
+import { withMessage } from '@regle/rules'
 
 const props = defineProps<{
   projects: IGetUserProjectsResponse['projects']
@@ -58,7 +58,7 @@ const activeInvoiceItems = getSortedInvoiceItems(props.projects.filter((p) => p.
   },
 )
 
-const { r$ } = useRegle(
+const { r$ } = useKeepiRegle(
   {
     days: mapWeekEntriesToFlatHoursPerDayPerInvoiceItemArray(activeInvoiceItems, props.weekEntries),
   },

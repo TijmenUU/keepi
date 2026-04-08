@@ -23,12 +23,11 @@ import {
   FieldTitle,
 } from '@/components/ui/field'
 import { Label } from '@/components/ui/label'
-import { hasMaxLength, requiredValidator } from '@/regle'
 import { handleApiError } from '@/error'
-import { useRegle } from '@regle/core'
-import { withMessage } from '@regle/rules'
+import { maxLength, required, withMessage } from '@regle/rules'
 import { Plus, Trash } from '@lucide/vue'
 import { nextTick, ref } from 'vue'
+import { useKeepiRegle } from '@/regle'
 
 const props = defineProps<{
   existingProjects: IGetAllProjectsResponse['projects']
@@ -53,10 +52,10 @@ const users = await apiClient.getAllUsers().match(
 
 const disableUserInteraction = ref(false)
 const formValues = ref(getFormValues(props.editingProject, users))
-const { r$ } = useRegle(formValues, {
+const { r$ } = useKeepiRegle(formValues, {
   name: {
-    required: requiredValidator,
-    maxLength: hasMaxLength(64),
+    required,
+    maxLength: maxLength(64),
     unique: withMessage((value) => {
       if (value == null || typeof value !== 'string') {
         return true
@@ -68,19 +67,19 @@ const { r$ } = useRegle(formValues, {
     }, 'Deze naam is al reeds in gebruik'),
   },
   enabled: {
-    required: requiredValidator,
+    required,
   },
   users: {
     $each: {
-      id: { required: requiredValidator },
-      value: { required: requiredValidator },
+      id: { required },
+      value: { required },
     },
   },
   invoiceItems: {
     $each: {
       name: {
-        required: requiredValidator,
-        maxLength: hasMaxLength(64),
+        required,
+        maxLength: maxLength(64),
         unique: withMessage((value) => {
           if (value == null || typeof value !== 'string') {
             return true
