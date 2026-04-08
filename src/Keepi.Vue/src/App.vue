@@ -34,22 +34,24 @@ onMounted(async () => {
   const apiClient = new ApiClient()
   try {
     await apiClient.getUser().match(
-      (user) => {
+      async (user) => {
         const userRole = getUserRole(user)
         setUserContext(user.id, user.name, userRole)
 
         if (userRole !== 'none') {
           showSideBar.value = true
         } else if (router.currentRoute.value.path !== '/disableduser') {
-          router.push('/disableduser')
+          await router.push('/disableduser')
         }
       },
-      () => {
+      async (error) => {
         showSideBar.value = false
         clearUserContext()
 
-        if (router.currentRoute.value.meta.requiresAuth) {
+        if (error.type === 'unauthorized' && router.currentRoute.value.meta.requiresAuth) {
           location.href = `/signin?returnUrl=${encodeURIComponent(location.toString())}`
+        } else if (router.currentRoute.value.path !== '/error') {
+          await router.push('/error')
         }
       },
     )
