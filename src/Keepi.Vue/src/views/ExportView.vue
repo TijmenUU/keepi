@@ -85,22 +85,18 @@ const onSubmit = async () => {
 }
 
 const maximumFromValue = computed<DateValue | undefined>(() => {
-  try
-  {
-    return parseDate(formValues.value.to);
-  } catch
-  {
-    return;
+  try {
+    return parseDate(formValues.value.to)
+  } catch {
+    return undefined
   }
 })
 
 const minimumToValue = computed<DateValue | undefined>(() => {
-  try
-  {
-    return parseDate(formValues.value.from);
-  } catch
-  {
-    return;
+  try {
+    return parseDate(formValues.value.from)
+  } catch {
+    return undefined
   }
 })
 </script>
