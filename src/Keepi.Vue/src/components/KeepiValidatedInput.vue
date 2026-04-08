@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { RegleFieldStatus } from '@regle/core'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useAttrs } from 'vue'
 import Input from '@/components/ui/input/Input.vue'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useMediaQuery } from '@vueuse/core'
 
 defineOptions({
   inheritAttrs: false,
@@ -30,11 +31,22 @@ const errorMessage = computed<string>(() => {
 const hasErrorMessage = computed<boolean>(() => {
   return errorMessage.value !== ''
 })
+
+const mediaQueryTouch = useMediaQuery('(pointer: coarse)')
+const tooltipOpen = ref<undefined | boolean>()
 </script>
 
 <template>
-  <Tooltip :disabled="!hasErrorMessage">
-    <TooltipTrigger as-child>
+  <Tooltip
+    :disabled="!hasErrorMessage"
+    :open="tooltipOpen && hasErrorMessage"
+    disable-closing-trigger>
+    <TooltipTrigger
+      @focus="tooltipOpen = true"
+      @blur="tooltipOpen = false"
+      @mouseenter="mediaQueryTouch && (tooltipOpen = true)"
+      @mouseleave="mediaQueryTouch && (tooltipOpen = false)"
+      as-child>
       <Input
         :class="{ 'border-red-500': props.field.$error }"
         v-bind="useAttrs()"
