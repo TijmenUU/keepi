@@ -183,8 +183,7 @@ const onSubmit = async () => {
     }
 
     const result: TimeTableEntry[] = []
-    // For some reason days is optional here despite the regle form not being
-    // defined as such
+
     const minutes = data.days?.map((d) => tryParseTimeNotation(d.minutes ?? '') ?? 0) ?? []
 
     activeInvoiceItems.forEach((_, invoiceItemIndex) =>
