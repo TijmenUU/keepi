@@ -29,6 +29,8 @@ public partial class Program
 
         builder.Services.AddHttpContextAccessor();
 
+        builder.Services.AddAntiforgery();
+
         builder.Services.AddAuthorizationHelpers();
 
         const string connectionStringName = "Keepi";
@@ -144,12 +146,12 @@ public partial class Program
                 )
         );
 
-        app.UseAntiforgery();
-
         app.MapStaticAssets();
 
         app.UseAuthentication();
         app.UseAuthorization();
+        // This needs to be after the authentication and authorization. Joost may know why.
+        app.UseAntiforgery();
 
         app.MapRazorComponents<Components.App>().AddInteractiveServerRenderMode();
 
