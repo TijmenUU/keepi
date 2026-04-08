@@ -1,4 +1,3 @@
-using Keepi.Core.Entries;
 using Keepi.Core.InvoiceItems;
 using Keepi.Core.Users;
 using Microsoft.Extensions.Logging;

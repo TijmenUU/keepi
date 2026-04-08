@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using FastEndpoints;
-using Keepi.Core.Entries;
 using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
 using Keepi.Core.Users;

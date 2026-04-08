@@ -1,7 +1,6 @@
 using System.Data;
 using EntityFramework.Exceptions.Common;
 using Keepi.Core;
-using Keepi.Core.Entries;
 using Keepi.Core.InvoiceItems;
 using Keepi.Core.Projects;
 using Keepi.Core.UserInvoiceItemCustomizations;
