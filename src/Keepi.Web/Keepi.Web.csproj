@@ -40,8 +40,16 @@
     <InternalsVisibleTo Include="Keepi.Web.Integration.Tests" />
   </ItemGroup>
 
-  <Target Name="SpaBuild" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+  <Target Name="SpaRestore" BeforeTargets="Build">
     <Exec Command="bun ci" WorkingDirectory="../Keepi.Vue" />
+  </Target>
+
+  <Target
+    Name="SpaBuild"
+    BeforeTargets="Build"
+    AfterTargets="SpaRestore"
+    Condition="'$(Configuration)' == 'Release'"
+  >
     <Exec Command="bun run build" WorkingDirectory="../Keepi.Vue" />
   </Target>
 </Project>
