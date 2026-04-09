@@ -69,7 +69,7 @@ const onEditUser = (id: number) => {
       <TableHeader>
         <TableRow>
           <TableHead>Naam</TableHead>
-          <TableHead class="hidden sm:block">E-mail</TableHead>
+          <TableHead class="hidden sm:table-cell">E-mail</TableHead>
           <TableHead>Rol</TableHead>
           <TableHead></TableHead>
         </TableRow>
@@ -79,7 +79,7 @@ const onEditUser = (id: number) => {
         <TableRow v-for="user in users" :key="user.id">
           <TableCell>{{ user.name }}</TableCell>
 
-          <TableCell class="hidden sm:block">{{ user.emailAddress }}</TableCell>
+          <TableCell class="hidden sm:table-cell">{{ user.emailAddress }}</TableCell>
 
           <TableCell>
             {{ getUserRoleLabel(user.role) }}
