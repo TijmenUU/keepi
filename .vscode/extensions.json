@@ -1,9 +1,11 @@
 {
   "recommendations": [
     "bradlc.vscode-tailwindcss",
+    "csharpier.csharpier-vscode",
     "dbaeumer.vscode-eslint",
     "EditorConfig.EditorConfig",
     "esbenp.prettier-vscode",
+    "ms-dotnettools.csharp",
     "oxc.oxc-vscode",
     "vitest.explorer",
     "Vue.volar",
