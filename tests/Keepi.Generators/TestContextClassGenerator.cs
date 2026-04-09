@@ -254,9 +254,14 @@ namespace Keepi.Generators
             IDiagnosticFeedbackProvider diagnosticFeedbackProvider
         )
         {
-            if (target.Constructors.Length != 1)
+            if (target.Constructors.Length > 1)
             {
                 diagnosticFeedbackProvider.ReportMultipleConstructorsNotSupportedForTargetDiagnostic();
+                return [];
+            }
+
+            if (target.Constructors.Length == 0)
+            {
                 return [];
             }
 
