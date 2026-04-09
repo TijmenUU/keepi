@@ -102,14 +102,14 @@ const minimumToValue = computed<DateValue | undefined>(() => {
 
 <template>
   <div class="inline-block">
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
       <Label>
-        Van
+        <span class="w-15 sm:w-auto">Van</span>
         <KeepiDatePicker v-model="formValues.from" autofocus :max-value="maximumFromValue" />
       </Label>
 
       <Label>
-        tot en met
+        <span class="w-15 sm:w-auto">tot en met</span>
         <KeepiDatePicker v-model="formValues.to" :min-value="minimumToValue" />
       </Label>
     </div>

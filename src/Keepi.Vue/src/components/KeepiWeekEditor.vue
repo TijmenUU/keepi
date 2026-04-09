@@ -342,7 +342,8 @@ function sumInvoiceItemMinutes(day: IGetWeekUserEntriesResponseDay, invoiceItemI
         variant="outline"
         :disabled="currentWeek === dateRange.weekNumber || disableNavigation"
         @click="() => emits('currentWeek')">
-        Toon vandaag
+        <span class="inline sm:hidden">Vandaag</span>
+        <span class="hidden sm:inline">Toon vandaag</span>
       </Button>
 
       <Button variant="outline" @click="() => emits('nextWeek')" :disabled="disableNavigation">
@@ -374,7 +375,7 @@ function sumInvoiceItemMinutes(day: IGetWeekUserEntriesResponseDay, invoiceItemI
 
         <div
           v-for="(invoiceItem, index) in activeInvoiceItems"
-          class="grid grid-cols-[repeat(10,minmax(4rem,1fr))] gap-2 p-0.5"
+          class="grid grid-cols-[repeat(10,minmax(5.5rem,1fr))] gap-2 p-0.5"
           :key="invoiceItem.id">
           <div
             class="col-span-2 flex items-center justify-end rounded-md px-1"

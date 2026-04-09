@@ -55,7 +55,7 @@ const df = new DateFormatter('nl-NL', {
       <Button
         v-bind="$attrs"
         variant="outline"
-        :class="cn('w-60 justify-start text-left font-normal', !date && 'text-muted-foreground')">
+        :class="cn('justify-start text-left font-normal', !date && 'text-muted-foreground')">
         <CalendarIcon />
         {{ date ? df.format(date.toDate(getLocalTimeZone())) : 'Kies een datum' }}
       </Button>
