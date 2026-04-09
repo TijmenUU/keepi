@@ -129,6 +129,7 @@ namespace Keepi.Generators
 
             AddGeneratedSourceFor(
                 context: context,
+                testContextClassDeclaration: testContextClassDeclaration.ClassDeclarationSyntax,
                 testContextClassSymbol: testContextClassSymbol,
                 attributeData: generateTestContextAttribute
             );
@@ -179,6 +180,7 @@ namespace Keepi.Generators
 
         private static void AddGeneratedSourceFor(
             SourceProductionContext context,
+            ClassDeclarationSyntax testContextClassDeclaration,
             ISymbol testContextClassSymbol,
             GenerateTestContextAttributeData attributeData
         )
@@ -191,8 +193,26 @@ namespace Keepi.Generators
                         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
                     )
                 ),
+                testContextClassName: testContextClassSymbol.ToDisplayString(
+                    new SymbolDisplayFormat(
+                        genericsOptions: SymbolDisplayGenericsOptions.None,
+                        typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameOnly
+                    )
+                ),
                 testContextClassLocation: testContextClassSymbol.Locations.First()
             );
+
+            if (
+                !ValidateClassDeclarationRequirements(
+                    testContextClassDeclaration: testContextClassDeclaration,
+                    testContextClassSymbol: testContextClassSymbol,
+                    attributeData: attributeData,
+                    diagnosticFeedbackProvider: diagnosticFeedbackProvider
+                )
+            )
+            {
+                return;
+            }
 
             var sourceFile = GenerateSourceFile(
                 testContextClassSymbol: testContextClassSymbol,
@@ -201,6 +221,59 @@ namespace Keepi.Generators
             );
 
             context.AddSource(hintName: sourceFile.Name, source: sourceFile.Content);
+        }
+
+        private static bool ValidateClassDeclarationRequirements(
+            ClassDeclarationSyntax testContextClassDeclaration,
+            ISymbol testContextClassSymbol,
+            GenerateTestContextAttributeData attributeData,
+            DiagnosticFeedbackProvider diagnosticFeedbackProvider
+        )
+        {
+            #region Warnings
+            var expectedTestContextClassName = $"{attributeData.Target.Name}TestContext";
+            if (testContextClassSymbol.Name != expectedTestContextClassName)
+            {
+                diagnosticFeedbackProvider.ReportUnexpectedTestContextClassNameDiagnostic();
+            }
+            #endregion
+
+            bool isValid = true;
+            #region Errors
+            if (
+                !testContextClassDeclaration.Modifiers.Any(m =>
+                    m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)
+                )
+            )
+            {
+                diagnosticFeedbackProvider.ReportUnsupportedNonPartialClassDefinitionDiagnostic();
+                isValid = false;
+            }
+
+            if (testContextClassSymbol.DeclaredAccessibility != Accessibility.Internal)
+            {
+                diagnosticFeedbackProvider.ReportUnsupportedNonInternalClassDefinitionDiagnostic();
+                isValid = false;
+            }
+
+            if (
+                testContextClassDeclaration.Parent?.IsKind(
+                    Microsoft.CodeAnalysis.CSharp.SyntaxKind.ClassDeclaration
+                ) == true
+            )
+            {
+                diagnosticFeedbackProvider.ReportUnsupportedNonGlobalClassDefinitionDiagnostic();
+                isValid = false;
+            }
+
+            if (attributeData.Target.IsAbstract)
+            {
+                diagnosticFeedbackProvider.ReportUnsupportedAbstractTargetTypeDiagnostic();
+                isValid = false;
+            }
+            #endregion
+
+            return isValid;
         }
 
         private static TestContextClassSource GenerateSourceFile(
