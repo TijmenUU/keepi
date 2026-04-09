@@ -240,6 +240,12 @@ namespace Keepi.Generators
 
             bool isValid = true;
             #region Errors
+            if (attributeData.Target.Constructors.Length > 1)
+            {
+                diagnosticFeedbackProvider.ReportMultipleConstructorsNotSupportedForTargetDiagnostic();
+                isValid = false;
+            }
+
             if (
                 !testContextClassDeclaration.Modifiers.Any(m =>
                     m.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.PartialKeyword)
@@ -300,8 +306,7 @@ namespace Keepi.Generators
             var mocks = GetTestContextTargetDependencies(
                 target: attributeData.Target,
                 gatherMethods: attributeData.GenerateWithMethods,
-                verifyLogging: attributeData.VerifyLogging,
-                diagnosticFeedbackProvider: diagnosticFeedbackProvider
+                verifyLogging: attributeData.VerifyLogging
             );
 
             return TestContextClassSource.Create(
@@ -323,20 +328,14 @@ namespace Keepi.Generators
         private static TestContextTargetDependency[] GetTestContextTargetDependencies(
             INamedTypeSymbol target,
             bool gatherMethods,
-            bool verifyLogging,
-            IDiagnosticFeedbackProvider diagnosticFeedbackProvider
+            bool verifyLogging
         )
         {
-            if (target.Constructors.Length > 1)
-            {
-                diagnosticFeedbackProvider.ReportMultipleConstructorsNotSupportedForTargetDiagnostic();
-                return [];
-            }
-
             if (target.Constructors.Length == 0)
             {
                 return [];
             }
+            Debug.Assert(target.Constructors.Length == 1);
 
             var results = new List<TestContextTargetDependency>();
             foreach (var parameter in target.Constructors[0].Parameters)
